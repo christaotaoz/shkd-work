@@ -1,0 +1,43 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Route/`basename $0`"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_name}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "线路名称中包含非法字符!"
+		#afm_load_page 0 "${myself}?name=${CGI_name}&netmask=${CGI_netmask}&vlan=${CGI_vlan}&mtu=${CGI_mtu}&addr=${CGI_ifaddr}&ifname=${CGI_ifname}"
+		exit 0
+	fi
+	[ "${CGI_netmask}" = "" ] && CGI_netmask="255.255.255.0"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="1500"
+	[ "${CGI_clonemac}" = "" ] && CGI_clonemac="00:00:00:00:00:00"
+	cmdargs="name=${CGI_name} ifname=${CGI_ifname} addr=${CGI_ifaddr} netmask=${CGI_netmask}"
+	cmdargs="${cmdargs} vlan=${CGI_vlan} mtu=${CGI_mtu} clonemac=${CGI_clonemac}"
+	if [ "${CGI_mode}" = "standby" ]; then
+		cmdargs="${cmdargs} standby=${CGI_standby}"
+	else
+		cmdargs="${cmdargs} standby=NULL"
+	fi
+	errmsg=`${FLOWEYE} nat addrtif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		#afm_load_page 0 "/cgi-bin/Route/iflan_list"
+		exit 0
+	fi
+else
+	[ "${CGI_vlan}" = "" ] && CGI_vlan=0
+	[ "${CGI_mtu}" = "" ] && CGI_mtu=1500
+	[ "${CGI_netamsk}" = "" ] && CGI_netmask="255.255.255.0"
+	[ "${CGI_standby}" = "" ] && CGI_standby="NULL"
+fi
+

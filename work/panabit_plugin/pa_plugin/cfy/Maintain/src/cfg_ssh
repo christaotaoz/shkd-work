@@ -1,0 +1,113 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+. /etc/rc.subr
+load_rc_config 'XXX'
+myself="/cgi-bin/Maintain/`basename $0`"
+sshd_status=0
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+";
+skip="-s nostart"
+if [ `/sbin/sysctl -n security.jail.jailed` -eq 1 ]; then
+    skip="$skip -s nojail"
+fi
+[ -n "$local_startup" ] && find_local_scripts_new                 
+sshdfile=`rcorder ${skip} /etc/rc.d/* ${local_rc} 2>/dev/null | grep sshd`
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+  if grep -q ^rcvar $sshdfile; then
+      eval `grep ^name= $sshdfile`
+      eval `grep ^rcvar $sshdfile`
+      sshd_cfg=`cat /etc/rc.conf | grep ${rcvar}`
+      if [ "$CGI_ssh_switch" = "1" ]; then
+          sshd_cfg_cmd="onestart"
+          sshd_cfg_value="YES"
+      else
+          sshd_cfg_cmd="onestop"
+          sshd_cfg_value="NO"
+      fi
+      [ -f /tmp/rc.conf ] &&  rm -f /tmp/rc.conf      
+      if [ "${sshd_cfg}" != "" -a "${rcvar}" != "" ]; then
+          sed "s/${sshd_cfg}/${rcvar}=\"${sshd_cfg_value}\"/g" /etc/rc.conf > /tmp/rc.conf 2>/dev/null
+          if [ $? -ne 0 ]; then                                                          
+                cat /etc/rc.conf > /tmp/rc.conf 2>/dev/null                              
+                echo "${rcvar}=\"${sshd_cfg_value}\"" >> /tmp/rc.conf                    
+          fi
+      else
+          if [ "${rcvar}" != "" ]; then
+                cat /etc/rc.conf > /tmp/rc.conf 2>/dev/null                    
+                echo "${rcvar}=\"${sshd_cfg_value}\"" >> /tmp/rc.conf
+          else
+          		afm_dialog_msg "操作失败！找不到相关的服务配置。"
+          		afm_load_page 0 "${myself}"
+              exit 0
+          fi
+      fi
+      if [ $? -eq 0 ]; then
+          cat /tmp/rc.conf > /etc/rc.conf 2>/dev/null 
+          if [ $? -eq 0 ]; then   
+              ${sshdfile} ${sshd_cfg_cmd}
+              [ -f /tmp/rc.conf ] && rm /tmp/rc.conf
+          		afm_dialog_msg "操作成功!"
+          		afm_load_page 0 "${myself}"
+              exit 0
+          fi
+          [ -f /tmp/rc.conf ] && rm /tmp/rc.conf
+      fi
+      afm_dialog_msg "出现错误:$?" 
+  else
+	    afm_dialog_msg "出现错误:${sshdfile}"
+  fi
+fi
+if grep -q ^rcvar $sshdfile; then
+    eval `grep ^name= ${sshdfile}`
+    eval `grep ^rcvar ${sshdfile}`
+    checkyesno ${rcvar} 2>/dev/null && sshd_status=1
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "高级功能->SSH管理" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:20\"></td>
+        <td align=left style=\"width:80\">SSH管理</td>
+        <td align=left width=*>
+      	<select name=ssh_switch value=${sshd_status} style=\"width:110\">
+"; if [ ${sshd_status} -eq 1 ]; then 
+echo -n "
+          <option value=0>关闭</option>
+          <option value=1 selected>开启</option>
+"; else 
+echo -n "
+      	  <option value=0 selected>关闭</option>
+          <option value=1>开启</option>
+"; fi 
+echo -n "
+      	</select> (开启或关闭SSH的远程控制)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

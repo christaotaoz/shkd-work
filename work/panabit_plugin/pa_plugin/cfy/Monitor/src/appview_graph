@@ -1,0 +1,79 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+cgipath="/cgi-bin/Monitor/appview_graph"
+[ "${CGI_bridge}" = "" ] && CGI_bridge=0
+cgiargs="refresh=${CGI_refresh}&appid=${CGI_appid}&appname=${CGI_appname}&bridge=${CGI_bridge}"
+cgiurl="${cgipath}?${cgiargs}"
+[ "${width}" = "" ] && width=700
+MOD_TAB_LIST="协议配置#/cgi-bin/Protocol/sysapp_config?appid=${CGI_appid}&appname=${CGI_appname} \
+趋势图表#/cgi-bin/Monitor/appview_graph?${cgiargs} \
+在线用户#/cgi-bin/Monitor/appview_topip?${cgiargs} \
+连接排名#/cgi-bin/Monitor/appview_topflowip?${cgiargs} \
+有关策略#/cgi-bin/Monitor/appview_policy?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height)
+{
+        ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+</script>
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlp3day\" style=\"display:none\">查看最近三天趋势图</span>
+<span id=\"hlpall\" style=\"display:none\">查看最近一周、一月的趋势图</span>
+"; cgi_show_title "应用协议->`${FLOWEYE} app name ${CGI_appid}`档案" ${width} 
+echo -n "
+"; cgi_show_app_info ${CGI_appid} ${width} 
+echo -n "
+<br>
+"; cgi_print_mod_header "趋势图表" ${width} 
+echo -n "
+";
+TMPPATH=${PGPATH}/admin/tmp
+comargs="type=line bridge=${CGI_bridge} width=${width} height=260 hours=24" 
+grpbps=${TMPPATH}/day_${CGI_appid}_bps_${CGI_bridge}.png
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${grpbps} tag=${CGI_appid}.bpsin tag=${CGI_appid}.bpsout`
+grpflow=${TMPPATH}/day_${CGI_appid}_flow_${CGI_bridge}.png 
+errmsg=`${FLOWEYE} chart show ${comargs} yname="#flow" outimg=${grpflow} tag=${CGI_appid}.flow`
+
+echo -n "     
+<br>    
+<table style=\"width:${width}; font-weight:bold;font-size:14px; color:#CE6C04\">
+<tr>    
+        <td align=left><b>最近24小时流量趋势图</b></td>
+        <td align=right>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/appgraph?bridge=${CGI_bridge}&appid=${CGI_appid}&type=bps&time=3day', 700, 800)\"
+            onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/appgraph?bridge=${CGI_bridge}&appid=${CGI_appid}&type=bps&time=mon', 700, 800)\"
+            onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>         </td>
+</tr>   
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/day_${CGI_appid}_bps_${CGI_bridge}.png\"></img></td></tr>
+</table>
+<br>
+<table style=\"width:${width};font-weight:bold;font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近24小时连接趋势图</b></td>
+        <td align=right>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/appgraph?bridge=${CGI_bridge}&appid=${CGI_appid}&type=flow&time=3day', 700, 800)\"
+            onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/appgraph?bridge=${CGI_bridge}&appid=${CGI_appid}&type=flow&time=mon', 700, 800)\"
+            onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+        </td>
+</tr>
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr> <td><img src=\"/tmp/day_${CGI_appid}_flow_${CGI_bridge}.png\"></img></td> </tr>
+</table>
+</body>
+</html>
+";

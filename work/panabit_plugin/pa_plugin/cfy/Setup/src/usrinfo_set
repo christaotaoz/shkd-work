@@ -1,0 +1,124 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var maxlogin = document.getElementsByName(\"maxlogin\")[0];
+	maxlogin.value = TrimAll(maxlogin.value);
+	if (maxlogin.value == \"\") {
+		alert(\"最大在线人数!\");
+		maxlogin.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_list?group=${CGI_group}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	args="name=${CGI_name} group=${CGI_group} enable=${CGI_enable} maxlogin=${CGI_maxlogin}"
+	args="${args} ipaddr=${CGI_ipaddr}"
+	errmsg=`${FLOWEYE} usrinfo set ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/usrinfo_list?group=${CGI_group}"
+		exit 0
+	fi
+else
+	for nameval in `${FLOWEYE} usrinfo get name=${CGI_name}`
+	do
+		eval "CGI_${nameval}"
+	done
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "Web认证->账号管理->账号编辑" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>账号名称</td>
+	<td width=400 align=left><b>${CGI_name}</b>
+		<input type=hidden name=name style=\"width:120px\" value=\"${CGI_name}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td align=left>用户组</td>
+	<td align=left>
+		<select style=\"width:120px;\" name=group value=\"${CGI_group}\">
+		";
+			${FLOWEYE} usrinfo listgrp | while read grpid grpname theothers
+			do
+				if [ "${grpid}" = "${CGI_group}" -o "${grpname}" = "${CGI_group}" ]; then
+					echo "<option value=\"${grpid}\" selected>${grpname}</option>"
+				else
+					echo "<option value=\"${grpid}\">${grpname}</option>"
+				fi
+			done
+		
+echo -n "</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>账号状态</td>
+        <td align=left>
+	<select name=enable style=\"width:120px\" value=\"${CGI_enable}\">
+	";
+		if [ ${CGI_enable} -eq 0 ]; then
+			echo "<option value=1>允许使用</option>"
+			echo "<option value=0 selected>禁止使用</option>"
+		else
+			echo "<option value=1 selected>允许使用</option>"
+			echo "<option value=0>禁止使用</option>"
+		fi
+	
+echo -n "
+	</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>最大在线</td>
+        <td align=left><input class=text name=maxlogin style=\"width:120px\" value=\"${CGI_maxlogin}\"></input></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>绑定IP</td>
+        <td align=left><input class=text name=ipaddr style=\"width:120px\" value=\"${CGI_ipaddr}\"></input></td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

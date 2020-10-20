@@ -1,0 +1,290 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+. ${PGETC}/ifadmin.conf
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=\"javascript\">
+function editIPgrp()
+{
+	var whitetbl = document.getElementsByName(\"webauth_wlist\")[0];
+	if (whitetbl.value == \"0\") {
+		alert(\"没有设置IP群组!\");
+		alert(\"请选择直通IP群组后再编辑!\");
+		return;
+	}
+	var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + whitetbl.value;
+	ShowWindow(url, \"\", 840, 620);
+}
+function onEnableChanged(obj)
+{
+  OptionsValue = obj.value == \"0\";
+  var objs = document.getElementsByTagName(\"td\");
+  for (i = 0; i < objs.length; i++) {
+      for (j = 0; j < objs[i].childNodes.length; j++) {
+          if(objs[i].childNodes[j].id != \"webauth_enable\" &&
+             objs[i].childNodes[j].id != \"webauth_submit\" &&
+             typeof(objs[i].childNodes[j].disabled) == \"boolean\")
+              objs[i].childNodes[j].disabled = OptionsValue;
+      }
+  }
+}
+function onTypeChanged(obj)
+{
+	var ldap_config = document.getElementById(\"ldap_config\");
+	var radius_config = document.getElementById(\"radius_config\");
+	var _3rd_config = document.getElementById(\"3rd_config\");
+	var typedsc = document.getElementById(\"typedsc\");
+	if (obj.value == \"0\") {
+		ldap_config.style.display = 'none';
+		radius_config.style.display = 'none';
+    _3rd_config.style.display = 'none';
+		typedsc.innerText = '  该认证，需要在“帐号管理”中添加您的用户帐号。';
+	}
+	else if ( obj.value == \"1\") { 
+		ldap_config.style.display = 'block';
+		radius_config.style.display = 'none';
+    _3rd_config.style.display = 'none';
+		typedsc.innerText = '  该认证，由远程LDAP服务器提供帐号服务。';
+	}
+	else if ( obj.value == \"2\") { 
+		ldap_config.style.display = 'none';
+		radius_config.style.display = 'block';
+    _3rd_config.style.display = 'none';
+		typedsc.innerText = '  该认证，由远程RADIUS服务器提供帐号服务。';
+	}
+  else {
+		ldap_config.style.display = 'none';
+		radius_config.style.display = 'none';
+    _3rd_config.style.display = 'block';
+		typedsc.innerText = '  该认证，由第三方服务提供认证。';
+  }
+}
+function onLoad()
+{
+	var webtype = document.getElementsByName(\"webauth_type\")[0];
+	onTypeChanged(webtype);
+	onEnableChanged(document.getElementsByName(\"webauth_enable\")[0]);   
+}
+function beforeSubmit(frmObj)
+{
+	var msg = document.getElementsByName(\"webauth_promptmsg\")[0];
+	var script = document.getElementsByName(\"webauth_afterlogin\")[0];
+	msg.value = TrimAll(msg.value);
+	script.value = TrimAll(script.value);
+	return true;
+}
+</script>
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	args="webauth_enable=${CGI_webauth_enable}"
+  if [ "${CGI_webauth_enable}" = "1" ]; then
+    	args="${args} webauth_type=${CGI_webauth_type}"
+    	args="${args} webauth_wlist=${CGI_webauth_wlist}"
+	args="${args} webauth_afterlogin=\"${CGI_webauth_afterlogin}\""
+	case "${CGI_webauth_type}" in
+          1)
+		args="${args} webauth_adserver=${CGI_webauth_adserver}"
+          	args="${args} webauth_adport=${CGI_webauth_adport}"
+            ;;
+          2)
+          	args="${args} webauth_rdserver=${CGI_webauth_rdserver}"
+          	args="${args} webauth_rdport=${CGI_webauth_rdport}"
+          	args="${args} webauth_rdsecret=${CGI_webauth_rdsecret}"
+            ;;
+          3)
+            [ "${CGI_webauth_3rdlogin}" = "" ] && CGI_webauth_3rdlogin="http://${ADMIN_IP}:8010/cgi-bin/login"
+          	args="${args} webauth_3rdlogin=\"${CGI_webauth_3rdlogin}\""
+            ;;
+          *)
+            ;;          
+	esac
+  fi 
+	errmsg=`${FLOWEYE} webauth config ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	fi
+fi
+mkdir -p ${RAMDISK}/tmp
+${FLOWEYE} webauth stat > ${RAMDISK}/tmp/webauth.stat
+. ${RAMDISK}/tmp/webauth.stat
+[ "${webauth_afterlogin}" = "NULL" ] && webauth_afterlogin=""
+
+echo -n "
+<body onload=\"onLoad()\">
+"; cgi_show_title "Web认证->基本设置" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeSubmit(this)\" action=\"${myself}\">
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=150 align=left>Web认证</td>
+	<td width=* align=left>
+		<select ID=\"webauth_enable\" name=webauth_enable style=\"width:120px\" value=\"${webauth_enable}\" onchange=\"onEnableChanged(this)\">
+		"; if [ "${webauth_enable}" = "0" ]; then 
+echo -n "
+			<option value=1>打开</option>
+			<option value=0 selected>关闭</option>
+		"; else 
+echo -n "
+			<option value=1 selected>打开</option>
+			<option value=0>关闭</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left><span>不需要认证的IP</span></td>
+	<td width=* align=left>
+		<select name=webauth_wlist style=\"width:120px\" value=\"${webauth_wlist}\">
+		";
+			if [ "${webauth_wlist}" = "0" ]; then
+				echo "<option value=0 selected>空IP群组</option>"
+			else
+				echo "<option value=0>空IP群组</option>"
+			fi
+			
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				if [ "${webauth_wlist}" = "${tblid}" ]; then
+					echo "<option value=${tblid} selected>${tblname}</option>"
+				else
+					echo "<option value=${tblid}>${tblname}</option>"
+				fi
+			done
+		
+echo -n "
+		</select>
+		"; if [ "${webauth_wlist}" != "0" ]; then 
+echo -n "
+			&nbsp;&nbsp;<span><a style=\"color:#0000ff\" href=\"javascript:editIPgrp()\">[编辑IP]</a></span>
+		"; fi 
+echo -n "
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left><span>成功后显示页面</span></td>
+	<td width=* align=left>
+		<input ID=\"webauth_afterlogin\" type=text name=webauth_afterlogin disabled style=\"width:100%\" value=\"${webauth_afterlogin}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left><span>认证方式</span></td>
+	<td width=* align=left>
+		<select name=webauth_type style=\"width:120px\" value=\"${webauth_type}\" onchange=\"onTypeChanged(this)\">
+		"; case "${webauth_type}" in
+            1) 
+echo -n "
+			<option value=0>本地认证</option>
+			<option value=1 selected>LDAP认证</option>
+      <option value=2>RADIUS认证</option>
+      <option value=3>第三方认证</option>
+		";     ;;
+            2) 
+echo -n "
+			<option value=0>本地认证</option>
+			<option value=1>LDAP认证</option>
+      <option value=2 selected>RADIUS认证</option>
+      <option value=3>第三方认证</option>
+		";     ;;
+            3) 
+echo -n "
+			<option value=0>本地认证</option>
+			<option value=1>LDAP认证</option>
+      <option value=2>RADIUS认证</option>
+      <option value=3 selected>第三方认证</option>
+		";     ;;
+            *) 
+echo -n "
+			<option value=0 selected>本地认证</option>
+			<option value=1>LDAP认证</option>
+      <option value=2>RADIUS认证</option>
+      <option value=3>第三方认证</option>
+		";     ;;
+        esac 
+echo -n "
+		</select>
+    <span ID=\"typedsc\"></span>
+	</td>
+</tr>
+</table>
+<br>
+<table ID=\"ldap_config\" style=\"font:14px\" width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=150 align=left><span>服务器地址</span></td>
+	<td width=* align=left>
+		<input type=text name=webauth_adserver style=\"width:160px\" value=\"${webauth_adserver}\"></input>
+		&nbsp;&nbsp;<span>( x.x.x.x )</span>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left><span>端口</span></td>
+        <td align=left>
+		<input type=text name=webauth_adport style=\"width:160px\" value=\"${webauth_adport}\"></input>
+		&nbsp;&nbsp;<span>(1~65535，LDAP默认端口为：389)</span>
+	</td>
+</tr>
+</table>
+<table ID=\"radius_config\" style=\"font:14px\" width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=150 align=left><span>服务器地址</span></td>
+	<td width=* align=left>
+		<input type=text name=webauth_rdserver style=\"width:160px\" value=\"${webauth_rdserver}\"></input>
+		&nbsp;&nbsp;<span>( x.x.x.x )</span>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left><span>端口</span></td>
+        <td align=left>
+		<input type=text name=webauth_rdport style=\"width:160px\" value=\"${webauth_rdport}\"></input>
+		&nbsp;&nbsp;<span>(1~65535，RADIUS默认端口为：1812)</span>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left><span>共享密钥</span></td>
+        <td align=left>
+		<input type=password name=webauth_rdsecret style=\"width:160px\" value=\"${webauth_rdsecret}\"></input>
+	</td>
+</tr>
+</table>
+<table ID=\"3rd_config\" style=\"font:14px\" width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=150 align=left><span>认证页面地址</span></td>
+	<td width=* align=left>
+		<input type=text name=webauth_3rdlogin style=\"width:100%\" value=\"${webauth_3rdlogin}\"></input>
+	</td>
+</tr>
+</table>
+<table style=\"width:800; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:800\"> 
+<tr>
+        <td align=right>
+		<input ID=\"webauth_submit\" type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

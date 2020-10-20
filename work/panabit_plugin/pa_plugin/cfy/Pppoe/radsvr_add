@@ -1,0 +1,42 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+        operator_check "${myself}"
+        string_verify "${CGI_desc}"
+        if [ "$?" = "0" ]; then
+                afm_dialog_msg "名称中包含特殊字符!"
+                #adm_load_page 0 "${myself}"
+                exit 0
+        fi
+	[ "${CGI_authport}" = "" ] && CGI_authport=1812
+	[ "${CGI_acctport}" = "" ] && CGI_acctport=1813
+	[ "${CGI_discport}" = "" ] && CGI_discport=3799
+	[ "${CGI_secret}" = "" ] && CGI_secret="panabit"
+	[ "${CGI_proxy}" = "" ] && CGI_proxy="NULL"
+	[ "${CGI_proxy2}" = "" ] && CGI_proxy2="NULL"
+	cmdargs="ip=${CGI_ip} authport=${CGI_authport} acctport=${CGI_acctport}"
+	cmdargs="${cmdargs} secret=${CGI_secret}"
+	cmdargs="${cmdargs} proxy=${CGI_proxy}"
+	cmdargs="${cmdargs} proxy2=${CGI_proxy2}"
+	cmdargs="${cmdargs} desc=${CGI_desc}"
+	errmsg=`${FLOWEYE} radsvr add ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		#afm_load_page 0 "/cgi-bin/Pppoe/radsvr_list"
+		exit 0
+	fi
+else
+	[ "${CGI_authport}" = "" ] && CGI_authport=1812
+	[ "${CGI_acctport}" = "" ] && CGI_acctport=1813
+	[ "${CGI_discport}" = "" ] && CGI_discport=3799
+fi
+

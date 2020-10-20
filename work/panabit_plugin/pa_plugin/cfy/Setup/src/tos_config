@@ -1,0 +1,55 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy config force_tos=${CGI_tos}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} policy stat`
+do
+	eval "${nameval}"
+done
+CGI_tos="${force_tos}"
+
+echo -n "
+<body>
+"; cgi_show_title "参数设置-->TOS设置" 
+echo -n "
+<br>
+<form method=post action=\"/cgi-bin/Setup/tos_config\">
+<table width=500 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>TOS标记设置</td>
+	<td width=120 align=left>
+		<select name=tos value=${CGI_tos} style=\"width:100%\">
+		";
+			if [ ${CGI_tos} -eq 0 ]; then
+				echo "<option value=1>单线TOS</option>"
+				echo "<option value=0 selected>多线TOS</option>" 
+			else 
+				echo "<option value=1 selected>单线TOS</option>"
+				echo "<option value=0>多线TOS</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=right><input type=submit style=\"width:100\" value=\"提交\"></input>&nbsp;&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

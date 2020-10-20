@@ -1,0 +1,33 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+returl="/cgi-bin/Pppoe/ippool_list"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	[ "${CGI_ratein}" = "" ] && CGI_ratein="0"
+	[ "${CGI_rateout}" = "" ] && CGI_rateout="0"
+	[ "${CGI_dns}" = "" ] && CGI_dns="0.0.0.0"
+	[ "${CGI_maxonlinetime}" = "" ] && CGI_maxonlinetime="0"
+	errmsg=`${FLOWEYE} pppoeippool set id=${CGI_id} name=${CGI_name} start=${CGI_start} end=${CGI_end} \
+ratein=${CGI_ratein} rateout=${CGI_rateout} dns=${CGI_dns} clntepa=${CGI_clntepa} maxonlinetime=${CGI_maxonlinetime}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "²Ù×÷Ê§°Ü:${errmsg}"
+	else
+		#afm_load_page 0 "${returl}"
+		exit 0
+	fi
+else
+	for nameval in `${FLOWEYE} pppoeippool get id=${CGI_id}`
+	do
+		name=`echo ${nameval} | cut -d'=' -f1`
+		val=`echo ${nameval} | cut -d'=' -f2-`
+		export CGI_${name}="${val}"
+	done
+fi

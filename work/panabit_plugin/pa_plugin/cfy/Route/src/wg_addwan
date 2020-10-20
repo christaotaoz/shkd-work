@@ -1,0 +1,393 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+RAMDISK="/usr/ramdisk"
+if [ -f ${RAMDISK}/PG.conf ]; then
+	. ${RAMDISK}/PG.conf
+	PGPATH="${RAMDISK}"
+else
+	. /etc/PG.conf
+fi
+. ${PGPATH}/etc/panabit.inf
+PGBIN=${PGPATH}/bin
+FLOWEYE=${PGBIN}/floweye
+EVENTFILE=${PGETC}/log/pending_events
+myself="/cgi-bin/Route/`basename $0`"
+returnurl="/cgi-bin/Route/wg_list"
+if [ "${CGI_action}" = "status" -a "${CGI_items}" != "" ]; then
+	echo "{data: ["
+	for item in ${CGI_items}
+	do
+		${FLOWEYE} nat listproxy type=proxy.pppoe | \
+		awk -v id="${item}" '{if($2==id){print $0; exit;}}' | \
+		while read type id name ifname addr gateway dnsaddr vlan \
+		gatewaymac flowcnt ttl inbytes outbytes inbps outbps dnsreqs dnsress linkup theothers
+		do
+			echo "{inbps: ${inbps}, outbps: ${outbps}},"
+		done
+	done
+	echo "]}"
+	exit 0;
+fi
+. ../common/common.sh
+
+echo -n "
+<style>
+.xrow1 td {
+	background-color: #fff4d8;
+	color: #000000;
+	font-size: 12px;
+}
+.xrow2 td {
+	background-color: #ffeeb8;
+	color: #000000;
+	font-size: 12px;
+}
+</style>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddWan(frm)
+{
+	var srcdsts = \"\";
+	var ids = \"\";
+	var pnames = \"\";
+	var i;
+	var table = document.getElementsByTagName(\"table\")[3].rows;
+	
+	for(i = 1;i < table.length; i++){
+		if(table.item(i).cells[0].children[0].checked) {
+			ids   += table.item(i).cells[0].children[0].value + \",\";
+			srcdsts += table.item(i).cells[3].children[0].value + \",\";
+			pnames += table[i].getAttribute(\"proxyname\") + \",\" + table.item(i).cells[3].children[0].value + \";\";
+		}
+	}
+	if(ids != \"\") {
+		document.getElementById(\"ids\").value = ids.substr(0, ids.length - 1);
+		document.getElementById(\"srcdsts\").value = srcdsts.substr(0, srcdsts.length - 1);
+		document.getElementById(\"pnames\").value = pnames.substr(0, pnames.length - 1);
+		return true;
+	}
+	if(table.length > 1)
+		alert(\"请重试，您还未选择需要加入“${CGI_name}”群组的线路!\");
+	else
+		alert(\"错误！当前无可用WAN线路，请先添后线路后再重试!\");
+	return false;
+}
+function onCancel() 
+{
+	window.location.href = \"${returnurl}\";
+}
+function onSelectItemSub(obj)
+{
+	var table = obj.parentElement.parentElement.parentElement.children;
+	var count = 0;
+	var i;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked)
+			count++;
+	}
+	if(obj.checked) {
+		table.item(0).cells[0].children[0].checked = (count == table.length - 1);
+	} else {
+		table.item(0).cells[0].children[0].checked = false;
+	}
+	obj.parentElement.parentElement.children[3].children[0].disabled = !obj.checked;
+}
+function onSelectItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	for(i = 1;i < table.length; i++){
+		table.item(i).cells[0].children[0].checked = obj.checked;
+		table.item(i).cells[3].children[0].disabled = !obj.checked;
+	}
+}
+function onChangeSrcdst(obj)
+{
+	var i;
+	var table = document.getElementsByTagName(\"table\")[3].rows;
+	for(i = 1;i < table.length; i++){
+		if(table.item(i).cells[0].children[0].checked)
+			table.item(i).cells[3].children[0].children[obj.value-1].selected = true;
+	}
+}
+function showProxy(type, proxyname)
+{
+    var url;
+	url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+    ShowWindow(url, \"\", 350, 400);
+}
+function showtablelist(obj, status)
+{
+	obj.children[0].style.display = status;
+}
+function onAddWGwan(id, name)
+{
+	window.location.href = \"${myself}?id=\" + id + \"&name=\" + name;
+}
+function fromwgrmv(wgid, proxy)
+{
+	window.location.href = \"${myself}?action=rmvwan&id=${CGI_id}&wgid=\" + wgid + \"&proxy=\" + proxy;
+}
+function getstatus()
+{
+	var table = document.getElementsByTagName(\"table\")[3].rows;
+	var items = new Array();
+	var i;
+	
+	for(i = 1; i < table.length; i++)
+		items.push(table[i].cells[0].childNodes[0].value);
+	if(items.length <= 0)
+		return;
+	AJXS({type: 'POST', 
+				 url: '${myself}?action=status&items=' + items.join(' '), 
+				 error: function(status){setTimeout(getstatus, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			setTimeout(getstatus, 1000);
+			return;
+		}
+		if((table.length - 1) == d.data.length) {
+			for(i=0; i < d.data.length; i++) {
+				table[i + 1].cells[8].childNodes[0].innerHTML = d.data[i].outbps + \" / \" + d.data[i].inbps;
+			}
+		}
+		
+		setTimeout(getstatus, 1000);
+	}});
+} 
+function onLoadChange()
+{
+	var srcdsts = [${CGI_srcdsts}];
+	var ids = [${CGI_ids}];
+	var i, j;
+	var table = document.getElementsByTagName(\"table\")[3].rows;
+	
+	if(ids.length == srcdsts.length) {
+		for(i = 0;i < srcdsts.length; i++){
+			for(j = 1; j < table.length; j++){
+				if(table.item(j).cells[0].children[0].value == ids[i]) {
+					table.item(j).cells[0].children[0].checked = true;
+					table.item(j).cells[3].children[0].children[srcdsts[i]-1].selected = true;
+					table.item(j).cells[3].children[0].disabled = false;
+				}
+			}
+		}
+	}
+	getstatus();
+}
+</script>
+<body onload=\"onLoadChange()\">
+";
+if [ "${CGI_action}" = "rmvwan" -a "${CGI_wgid}" != "" -a "${CGI_proxy}" != "" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} wangroup set id=${CGI_wgid} proxy=${CGI_proxy} weight=-1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+	sleep 1
+	sync
+fi
+	
+if [ "${REQUEST_METHOD}" = "POST" -a "${CGI_pnames}" != "" ]; then
+	operator_check "${myself}"
+	wans=`echo "${CGI_pnames}" | tr ';' '\n' | awk -F "," \
+		 'BEGIN{i=0;}{if(NF==2){print $1,$2; i++;}}END{exit i}'`
+	if [ "$?" != "0" -a "${CGI_id}" != "" ]; then
+		errcount=0
+		echo "${wans}<br>"
+		echo "<span style=\"color:#ff0000;\"><br>"
+		while read name srcdst othe
+		do
+			errmsg=`${FLOWEYE} wangroup set id=${CGI_id} proxy=${name} weight=${srcdst}`
+			if [ "$?" != "0" ]; then
+				echo "	err: ${name} >>> ${errmsg}<br>"
+				errcount=$((${errcount}+1))
+			fi
+		done << EOF
+${wans}
+EOF
+		echo "</span><br>"
+		if [ "${errcount}" != "0" ]; then
+			afm_dialog_msg "操作中发生错误!"
+		else
+			afm_load_page 0 "/cgi-bin/Route/wg_list"
+			exit 0
+		fi
+	fi
+fi
+cgi_show_title "接口线路->${CGI_name}->添加线路"
+
+echo -n " 
+<br>
+<form method=post onsubmit=\"return beforeAddWan(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=850 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=1 ></td>
+    <td width=80 align=left>群组名称</td>
+	<td width=400 align=left><b>${CGI_name}</b></td>
+</tr>
+</table>
+<table style=\"font:15px\" width=850 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+    <td width=1></td>
+    <td align=left><a style=\"color:#0000ff\">带宽比重，是指线路下行带宽的相对值，比如将一条100M线路和一条50M线路加到群组中，那么他们的比值就是2和1</a></td>
+    <td align=left></td>
+</tr>
+<tr id=row1>
+    <td width=1></td>
+    <td align=left>可选WAN线路，红色行“<span style=\"color: #fff4d8;font-size: 24px;\">■</span> <span style=\"color: #ffeeb8;font-size: 24px;\">■</span>”的表示线路已经被其它群组使用过：</td>
+    <td align=left></td>
+</tr>
+</table>
+<table width=850 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=40 align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' onclick=\"onSelectItem(this)\"/></td>
+	<td width=40 align=center>序号</td>
+	<td width=120 align=center>线路名称</td>
+	<td width=120 align=right>带宽比重
+		<select style=\"width:40\" value=\"1\" onchange=\"onChangeSrcdst(this)\">
+			<option value=\"1\" selected=\"\">1</option>
+			<option value=\"2\">2</option>
+			<option value=\"3\">3</option>
+			<option value=\"4\">4</option>
+			<option value=\"5\">5</option>
+			<option value=\"6\">6</option>
+			<option value=\"7\">7</option>
+			<option value=\"8\">8</option>
+			<option value=\"9\">9</option>
+			<option value=\"10\">10</option>
+		</select>
+	</td>
+	<td width=80 align=right>物理网卡</td>
+	<td width=110 align=right>IP地址</td>
+	<td width=110 align=right>网关地址</td>
+	<td width=60  align=right>VLAN</td>
+	<td width=100  align=right>当前速率</td>
+	<td width=90 align=right>已归属群组</td>
+</tr>
+";
+	wanids=""
+	if [ "${CGI_id}" != "" ]; then
+		subproxy=`${FLOWEYE} wangroup get id=${CGI_id}`
+		while read type pxytype wanid wanname status weight inbps outbps theothers;
+		do
+			[ "${type}" != "wan" ] && continue;
+			wanids="${wanids} ${wanid} |"
+		done << EOF
+${subproxy}
+EOF
+	fi
+	wanids="${wanids%|*}"
+	if [ "${wanids}" = "" ]; then
+		proxyline=`${FLOWEYE} nat listproxy type=proxy.pppoe`
+	else
+		proxyline=`${FLOWEYE} nat listproxy type=proxy.pppoe | grep -Ev "(proxy|pppoe)(${wanids})"`
+	fi
+	idname="row1"
+	natcount=0
+	while read type id name ifname addr gateway dnsaddr vlan \
+	gatewaymac flowcnt ttl inbytes outbytes inbps outbps dnsreqs dnsress linkup theothers
+	do
+		[ "${type}" != "proxy" -a "${type}" != "pppoe" ] && continue
+		natcount=$((${natcount}+1))
+		if [ ${linkup} -eq 1 ]; then
+			color="#0000ff"
+		else
+			color="#ff0000"
+		fi
+		wggrp=`${FLOWEYE} wangroup list | while read wgid wgname othe
+		do
+			${FLOWEYE} wangroup get id=${wgid} | awk -v wanid="${id}" '{if($3==wanid)exit 1;}'
+			if [ "${?}" = "1" ]; then
+				echo "<tr><td width='120' style='background-color: #fff;'><a title='点击编译“${wgname}”群组' href='javascript:onAddWGwan(\"${wgid}\",\"${wgname}\")'>${wgname}&nbsp;</a></td><td style='background-color: #fff;'><a title='从该组中移除此线路' href='javascript:fromwgrmv(\"${wgid}\", \"${name}\")'>移除</a></td></tr>"
+			fi
+		done` 
+		
+		isx=""
+		trtype="id"
+		wggrpcnt=0
+		if [ "${wggrp}" != "" ]; then
+			wggrpcnt=`echo "${wggrp}" | wc -l`
+			wggrpcnt=$((${wggrpcnt}+0))
+			isx="x"
+			trtype="class"
+		else
+			wggrp="<tr><td align='middle' style='background-color: #fff; color: #00AF15; font-weight: bold;'>未加入过群组</td></tr>"
+		fi
+		wggrp="<div style='left: 660px; display: none; position: absolute; z-index: 1000; border: 2px solid #cccccc; padding: 4px; background-color: white;'><table width='160' border='0' bgcolor='#ffffff'>${wggrp}</table></div>"
+
+echo -n "
+    <tr ${trtype}=${isx}${idname} proxyname=\"${name}\" proxytype=\"${type}\" linkup=\"${linkup}\" ifname=\"${ifname}\" vlan=\"${vlan}\">
+	<td align=right><input type=checkbox style=\"color:#0000ff\" value='${id}' onclick=\"onSelectItemSub(this)\"/>&nbsp;&nbsp;</td>
+	<td align=right>${natcount}&nbsp;</td> 
+    <td align=right><a style=\"color:${color}\" href=\"javascript:showProxy('${type}', '${name}')\">${name}&nbsp;</a></td>
+	<td align=right style=\"color:#00ff00\">
+		<select style=\"width:50\" value=\"1\" disabled>
+			<option value=\"1\" selected=\"\">1</option>
+			<option value=\"2\">2</option>
+			<option value=\"3\">3</option>
+			<option value=\"4\">4</option>
+			<option value=\"5\">5</option>
+			<option value=\"6\">6</option>
+			<option value=\"7\">7</option>
+			<option value=\"8\">8</option>
+			<option value=\"9\">9</option>
+			<option value=\"10\">10</option>
+		</select>
+    </td>
+    <td align=right>${ifname}&nbsp;</td>
+    <td align=right>${addr}&nbsp;</td>
+    <td align=right>${gateway}&nbsp;</td>
+";
+	[ "${vlan}" = "0" ] && vlan=""
+
+echo -n "
+    <td align=right>${vlan}&nbsp;</td>
+    <td align=right><span>${outbps}&nbsp;/&nbsp;${inbps}</span>&nbsp;</td>
+    <td align=right onmouseover='showtablelist(this, \"block\");' onmouseout='showtablelist(this, \"none\");'>
+		${wggrpcnt}
+		${wggrp}
+	</td>
+</tr>
+";
+		if [ "${idname}" = "row1" ]; then
+			idname="row2"
+		else
+			idname="row1"
+		fi
+	done << EOF
+${proxyline}
+EOF
+
+echo -n "
+</table>
+<table style=\"width:850; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:850\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=id value=\"${CGI_id}\" />
+		<input type=hidden name=pnames id=pnames value=\"${CGI_pname}\" />
+		<input type=hidden name=srcdsts id=srcdsts value=\"\" />
+		<input type=hidden name=ids id=ids value=\"\" />
+		<input type=hidden name=name value=\"${CGI_name}\" />
+		<input type=submit id=newbtn value=\"添加\" />
+		<input type=button id=newbtn value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

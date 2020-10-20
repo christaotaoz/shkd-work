@@ -1,0 +1,24 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+firstelem=1
+FLOWEYE=/usr/ramdisk/bin/floweye
+printf "["
+${FLOWEYE} route list | while read id iniftype inifname proto appid appname \
+srctype srcip srcport dsttype dstip dstport dscp disabled vlan ttl action nexthop gateway state pkts t1 t2 t3 standby theothers
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{ id:'${id}',pkts:'${pkts}',disabled:'${disabled}',iniftype:'${iniftype}',inifname:'${inifname}',standby:'${standby}'}"
+		firstelem=0
+	else
+		printf ",{ id:'${id}',pkts:'${pkts}',disabled:'${disabled}',iniftype:'${iniftype}',inifname:'${inifname}',standby:'${standby}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

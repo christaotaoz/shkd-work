@@ -1,0 +1,135 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+cgipath="/cgi-bin/Monitor/`basename $0`"
+afm_load_page 30 ${cgipath}
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddRule()
+{ 
+	var url = \"/cgi-bin/Route/dns_addrule\";
+	ShowWindow(url, \"\", 750, 320);
+}
+function modifyRule(polno) 
+{
+	var url = \"/cgi-bin/Route/dns_setrule?polno=\" + polno;
+	ShowWindow(url, \"\", 750, 280);
+}
+function deleteRule(rule)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"/cgi-bin/Route/dns_listrule?action=rmvrule\" +
+		                       \"&ruleid=\" + rule;
+	}
+}
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 320);
+}
+function dnsEdit(grpname)
+{
+        var url = \"/cgi-bin/Protocol/urldnsgrp_edit?grpname=\" + grpname;
+        ShowWindow(url, \"\", 840, 560);
+}
+function showIPGrp(gname)
+{
+        var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+        ShowWindow(url, \"\", 860, 630);
+}
+</script>
+";
+if [ "${CGI_action}" = "rmvrule" ]; then
+	errmsg=`${FLOWEYE} dns rmvrule ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "当前策略->DNS管控" 
+echo -n "
+<br>
+<table width=1080 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+        <td width=40  align=center>序号</td>
+	<td width=120 align=center>路径</td>
+	<td width=150 align=center>源地址</td>
+	<td width=150 align=center>目的DNS服务器</td>
+	<td width=130 align=center>访问域名</td>
+	<td width=250 align=center>执行动作</td>
+	<td width=100 align=center>匹配次数</td>
+        <td width=*   align=center><a style=\"color:#0000ff\" href=\"javascript:onAddRule()\">添加策略>></a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} dns listrule | \
+while read polno intype inip outtype outip dnstype dns bdg action actarg pkts pxystate others 
+do
+	echo "<tr id=${idname}>"
+	echo "<td align=center>${polno}</td>"
+	if [ $bdg -eq 0 ]; then
+		echo "<td align=center>任意路径</td>"
+	else
+		echo "<td align=center>网桥$bdg</td>"
+	fi
+        if [ "${intype}" = "table" ]; then
+                echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}</a></td>"
+        else
+                echo "<td align=center>${inip}</td>"
+        fi
+        if [ "${outtype}" = "table" ]; then
+                echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}</a></td>"
+        else
+                echo "<td align=center>${outip}</td>"
+        fi
+	if [ "${dns}" = "any" ]; then
+		echo "<td align=center>任意</td>"
+	else
+		if [ "${dnstype}" = "usr" ]; then
+			echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:dnsEdit('${dns}')\">${dns}</a></td>"
+		else
+			echo "<td align=center>*${dns}</td>"
+		fi
+	fi
+	case "${action}" in
+	"pass")
+		echo "<td align=center>允许</td>"
+		;;
+	"rdr")
+		actarg="${actarg#_wg.}"
+		if [ "${pxystate}" = "1" ]; then
+			echo "<td align=center>重定向至-><a style=\"color:#0000ff\" href=\"javascript:showProxy('${actarg}')\"><b>${actarg}</b></a></td>"
+		else
+			echo "<td align=center>重定向至-><a style=\"color:#ff0000\" href=\"javascript:showProxy('${actarg}')\"><b>${actarg}</b></a></td>"
+		fi
+		;;
+	"reply")
+		echo "<td align=center>劫持至IP->${actarg}</td>"
+		;;
+	"deny")
+		echo "<td align=center>丢弃请求</td>"
+		;;
+	esac
+	echo "<td align=center>${pkts}</td>"
+       	echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:modifyRule('${polno}')\">&nbsp;&nbsp;编辑&nbsp;&nbsp;</a><a style="color:#0000ff" href=\"javascript:deleteRule('${polno}')\">&nbsp;&nbsp;删除&nbsp;&nbsp;</a></td>"
+	echo "</tr>"
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

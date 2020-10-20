@@ -1,0 +1,28 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<body>
+"; 
+cgi_show_title "配置管理->配置导出" 
+if [ -f ${PGETC}/panabit.conf ]; then
+	cp -f ${PGETC}/panabit.conf ${TMPPATH}/current.conf
+else
+	echo "ENDCONFIG" > ${TMPPATH}/current.conf
+fi
+
+echo -n " 
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3 style=\"font-bold:true;font-size:15px\">
+<tr>
+    <td width=20></td>
+    <td width=*>在此处&nbsp;<a style=\"color:#ff0000;font-size:15px;\" href=\"/tmp/current.conf\"><b>点击鼠标右键，选择\"另存为...\"</b></a>&nbsp;导出当前配置文件</td>
+</tr>
+</table>
+</body>
+</html>
+";

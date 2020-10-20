@@ -1,0 +1,24 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:Virtual-host?version=0.2&distribution=centos'
+node_templates:
+  pa_host:
+    type: cloudify.kvm.virtual.host
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      bridge_1: br0
+      bridge_2: br0
+      config:
+        host: 192.168.4.249
+        user: root
+        password: root
+      cpu: 2
+      hostname: pa-kvm2
+      pcis:
+        pciaddr1: '05:00.0'
+        pciaddr2: '05:00.1'
+      ram: 4096

@@ -1,0 +1,74 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+  user_group_name:
+    description: >
+      The name of the user group to be created
+    default: 
+  max_uplink_rate:
+    description: >
+      Maximum uplink rate for users in this group
+    default:
+  max_downlink_rate:
+    description: >
+      Maximum downlink rate for users in this group
+    default: 
+  not_allowed_app:
+    description: >
+      List of application protocols that are not allowed
+      eg:game,video,mobile,webmail
+    default:
+
+node_templates:
+  new_user_group:
+    type: cloudify.pa.user_group
+    properties:
+      user_group_name:
+        get_input: user_group_name
+      start_ip: 0
+      final_ip: 0
+      max_uplink_rate:
+        get_input: max_uplink_rate
+      max_downlink_rate:
+        get_input: max_downlink_rate
+      dns_server: 114.114.114.114,8.8.8.8
+      max_online_time: 0
+      allow_for_overdue_account: reject
+      dialing_interface: 'NULL'
+
+      group_en_name:
+        get_input: user_group_name
+      group_cn_name:
+        get_input: user_group_name
+      applist:
+        get_input: not_allowed_app
+
+      desc:
+        get_input: user_group_name
+      bridge: any
+      dir: both
+      vlan: 0
+      intype:
+        data_sources: 1
+        data_value: 
+          get_input: user_group_name
+      iniptbl: 1
+      inport: 0
+      outtype: any
+      outiptbl: 1
+      outport: 0
+      proto: any
+      appid:
+        get_input: user_group_name
+      natip: 0
+      hasms: 0
+      qqcnt: 0
+      action: deny
+      iprate: 0
+      tos: 0
+      matchact:  stop
+
+

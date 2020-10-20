@@ -1,0 +1,164 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=2
+afm_load_page ${CGI_refresh} "/cgi-bin/Pppoe/clntpxy_show?name=${CGI_name}"
+for nameval in `${FLOWEYE} clntpxy get name=${CGI_name}`
+do
+	eval "${nameval}"
+done
+
+echo -n "
+<body>
+<br>
+<table class=bgurl width=310 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td align=left width=100>名称</td>
+	<td align=left width=*><b>代理账号->${username}</b></td>
+</tr>	
+<tr id=row1>
+	<td align=left>所在接口</td>
+	<td align=left>${pxyif}</td>
+</tr>	
+<tr id=row1>
+	<td align=left>MTU</td>
+	<td align=left>${mtu}</td>
+</tr>
+<tr id=row1>
+	<td align=left>VLAN</td>
+	<td align=left>${pxyvlan}</td>
+</tr>
+<tr id=row1>
+	<td align=left>网关IP</td>
+	<td align=left>${gateway}</td>
+</tr>
+<tr id=row1>
+	<td align=left>帐号/密码</td>
+	<td align=left>${username}/${password}</td>
+</tr>
+<tr id=row1>
+	<td align=left>IP/MAC</td>
+	<td align=left>${addr}/${mac}</td>
+</tr>
+<tr id=row1>
+	<td align=left>PPPOE网关</td>
+	"; if [ "${peermac}" = "ff:ff:ff:ff:ff:ff" ]; then 
+echo -n "
+	<td align=left><a style=\"color:#ff0000\"><b>未找到服务网关</b></td>
+	"; else 
+echo -n "
+	<td align=left>${peermac}[${acname}]</td>
+	"; fi 
+echo -n "
+</tr>
+"; [ "${peersvc}" = "NULL" ] && peersvc="" 
+echo -n "
+<tr id=row1>
+	<td align=left>服务名称</td>
+	<td align=left>${peersvc}</td>
+</tr>
+"; [ "${sessionid}" = "0x0000" ] && sessionid="" 
+echo -n "
+<tr id=row1>
+	<td align=left>会话ID</td>
+	<td align=left>${sessionid}</td>
+</tr>
+<tr id=row1>
+<td align=left>状态</td>
+";
+case "${state}" in
+"PRESTART")
+	echo "<td align=left><b style=\"color:#ff0000\">${waitime_left}秒后重拨</b></td>"
+	;;
+		
+"START")
+	echo "<td align=left><b style=\"color:#ff0000\">寻找服务</b></td>"
+	;;
+"PADR")
+	echo "<td align=left><b style=\"color:#ff0000\">请求服务</b></td>"
+	;;
+"LCP")
+	echo "<td align=left><b style=\"color:#ff0000\">链路协商</b></td>"
+	;;
+"PAP")
+	echo "<td align=left><b style=\"color:#ff0000\">用户认证(PAP)</b></td>"
+	;;
+"CHAP")
+	echo "<td align=left><b style=\"color:#ff0000\">用户认证(CHAP)</b></td>"
+	;;
+"IPCP")
+	echo "<td align=left><b style=\"color:#ff0000\">获取IP地址</b></td>"
+	;;
+"DATA")
+	if [ "${ischap}" != "0" ]; then
+		echo "<td align=left><b style=\"color:#00ff00\">已连接(CHAP)</b></td>"
+	else
+		echo "<td align=left><b style=\"color:#00ff00\">已连接(PAP)</b></td>"
+	fi
+	;;
+esac
+
+echo -n "
+</tr>
+<tr id=row1>
+	<td align=left>连接时间</td>
+	<td align=left>${connect_time}</td>
+</tr>
+"; 
+if [ "${lasterr}" != "OK" ]; then 
+	echo "<tr id=row1>"
+	echo "<td align=left>错误信息</td>"
+	case "${lasterr}" in
+	"NOSERVICE")
+		echo "<td align=left><b style=\"color:#ff0000\">未找到服务</b></td>"
+		;;
+	"LCPNOTACKED")
+		echo "<td align=left><b style=\"color:#ff0000\">链路协商无应答</b></td>"
+		;;
+	"AUTHTIMEOUT")
+		echo "<td align=left><b style=\"color:#ff0000\">认证超时</b></td>"
+		;;
+	"AUTHFAIL")
+		echo "<td align=left><b style=\"color:#ff0000\">认证失败，用户名或密码不对</b></td>"
+		;;
+	"DATATIMEOUT")
+		echo "<td align=left><b style=\"color:#ff0000\">服务器无应答</b></td>"
+		;;
+	*)
+		echo "<td align=left><b style=\"color:#ff0000\">${lasterr}</b></td>"
+		;;
+	
+	esac
+	echo "</tr>"
+fi 
+echo -n "
+"; 
+[ "${dns0}" = "0.0.0.0" ] && dns0=""
+[ "${dns1}" = "0.0.0.0" ] && dns1=""
+
+echo -n "
+<tr id=row1>
+	<td align=left>主DNS</td>
+	<td align=left>${dns0}</td>
+</tr>
+<tr id=row1>
+	<td align=left>从DNS</td>
+	<td align=left>${dns1}</td>
+</tr>
+<tr id=row1>
+	<td align=left>流入bps</td>
+	<td align=left>${inbps}</td>
+</tr>
+<tr id=row1>
+	<td align=left>流出bps</td>
+	<td align=left>${outbps}</td>
+</tr>
+</table>
+</body>
+</html>
+";

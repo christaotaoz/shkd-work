@@ -1,0 +1,112 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/p2p.css\" />
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/dtree.js\"></script>
+<script type=\"text/javascript\">
+function openurl(url)
+{
+        window.parent.document.getElementById(\"content\").src = url;
+}
+function appinfo(appid, appname)
+{
+	var url;
+	url = \"/cgi-bin/Monitor/appview_topip?bridge=0&appid=\" + appid +
+	      \"&appname=\" + appname;
+        window.parent.document.getElementById(\"content\").src = url;
+}
+function groupinfo(grpid, grpname)
+{
+	var url;
+	url = \"/cgi-bin/Monitor/grpview?title=应用协议->\" + grpname + \"&group=\" + grpid;
+        window.parent.document.getElementById(\"content\").src = url;
+}
+</script>
+</head>
+";
+RAMDISK="/usr/ramdisk"
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+FLOWEYE=${PGPATH}/bin/floweye
+. ${PGPATH}/etc/panabit.inf
+
+echo -n "
+<body>
+<div style=\"position:absolute;top:6px\">
+<script type=\"text/javascript\">
+	d = new dTree('d');
+	d.add(0, -1, '监控统计');
+	d.add(10, 0, '系统概况', '','','','','', true);
+"; if [ "${JOS_RELEASE}" = "2" ]; then 
+echo -n "
+	d.add(100000, 10, '网络概况', \"javascript:openurl('/cgi-bin/Monitor/dashboard_wb')\");
+"; else 
+echo -n "
+	d.add(100001, 10, '流量概况', \"javascript:openurl('/cgi-bin/Monitor/group_stat')\");
+        d.add(100008, 10, '系统信息', \"javascript:openurl('/cgi-bin/Monitor/info_system?title=系统概况->系统信息')\");
+"; fi 
+echo -n "
+"; if [ "${JOS_RELEASE}" = "0" -o "${JOS_RELEASE}" = "1" ]; then 
+echo -n "
+        d.add(100009, 10, '攻击告警', \"javascript:openurl('/cgi-bin/Monitor/alarm_list?title=系统概况->攻击告警')\");
+"; fi 
+echo -n "
+	
+        d.add(100010, 10, '网络接口', \"javascript:openurl('/cgi-bin/Monitor/if_stat')\");
+";
+	bdglist=`${FLOWEYE} bridge list format=long`
+	if [ "${bdglist}" != "" ]; then 
+        	echo "d.add(200000, 10, '网桥');"
+        	bridgeidx=200001
+        	${FLOWEYE} bridge list format=long | while read bdg bwin bwout tmp1 tmp2 brname
+        	do
+                	nextidx=`expr ${bridgeidx} + ${bdg}` 
+			echo "d.add(${nextidx}, 200000,'${brname}',\"javascript:openurl('/cgi-bin/Monitor/group_stat?bridge=${bdg}&bdgname=${brname}')\");"
+		done
+	fi
+
+echo -n "
+        d.add(100004, 10, '虚拟链路', \"javascript:openurl('/cgi-bin/Monitor/vlink_list')\");
+       	d.add(100005, 10, '移动终端');
+	d.add(1000051, 100005, '终端排名', \"javascript:openurl('/cgi-bin/Monitor/mob_topn')\");
+	d.add(1000052, 100005, '在线趋势', \"javascript:openurl('/cgi-bin/Monitor/mob_stat')\");
+	
+"; if [ "${JOS_RELEASE}" != "2" ]; then 
+echo -n "
+	d.add(12, 0, 'Top排名', '','','','','', true);
+	d.add(120001, 12, 'Top应用', \"javascript:openurl('/cgi-bin/Monitor/app_topn')\");
+	d.add(120002, 12, 'Top用户', \"javascript:openurl('/cgi-bin/Monitor/ip_topn')\");
+	d.add(120003, 12, 'Top连接', \"javascript:openurl('/cgi-bin/Monitor/flow_topn')\");
+"; fi 
+echo -n "
+"; if [ "${PANABIT_USER}" != "guest" -a "${PANABIT_USER}" != "pppoeman" ]; then 
+echo -n "
+	d.add(40000, 0, '当前策略', '','','','','', true);
+	d.add(400001,40000, '流量控制', \"javascript:openurl('/cgi-bin/Monitor/policy_stat?title=当前策略->流量控制策略')\");
+	d.add(400002,40000, '策略路由', \"javascript:openurl('/cgi-bin/Route/policy_list')\");
+	d.add(400003,40000, '连接控制', \"javascript:openurl('/cgi-bin/Monitor/conlimit_stat?title=当前策略->连接数控制策略')\");
+	d.add(400004,40000, 'HTTP管控', \"javascript:openurl('/cgi-bin/Monitor/urlfilter_stat?title=当前策略->HTTP管控策略')\");
+	d.add(400005,40000, 'DNS管控', \"javascript:openurl('/cgi-bin/Route/dns_listrule')\");
+	d.add(400006,40000, 'MAC绑定', \"javascript:openurl('/cgi-bin/Monitor/ipmac_stat')\");
+"; fi 
+echo -n "
+	document.write(d);
+</script>
+</div>
+</body>
+</html>
+";

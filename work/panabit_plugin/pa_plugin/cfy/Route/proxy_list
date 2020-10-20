@@ -1,0 +1,99 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/cfy/Route/`basename $0`"
+MOD_TAB_LIST="LAN接口#/cgi-bin/Route/iflan_list WAN线路#/cgi-bin/Route/proxy_list"
+
+FLOWEYE=/usr/ramdisk/bin/floweye
+firstelem=1
+printf "{\"key\" :["
+${FLOWEYE} nat listproxy type=routerif.proxy.pppoe onlystat=1 | while read \
+type id name ifname linkup disable standby dnsreqs dnsfail flowcnt inbps outbps theothers
+do
+done
+echo "]}"
+
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat rmvproxy ${CGI_pxyid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "redial" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat setpppoe name=${CGI_proxyname} redial=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		sleep 1
+	fi
+elif [ "${CGI_action}" = "batchdelete" ]; then
+	operator_check "${myself}"
+	errcount=0
+	allcount=0
+	CGI_items=`echo ${CGI_items} | tr ',' ' '`
+	for id in ${CGI_items}
+	do
+		errmsg=`${FLOWEYE} nat rmvproxy ${id}`
+		[ "$?" != "0" ] && errcount=$((${errcount}+1))
+		allcount=$((${allcount}+1))
+	done
+	[ "${errcount}" != "0" ] && afm_dialog_msg "总共${allcount}个，操作失败${errcount}个: 可能线路正在使用中，无法删除。"
+elif [ "${CGI_action}" = "batchredial" ]; then
+	operator_check "${myself}"
+	errcount=0
+	allcount=0
+	CGI_items=`echo ${CGI_items} | tr ',' ' '`
+	for name in ${CGI_items}
+	do
+		errmsg=`${FLOWEYE} nat setpppoe name=${name} redial=1`
+		[ "$?" != "0" ] && errcount=$((${errcount}+1))
+		allcount=$((${allcount}+1))
+		echo "<br><b><p style=\"color:#0000ff;font-size:13px\">发送重拨指令给线路\"${name}\"......</p>"
+		sleep .1
+	done
+	sleep .5
+	afm_load_page 0 "${myself}"
+	exit 0
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat config enableproxy=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat config disableproxy=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "batchenable" ]; then
+	operator_check "${myself}"
+	CGI_items=`echo ${CGI_items} | tr ',' ' '`
+	cmdargs=""
+	for name in ${CGI_items}
+	do
+		cmdargs="${cmdargs} enableproxy=${name}"
+	done
+	errmsg=`${FLOWEYE} nat config ${cmdargs}`
+	afm_load_page 0 "${myself}"
+	exit 0
+elif [ "${CGI_action}" = "batchdisable" ]; then
+	operator_check "${myself}"
+	CGI_items=`echo ${CGI_items} | tr ',' ' '`
+	cmdargs=""
+	for name in ${CGI_items}
+	do
+		cmdargs="${cmdargs} disableproxy=${name}"
+	done
+	errmsg=`${FLOWEYE} nat config ${cmdargs}`
+	afm_load_page 0 "${myself}"
+	exit 0
+fi
+
+

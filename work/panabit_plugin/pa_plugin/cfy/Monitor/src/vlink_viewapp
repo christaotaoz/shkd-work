@@ -1,0 +1,49 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="refresh=${CGI_refresh}&appid=${CGI_appid}&appname=${CGI_appname}"
+cgiurl="${cgipath}?${cgiargs}"
+width=613
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height) {
+        ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+</script>
+<body>
+"; 
+cgi_show_title "`${FLOWEYE} app name ${CGI_appid}`流量趋势(${CGI_vlinkname})" ${width} 
+echo "<br>"
+floweyearg="bridge=${CGI_bridge} tag=${CGI_appid}.bpsin tag=${CGI_appid}.bpsout width=660 height=300"
+daypng=${CGI_bridge}_grpday_${CGI_appid}.png
+weekpng=${CGI_bridge}_grpweek_${CGI_appid}.png
+monpng=${CGI_bridge}_grpmon_${CGI_appid}.png
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${daypng} hours=24`
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${weekpng} hours=168`
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${monpng} hours=720`
+echo "<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>"
+echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>"
+	
+echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>"
+echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>"
+echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>"
+echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>"
+
+echo -n "
+</body>
+</html>
+";

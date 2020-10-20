@@ -1,0 +1,52 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showIPs(devid, devname)
+{
+	var url = \"/cgi-bin/Monitor/mob_topip?devid=\" + devid + \"&devname=\" + devname;
+	ShowWindow(url, \"\", 620, 700);
+}
+</script>
+<body>
+"; cgi_show_title "移动终端->终端排名" 
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=2>
+<tr id=tblhdr>
+	<td width=50  align=center>编号</td>
+	<td width=250 align=right>终端型号</td>
+	<td width=250 align=right>当前在线</td>
+	<td width=*   align=right>操作</td>
+</tr>
+";
+rowno=1
+idname=row1
+${FLOWEYE} mobile list type=device | sort -nr -k1 | while read count devid devname
+do 
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${rowno}</td>
+	<td align=right>${devname}</td>
+	<td align=right>${count}</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPs('${devid}', '${devname}')\">在线用户</a></td>
+	</tr>
+";
+	rowno=$((${rowno} + 1))
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

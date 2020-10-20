@@ -1,0 +1,173 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+MOD_TAB_LIST="阀值配置#/cgi-bin/Maintain/alarm_config 历史日志#/cgi-bin/Maintain/alarm_logger"
+alarm_config_file="${PGETC}/alarm_config.conf"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var syn_out = document.getElementsByName(\"syn_out\")[0];
+	var syn_in = document.getElementsByName(\"syn_in\")[0];
+	var icmp_out = document.getElementsByName(\"icmp_out\")[0];
+	var icmp_in = document.getElementsByName(\"icmp_in\")[0];
+	var ack_out = document.getElementsByName(\"ack_out\")[0];
+	var ack_in = document.getElementsByName(\"ack_in\")[0];
+	var fragment_out = document.getElementsByName(\"fragment_out\")[0];
+	var fragment_in = document.getElementsByName(\"fragment_in\")[0];
+	
+	syn_out.value = TrimAll(syn_out.value);
+	if (syn_out.value != \"\" && (IsDigit(syn_out.value) == false || syn_out.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		syn_out.select();
+		return false;
+	}
+	syn_in.value = TrimAll(syn_in.value);
+	if (syn_in.value != \"\" && (IsDigit(syn_in.value) == false || syn_in.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		syn_in.select();
+		return false;
+	}
+	
+	icmp_out.value = TrimAll(icmp_out.value);
+	if (icmp_out.value != \"\" && (IsDigit(icmp_out.value) == false || icmp_out.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		icmp_out.select();
+		return false;
+	}
+	icmp_in.value = TrimAll(icmp_in.value);
+	if (icmp_in.value != \"\" && (IsDigit(icmp_in.value) == false || icmp_in.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		icmp_in.select();
+		return false;
+	}
+	
+	ack_out.value = TrimAll(ack_out.value);
+	if (ack_out.value != \"\" && (IsDigit(ack_out.value) == false || ack_out.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		ack_out.select();
+		return false;
+	}
+	ack_in.value = TrimAll(ack_in.value);
+	if (ack_in.value != \"\" && (IsDigit(ack_in.value) == false || ack_in.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		ack_in.select();
+		return false;
+	}
+	fragment_out.value = TrimAll(fragment_out.value);
+	if (fragment_out.value != \"\" && (IsDigit(fragment_out.value) == false || fragment_out.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		fragment_out.select();
+		return false;
+	}
+	fragment_in.value = TrimAll(fragment_in.value);
+	if (fragment_in.value != \"\" && (IsDigit(fragment_in.value) == false || fragment_in.value < 0)) {
+		alert(\"请输入正确的阀值!\");
+		fragment_in.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	echo -n "logserip=${CGI_logserip}
+logserport=${CGI_logserport}
+syn_out=${CGI_syn_out}
+syn_in=${CGI_syn_in}
+icmp_out=${CGI_icmp_out}
+icmp_in=${CGI_icmp_in}
+ack_out=${CGI_ack_out}
+ack_in=${CGI_ack_in}
+fragment_out=${CGI_fragment_out}
+fragment_in=${CGI_fragment_in}
+" > ${alarm_config_file}
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+if [ -f "${alarm_config_file}" ]; then
+	. ${alarm_config_file}
+	
+	CGI_logserip=${logserip}
+	CGI_logserport=${logserport}
+	CGI_syn_out=${syn_out}
+	CGI_syn_in=${syn_in}
+	CGI_icmp_out=${icmp_out}
+	CGI_icmp_in=${icmp_in}
+	CGI_ack_out=${ack_out}
+	CGI_ack_in=${ack_in}
+	CGI_fragment_out=${fragment_out}
+	CGI_fragment_in=${fragment_in}
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "系统告警->攻击告警" 
+echo -n "
+<br>
+"; cgi_print_mod_header "阀值配置" 700 
+echo -n "
+<br>
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=40></td>
+        <td align=left width=100>日志服务器IP</td>
+        <td align=left width=* colspan=3>
+			<input type=text name=logserip value=\"${CGI_logserip}\" style=\"width:120\" />&nbsp;：&nbsp;
+			<input type=text name=logserport value=\"${CGI_logserport}\" style=\"width:60\" /> (0~65535,0表示关闭日志输出功能)
+		</td>
+</tr>
+<tr id=row1>
+        <td width=40></td>
+        <td align=left width=100>外网SYN告警阀值</td>
+        <td align=left width=210><input type=text name=syn_out value=\"${CGI_syn_out}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+        <td align=left width=100>内网SYN告警阀值</td>
+        <td align=left width=*><input type=text name=syn_in value=\"${CGI_syn_in}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left>外网ICMP告警阀值</td>
+        <td align=left><input type=text name=icmp_out value=\"${CGI_icmp_out}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+        <td align=left>内网ICMP告警阀值</td>
+        <td align=left><input type=text name=icmp_in value=\"${CGI_icmp_in}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left>外网ACK告警阀值</td>
+        <td align=left><input type=text name=ack_out value=\"${CGI_ack_out}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+        <td align=left>内网ACK告警阀值</td>
+        <td align=left width=*><input type=text name=ack_in value=\"${CGI_ack_in}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left>外网碎片告警阀值</td>
+        <td align=left><input type=text name=fragment_out value=\"${CGI_fragment_out}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+        <td align=left>内网碎片告警阀值</td>
+        <td align=left width=*><input type=text name=fragment_in value=\"${CGI_fragment_in}\" style=\"width:80\" />&nbsp;pps &nbsp;(0：表示忽略)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr><td align=right><input type=submit style=\"width:80\" value=\"提交\"></input></td></tr>
+</table>
+</form>
+</body>
+</html>
+";

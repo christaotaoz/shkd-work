@@ -1,0 +1,187 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"licfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请输入License文件路经!\");
+		return false;
+	}
+	if (confirm(\"确定要升级license?\"))
+		return true;
+	else
+		return false;
+}
+</script>
+<body>
+"; [ "${CGI_browsertitle}" = "" ] && cgi_show_title "系统升级->License升级" 
+echo -n "
+<br>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	# Get a clean directory
+	mkdir -p ${DATAPATH}/upgrade
+	rm -rf ${DATAPATH}/upgrade/*
+	# Mv the file to the directory
+	mv ${CGI_licfile} ${DATAPATH}/upgrade/license.dat
+	license=`cat ${DATAPATH}/upgrade/license.dat`
+	errmsg=`${FLOWEYE} key install ${license}`
+	if [ "${errmsg}" = "OK" ]; then
+		afm_dialog_msg "升级License成功!"
+		if [ -f ${PGETC}/license.dat ]; then
+			mv ${PGETC}/license.dat ${PGETC}/license.dat.old
+		fi
+		mv ${DATAPATH}/upgrade/license.dat ${PGETC}/license.dat
+		sync
+		sync
+		sleep .5
+	else
+		afm_dialog_msg "升级失败,请同厂家确认license的有效性!"
+	fi
+fi
+for nameval in `${FLOWEYE} key info`; do
+	eval "${nameval}"
+done
+startm=${start}
+endtm=${end}
+skipsecs=$((${endtm} - ${startm}))
+skipdays=$((${skipsecs} / 86400))
+if [ $release -eq 0 ]; then
+	cookie="00000000000000000000000000000000"
+else
+	cookie=`${FLOWEYE} key getcookie`
+	cookie2=`${FLOWEYE} key getcookie2`
+fi
+startm=`date -r ${startm} "+%Y-%m-%d %H:%M:%S"`
+freeend=`date -r ${freeend} "+%Y-%m-%d %H:%M:%S"`
+endtmstr=`date -r ${endtm} "+%Y-%m-%d %H:%M:%S"`
+if [ ${skipdays} -ge 8000 ]; then
+	forever=1
+else
+	forever=0
+fi
+
+echo -n "
+<table style=\"width:720; border-bottom:1px #787882 solid; font-bold:true;font-size:14px;\">
+<tr>
+	<td style=\"font:14px\"><b>当前License</b></td>
+	<td style=\"font:12px;\" align=right width=\"*\"></td>
+</tr>
+</table>
+<br>
+<table width=720 border=0 cellspacing=2 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=100 align=left>License编号</td>
+";
+	maxwan=`${FLOWEYE} nat stat | grep maxwan | cut -d'=' -f2`
+	if [ "${maxwan}" = "1" ]; then
+		oemstr="${oem}[<a style=\"color:#ff0000\"><b>单线普及版</b></a>]"
+	else
+		oemstr="${oem}"
+	fi
+	if [ $release -eq 0 ]; then
+		echo "<td width=* style=\"color:#ff0000;font:12px\" align=left>这是标准版,除了不得用于商业目的外您可以自由使用</td>"
+	else
+		echo "<td width=* align=left>${oemstr}</td>"
+	fi
+
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>使用许可时间</td>
+";
+	if [ $release -eq 0 ]; then
+		echo "<td align=left>无限制</td>"
+	elif [ ${forever} -eq 1 ]; then
+		echo "<td align=left><a style=\"color:#ff0000\"><b>可永久使用LICENSE</b></a></td>"
+	else
+		echo "<td align=left>${startm} -> ${endtmstr}</td>"
+	fi
+
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>升级许可时间</td>
+";
+	if [ $release -eq 0 ]; then
+		echo "<td align=left>无限制</td>"
+	else
+		echo "<td align=left>${startm} -> ${freeend}</td>"
+	fi
+
+echo -n "
+</tr>
+"; [ "${TOPSEC}" != "" ] && flowcnt=$((${flowcnt} + ${flowcnt})) 
+echo -n "
+<tr id=row1>
+	<td></td>
+	<td align=left>许可信息</td>
+	<td align=left>最大并发连接数${flowcnt}，最大在线IP数${ipcnt}</td>
+</tr>
+";
+oldkey=0
+if [ -f ${PGETC}/license.dat ]; then
+	charcnt=`cat ${PGETC}/license.dat | wc -c`
+	[ ${charcnt} -lt 1000 ] && oldkey=1
+fi
+
+echo -n "
+"; if [ ${oldkey} -eq 1 ]; then 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left style=\"color:#0000ff\">老系统编号</td>
+		<td style=\"color:#0000ff;font:12px\" align=left>${cookie}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left style=\"color:#ff0000\">新系统编号</td>
+		<td style=\"color:#ff0000;font:12px\" align=left>${cookie2}</td>
+	</tr>
+"; else 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>系统编号</td>
+		<td align=left>${cookie2}</td>
+	</tr>
+"; fi 
+echo -n "
+</table>
+<br>
+<table style=\"width:720; border-bottom:1px #787882 solid; font-bold:true;font-size:14px;\">
+<tr><td style=\"font:14px\"><b>升级License</b></td></tr>
+</table>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=720 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=100 align=left>License文件路径</td>
+	<td width=480 align=left>
+		<input type=file name=licfile style=\"width:100%\">
+	</td>
+	<td width=* align=right>
+		<input type=hidden name=action value=upload></input>
+		<input type=submit style=\"width:100%\" value=\"开始升级\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

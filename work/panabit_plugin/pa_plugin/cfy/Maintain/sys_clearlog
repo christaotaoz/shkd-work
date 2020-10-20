@@ -1,0 +1,98 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function Validate(frm)
+{
+	frm.curpwd.value  = TrimAll(frm.curpwd.value);
+	if (frm.curpwd.value == \"\")
+	{
+		alert(\"请输入当前密码\");
+		frm.curpwd.select();
+		return false;
+	}
+	if (confirm(\"确信要删除所有日志?\"))
+		return true;
+	else
+		return false;
+}
+</script>
+";
+PASSWDFILE=${PGPATH}/admin/.htpasswd
+if [ "${CGI_action}" = "clear" ]; then
+	operator_check "${myself}"
+	if [ ! -f ${PASSWDFILE} ]; then
+		afm_dialog_msg "发现严重错误，系统密码文件毁坏!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	curpasswd=`cat ${PASSWDFILE} | grep "${ADMIN_NAME}:" | cut -d':' -f2-`
+	if [ "${curpasswd}" != "${CGI_curpwd}" ]; then
+		afm_dialog_msg "对不起，密码不对，你无权清除日志!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	# waiting for 10 seconds for scheduler.
+	echo "<br><p style=\"color:#0000ff\">关闭日志采集服务......</p>"
+	while true;
+	do
+		datamon=`ps ax | grep ipe_datamon`
+		if [ "${datamon}" != "" ]; then
+			errmsg=`${PGPATH}/bin/ipectrl stop datamon 2>&1`
+		else
+			break
+		fi
+		sleep 1
+	done
+	echo "<br><p style=\"color:#0000ff\">日志采集进程已经关闭,删除日志......</p>"
+	rm -rf ${DATAPATH}/panabit.rrd
+	rm -rf ${DATAPATH}/panabit.raz
+	sync
+	echo "<br><p style=\"color:#0000ff\">日志已经删除,重新启动日志采集服务......</p>"
+	echo "start_datamon yes" >> ${EVENTFILE}
+	sleep 8
+	yes=`ps ax | grep ipe_datamon`
+	if [ "$yes" != "" ]; then
+		afm_dialog_msg "操作成功!"
+	else
+		afm_dialog_msg "操作失败!"
+	fi
+	afm_load_page 0 "${myself}"
+	exit 0
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "日志管理->清除流量日志" 
+echo -n "
+<br>
+<table width=\"76%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>请输入当前密码</td>
+	<td width=100 align=left>
+		<input type=password class=text name=curpwd style=\"width:100\"></input>
+	</td>
+	<td align=right width=120px>
+		<input type=submit style=\"width:100\" value=\"清除日志\"></input>
+		<input type=hidden name=action value=\"clear\"></input>
+	</td>
+	<td width=*></td>
+</tr>
+</table>
+</form>
+</table>
+</center>
+</body>
+</html>
+";

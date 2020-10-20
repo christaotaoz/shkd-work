@@ -1,0 +1,365 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+[ "${CGI_gid}" = "" ] && CGI_gid=0
+[ "${CGI_sort}" = "" ] && CGI_sort="expire"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function importPppoeAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_importextacct\";
+}
+function exportPppoeAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_exportextacct\";
+}
+function addAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_addextacct\";
+}
+function modifyAcct(acct)
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_editextacct?account=\" + acct;
+}
+function unbindAccts()
+{
+	var args = \"\";
+	var accounts = document.getElementsByName(\"accts\");
+       	for(var i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要解除这些账号的MAC绑定?\"))
+		window.location.href = \"${myself}?action=unbindmac&accounts=\" + args;
+}
+function modifyAcctPoolid()
+{
+	var args = \"\";
+	var accounts = document.getElementsByName(\"accts\");
+       	for(var i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要转这些帐号到新的移地址池?\"))
+		window.location.href = \"/cgi-bin/Pppoe/pppoe_modifyacctpoolid?accounts=\" + args;
+}
+function deleteAcct()
+{
+	var args;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要删除这些账号?\"))
+		window.location.href = \"${myself}?action=delete&accounts=\" + args;
+}
+function disableAcct()
+{
+	var args;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要禁用这些账号?\"))
+		window.location.href = \"${myself}?action=disable&accounts=\" + args;
+}
+function enableAcct()
+{
+	var args;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	window.location.href = \"${myself}?action=enable&accounts=\" + args;
+}
+function onSelectItem(obj)
+{
+	var count0, count1;
+	var accounts = document.getElementsByName(\"accts\");
+	var delacct;
+	count0 = count1 = 0;
+	if (obj.value == \"_NULL_\") {
+        	for(i = 1;i < accounts.length; i++) {
+			accounts[i].checked = obj.checked;
+			if (accounts[i].checked) count1++;
+			else count0++;
+		}
+	}
+	else {
+       		for(i = 1;i < accounts.length; i++) {
+			if (accounts[i].checked)
+				count1++;
+			else 
+				count0++;
+       		}
+		if (count0 == 0 && count1 > 0)
+			accounts[0].checked = true;
+		else
+			accounts[0].checked = false;
+	}
+	delacct = document.getElementById(\"delacct\");
+	enacct  = document.getElementById(\"enableacct\");
+	disacct  = document.getElementById(\"disableacct\");
+	if (count1 > 0) {
+		delacct.style.color = \"#0000ff\";
+		enacct.style.color  = \"#0000ff\";
+		disacct.style.color = \"#0000ff\";
+	}
+	else {
+		delacct.style.color = \"#545454\";
+		enacct.style.color  = \"#545454\";
+		disacct.style.color = \"#545454\";
+	}
+}
+function showIp(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 650, 700);
+}
+function changurl(obj)
+{
+	var acct = '&account=';
+	var account = document.getElementsByName(\"account\")[0];
+";
+	if [ "${CGI_sort}" != '' ]; then
+		if [ "${CGI_s_type}" = '' ]; then
+			mysort='-r'
+			CGI_s_type='desc'
+		else
+			mysort=''
+			CGI_s_type=''
+		fi
+	fi
+
+echo -n "
+	obj.href = obj.href.substr(0, obj.href.indexOf(acct) + acct.length) + account.value + \"&s_type=${CGI_s_type}\";
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+                document.getElementById(\"mytbl2\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+                document.getElementById(\"mytbl2\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; 
+cgi_show_title "PPPOE代理->账号管理" 
+if [ "${CGI_action}" = "unbindmac" ]; then
+	operator_check "${myself}" pppoeman
+	cmdargs=""
+	for acct in ${CGI_accounts}
+	do
+		cmdargs="${cmdargs} unbindmac=${acct}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct config ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+elif [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}" pppoeman
+	cmdargs=""
+	for acct in ${CGI_accounts}
+	do
+		cmdargs="${cmdargs} name=${acct}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct remove ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}" pppoeman
+	cmdargs=""
+	for acct in ${CGI_accounts}
+	do
+		cmdargs="${cmdargs} accten=${acct}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct config ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}" pppoeman
+	cmdargs=""
+	for acct in ${CGI_accounts}
+	do
+		cmdargs="${cmdargs} acctdis=${acct}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct config ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+fi
+
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=0 cellpadding=0> 
+<form method=post action=\"${myself}\">
+<tr id=tblhdr height=22>
+	<td width=800 align=left>地址池
+	<select name=gid value=\"${CGI_gid}\" style=\"width:85;height:21\">
+";
+		if [ "${CGI_gid}" = "0" ]; then
+			echo "<option value=0 selected>所有账号</option>"
+		else
+			echo "<option value=0>所有账号</option>"
+		fi
+		${FLOWEYE} pppoeippool list | while read gid name theothers
+		do
+			[ "${name}" = "NULL" ] && name="${gid}"
+			if [ "${gid}" = "${CGI_gid}" ]; then
+				echo "<option value=${gid} selected>${name}</option>"
+			else
+				echo "<option value=${gid}>${name}</option>"
+			fi
+		done
+
+echo -n "
+        </select>其它条件
+	<input type=text style=\"width:280;height:21\" name=account value=\"${CGI_account}\" />
+	<input type=submit value=\"查询\" style=\"width:80;height:22\" />&nbsp;&nbsp;
+	<input type=button value=\"添加账号\" style=\"width:80;height:22\" onclick=\"addAcct()\" />
+	</td>
+	<td width=* align=right>
+		<a id=delacct style=\"color:#545454;font-size:13px\" href=\"javascript:deleteAcct()\">删除账号</a>&nbsp;
+		<a id=enableacct style=\"color:#545454;font-size:13px\" href=\"javascript:disableAcct()\">禁用账号</a>&nbsp;
+		<a id=disableacct style=\"color:#545454;font-size:13px\" href=\"javascript:enableAcct()\">启用账号</a>&nbsp;
+	</td>
+</tr>
+</form>
+</table>
+<table id=mytbl2 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=50  align=left>&nbsp;<input type=checkbox name=accts style=\"color:#0000ff\" value='_NULL_' onclick=\"onSelectItem(this)\"/></td>
+	<td width=70  align=right><a style=\"color:#0000ff\" href=\"${myuself}?sort=gid&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">地址池</a></td>
+	<td width=130 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=account&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">账号</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=bindmac&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">在线MAC</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ip&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">在线IP</a></td>
+	<td width=80  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=start&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">开始日期</a></td>
+	<td width=80  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=expire&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">截止日期</a></td>
+	<td width=60  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=leftime&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">网络接口</a></td>
+	<td width=40  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=leftime&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">VLAN</a></td>
+	<td width=130 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=lastofftime&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">最后下线</a></td>
+	<td width=*   align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=memo&gid=${CGI_gid}&account=\" onclick=\"changurl(this)\">其他信息</a></td>
+</tr>
+";
+idname="row1"
+count=0
+case "${CGI_sort}" in
+"gid")
+	sortargs="-k1"
+	;;
+"account")
+	sortargs="-k3"
+	;;
+"ip")
+	sortargs="-k5"
+	;;
+"start")
+	sortargs="-k7"
+	;;
+"expire")
+	sortargs="-k8"
+	;;
+"leftime")
+	sortargs="-n -r -k7"
+	;;
+"memo")
+	sortargs="-k17"
+	;;
+"bindmac")
+	sortargs="-k12"
+	;;
+"maxonline")
+	sortargs="-n -r -k15"
+	;;
+"onlinecnt")
+	sortargs="-n -r -k14"
+	;;
+"bindip")
+	sortargs="-k16"
+	;;
+"lastofftime")
+	sortargs="-k10"
+	;;
+	
+*)
+	sortargs="-k1"
+	;;
+esac
+${FLOWEYE} pppoeacct list poolid=${CGI_gid} | sort ${mysort} ${sortargs} | grep "${CGI_account}" | \
+while read gid poolname name passwd ipaddr mac start expire leftime lastofftime disabled loginfail bindmac onlinecnt maxonline bindip \
+outif outvlan cname phone card other theothers
+do
+	[ "${outif}" = "NULL" ] && continue
+	memo=""
+	[ "${cname}" != "NULL" ] && memo="${memo} ${cname}"
+	[ "${phone}" != "NULL" ] && memo="${memo} ${phone}"
+	[ "${card}"  != "NULL" ] && memo="${memo} ${card}"
+	[ "${other}" != "NULL" ] && memo="${memo} ${other}"
+	[ "${mac}" = "00-00-00-00-00-00" ] && mac=""
+	[ "${ipaddr}" = "0.0.0.0" ] && ipaddr=""
+	count=$((${count} + 1))
+	if [ ${disabled} -ne 0 ]; then
+		echo "<tr id=row4>"
+	else
+		echo "<tr id=${idname}>"
+	fi
+
+echo -n "
+	<td align=left>&nbsp;<input type=checkbox name=accts style=\"color:#0000ff\" value='${name}' onclick=\"onSelectItem(this)\">${count}</td>
+	<td align=right>${poolname}</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyAcct('${name}')\">${name}</a></td>
+	<td align=right>${mac}</td>
+	<td align=right>${ipaddr}&nbsp;</td>
+	<td align=right>${start}</td>
+	<td align=right>${expire}</td>
+	<td align=right>${outif}</td>
+	<td align=right>${outvlan}</td>
+"; [ "${lastofftime}" = "1970-01-01/08:00:00" ] && lastofftime="" 
+echo -n "
+	<td align=right>${lastofftime}</td>
+	<td align=right>${memo}</td>
+	</tr>
+";
+ 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

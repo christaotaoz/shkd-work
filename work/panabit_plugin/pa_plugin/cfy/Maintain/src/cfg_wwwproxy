@@ -1,0 +1,73 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+trackdns=0
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+  if [ "${CGI_trackdns}" != "" ]; then
+      if [ "$CGI_trackdns" = "1" ]; then
+          trackdns_cfg_value="1"
+      else
+          trackdns_cfg_value="0"
+      fi
+      errmsg=`${FLOWEYE} app set http trackdns=${trackdns_cfg_value}`
+      if [ $? -eq 0 ]; then
+          afm_dialog_msg "操作成功!"
+          afm_load_page 0 "${myself}"
+          exit 0
+      fi
+      afm_dialog_msg "出现错误:${errmsg}" 
+  fi
+fi
+eval `${FLOWEYE} app get http | grep trackdns`
+trackdns=$((${trackdns}))
+
+echo -n "
+<body>
+"; cgi_show_title "高级功能->WWW加强代理" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:20\"></td>
+        <td align=left style=\"width:120\">WWW加强代理</td>
+        <td align=left width=*>
+      	<select name=trackdns value=${sshd_status} style=\"width:110\">
+"; if [ ${trackdns} -eq 1 ]; then 
+echo -n "
+          <option value=0>关闭</option>
+          <option value=1 selected>开启</option>
+"; else 
+echo -n "
+      	  <option value=0 selected>关闭</option>
+          <option value=1>开启</option>
+"; fi 
+echo -n "
+      	</select> (开启或关闭WWW加强代理)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\">
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

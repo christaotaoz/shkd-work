@@ -1,0 +1,75 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function kickoff(loginfile)
+{
+	if (confirm(\"确定要强制下线?\"))
+		window.location.href = \"${myself}?action=kickoff&loginfile=\" + loginfile;
+}
+</script>
+<body>
+";
+if [ "${CGI_action}" = "kickoff" ]; then
+	operator_check "${myself}"
+	# verify log file
+	if [ "`echo ${CGI_loginfile} | cut -d'_' -f1`" = "paonline" ]; then
+		rm -f /usr/ramdisk/weblogin/${CGI_loginfile}
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+
+echo -n "
+"; cgi_show_title "管理日志->在线用户" 
+echo -n "
+<br>
+<table width=700 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=125 align=center>用户</td>
+	<td width=125 align=center>登录地址</td>
+	<td width=160 align=center>登陆时间</td>
+	<td width=160 align=center>最后访问</td>
+	<td width=* align=center>操作</td>
+</tr>
+";
+cd /usr/ramdisk/weblogin
+STAT=/usr/ramdisk/bin/stat
+filelist=`ls paonline_*`
+if [ "$?" = "0" ]; then
+	tblid="row1"
+	for loginfile in ${filelist}
+	do
+		. /usr/ramdisk/weblogin/${loginfile}
+
+echo -n "
+		<tr id=${tblid}>
+		<td align=center>${user}</td>
+		<td align=center>${ip}</td>
+		<td align=center>${logintime}</td>
+		<td align=center>`${STAT} -f %Sm -t \"%Y.%m.%d/%H:%M:%S\" /usr/ramdisk/weblogin/${loginfile}`</td>
+		<td align=center><a style=\"color:#0000ff\" href=\"javascript:kickoff('${loginfile}')\">强制下线</a></td>
+		</tr>
+";
+		if [ "${tblid}" = "row1" ]; then
+			tblid="row2"
+		else
+			tblid="row1"
+		fi
+	done
+fi
+cd -
+
+echo -n "
+</table>
+</body>
+</html>
+";

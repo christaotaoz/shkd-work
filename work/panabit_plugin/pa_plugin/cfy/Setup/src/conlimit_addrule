@@ -1,0 +1,427 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddRule(frm)
+{
+	var rngs;
+	var polno    = document.getElementsByName(\"polno\")[0];
+	var intype   = document.getElementsByName(\"intype\")[0];
+	var inipnet  = document.getElementsByName(\"inipnet\")[0];
+	var iniprng  = document.getElementsByName(\"iniprng\")[0];
+	var outtype  = document.getElementsByName(\"outtype\")[0];
+	var outipnet = document.getElementsByName(\"outipnet\")[0];
+	var outiprng = document.getElementsByName(\"outiprng\")[0];
+	var maxtflow = document.getElementsByName(\"maxtflow\")[0];
+	var maxuflow = document.getElementsByName(\"maxuflow\")[0];
+	var maxflow  = document.getElementsByName(\"maxflow\")[0];
+	var inport   = document.getElementsByName(\"inport\")[0];
+	var outport  = document.getElementsByName(\"outport\")[0];
+	polno.value = TrimAll(polno.value);
+	if (!IsDigitIn(polno.value, 1, 65535)) {
+		alert(\"规则序号必须是介于1和65535之间的一个整数!\");
+		polno.select();
+		return false;
+	}
+	inipnet.value = TrimAll(inipnet.value);
+	iniprng.value = TrimAll(iniprng.value);
+	if (intype.value == \"net\") {
+		if (!IsIPAddr(inipnet.value)) {
+			alert(\"请输入正确的IP地址，格式为x.x.x.x/n\");
+			inipnet.select();
+			return false;
+		}
+	}
+	else
+	if (intype.value == \"range\") {
+		rngs = iniprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"请输入正确的IP段，格式为x.x.x.x-y.y.y.y\");
+			iniprng.select();
+			return false;
+		}
+	}
+	inport.value = TrimAll(inport.value);
+	if (inport.value == \"\") inport.value = \"0\";
+	rngs = inport.value.split(\"-\");
+	if (rngs.length == 2) {
+		if (!IsDigitIn(rngs[0], 0, 65535) || !IsDigitIn(rngs[1], 0, 65535)) {
+			alert(\"内网端口输入错误!\");
+			inport.select();
+			return false;
+		}
+	}
+	else {
+		if (!IsDigitIn(inport.value, 0, 65535)) {
+			alert(\"内网端口输入错误!\");
+			inport.select();
+			return false;
+		}
+	}
+	outipnet.value = TrimAll(outipnet.value);
+	outiprng.value = TrimAll(outiprng.value);
+	if (outtype.value == \"net\") {
+		if (!IsIPAddr(outipnet.value)) {
+			alert(\"请输入正确的IP地址，格式为x.x.x.x/n\");
+			outipnet.select();
+			return false;
+		}
+	}
+	else
+	if (outtype.value == \"range\") {
+		rngs = outiprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"请输入正确的IP段，格式为x.x.x.x-y.y.y.y\");
+			outiprng.select();
+			return false;
+		}
+	}
+	outport.value = TrimAll(outport.value);
+	if (outport.value == \"\") outport.value = \"0\";
+	rngs = outport.value.split(\"-\");
+	if (rngs.length == 2) {
+		if (!IsDigitIn(rngs[0], 0, 65535) || !IsDigitIn(rngs[1], 0, 65535)) {
+			alert(\"外网端口输入错误!\");
+			outport.select();
+			return false;
+		}
+	}
+	else {
+		if (!IsDigitIn(outport.value, 0, 65535)) {
+			alert(\"外网端口输入错误!\");
+			outport.select();
+			return false;
+		}
+	}
+	maxtflow.value = TrimAll(maxtflow.value);
+	if (maxtflow.value == \"\") maxtflow.value = \"0\";
+	if (!IsDigitIn(maxtflow.value, 0, 65536)) {
+		alert(\"最大TCP连接数必须在0~65535之间!\");
+		maxtflow.select();
+		return false;
+	}
+	
+	maxuflow.value = TrimAll(maxuflow.value);
+	if (maxuflow.value == \"\") maxuflow.value = \"0\";
+	if (!IsDigitIn(maxuflow.value, 0, 65536)) {
+		alert(\"最大UDP连接数必须在0~65535之间!\");
+		maxuflow.select();
+		return false;
+	}
+	maxflow.value = TrimAll(maxflow.value);
+	if (maxflow.value == \"\") maxflow.value = \"0\";
+	if (!IsDigitIn(maxflow.value, 0, 65536)) {
+		alert(\"最大连接数必须在0~65535之间!\");
+		maxflow.select();
+		return false;
+	}
+	return true;
+}
+function OnCancel(polgrpid)
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_getgrp?policy=\" + polgrpid;
+}
+function onIntypeChanged(obj) 
+{
+	var net = document.getElementsByName(\"inipnet\")[0];
+	var rng = document.getElementsByName(\"iniprng\")[0];
+	var tbl = document.getElementsByName(\"iniptbl\")[0];
+	if (obj.value == \"any\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"net\") {
+		net.style.display = \"block\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"range\") {
+		net.style.display = \"none\";
+		rng.style.display = \"block\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"table\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"block\";
+	}
+}
+function onOuttypeChanged(obj) 
+{
+	var net = document.getElementsByName(\"outipnet\")[0];
+	var rng = document.getElementsByName(\"outiprng\")[0];
+	var tbl = document.getElementsByName(\"outiptbl\")[0];
+	if (obj.value == \"any\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"net\") {
+		net.style.display = \"block\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"range\") {
+		net.style.display = \"none\";
+		rng.style.display = \"block\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"table\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"block\";
+	}
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Setup/conlimit_getgrp?policy=${CGI_policy}"
+	case "${CGI_intype}" in
+	"any")
+		CGI_inip="any"
+		;;
+	"net")
+		CGI_inip="${CGI_inipnet}"
+		;;
+	"range")
+		CGI_inip="${CGI_iniprng}"
+		;;
+	"table")
+		CGI_inip="${CGI_iniptbl}"
+		;;
+	esac
+	if [ "${CGI_inport}" != "" -a "${CGI_inport}" != "0" ]; then
+		CGI_inip="${CGI_inip}:${CGI_inport}"
+	fi	
+	case "${CGI_outtype}" in
+	"any")
+		CGI_outip="any"
+		;;
+	"net")
+		CGI_outip="${CGI_outipnet}"
+		;;
+	"range")
+		CGI_outip="${CGI_outiprng}"
+		;;
+	"table")
+		CGI_outip="${CGI_outiptbl}"
+		;;
+	esac
+	if [ "${CGI_outport}" != "" -a "${CGI_outport}" != "0" ]; then
+		CGI_outip="${CGI_outip}:${CGI_outport}"
+	fi	
+	[ "${CGI_maxtflow}" = "" ] && CGI_maxtflow="0"
+	[ "${CGI_maxuflow}" = "" ] && CGI_maxuflow="0"
+	[ "${CGI_maxflow}" = "" ] &&  CGI_maxflow="0"
+	errmsg=`${FLOWEYE} conlimit addrule group=${CGI_policy} id=${CGI_polno} inip=${CGI_inip} \
+outip=${CGI_outip} maxtcpflow=${CGI_maxtflow} maxudpflow=${CGI_maxuflow} maxflow=${CGI_maxflow} \
+app=${CGI_appid} bridge=${CGI_bridge}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		WEB_LOGGER "添加连接管理策略" "group=${CGI_policy},id=${CGI_polno}"
+		afm_load_page 0 "/cgi-bin/Setup/conlimit_getgrp?policy=${CGI_policy}"
+		exit 0
+	fi
+else
+	[ "${CGI_inip}" = "" ] && CGI_inip="any"
+	[ "${CGI_outip}" = "" ] && CGI_outip="any"
+	[ "${CGI_maxtflow}" = "" ] && CGI_maxtflow="0"
+	[ "${CGI_maxuflow}" = "" ] && CGI_maxuflow="0"
+	[ "${CGI_maxflow}" = "" ] && CGI_maxflow="0"
+	[ "${CGI_exclude80}" = "" ] && CGI_exclude80="0"
+fi
+
+echo -n "
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlpno\" style=\"display:none\">编号范围为1~65535,序号小的规则优先匹配</span>
+<span id=\"hlpflow\" style=\"display:none\">范围为0~65535,不填或填入0表示没有限制</span>
+<span id=\"hlp80\" style=\"display:none\">如果选择忽略,那么系统对目标端口为80的TCP连接不做检查</span>
+"; 
+policyname=`${FLOWEYE} conlimit listgrp | grep "^${CGI_policy} " | awk '{print $2}'`
+cgi_show_title "连接控制->策略组->添加策略"
+tblexists=`${FLOWEYE} table list`
+[ "${CGI_appid}" = "" ] && CGI_appid="any"
+appname=`${FLOWEYE} app name ${CGI_appid}`
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddRule(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=70></td>
+        <td width=120 align=left>策略组</td>
+	<td width=130 align=left><b>${policyname}</b></td>
+	<td width=* align=left></td>
+</tr>
+<tr id=row1>
+	<td width=70></td>
+        <td width=120 align=left>策略标识</td>
+	<td width=130 align=left><input align=right type=text name=polno style=\"width:100%\" value=\"${CGI_polno}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpno')\" onmouseout=\"UnTip()\">(1~65535)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>数据线路</td>
+	<td align=left>
+	<select name=bridge style=\"width:100%\" value=\"${CGI_bridge}\">
+	";
+		if [ "${CGI_bridge}" = "0" ]; then
+			echo "<option value=0 selected>任意线路</option>"
+		else
+			echo "<option value=0>任意线路</option>"
+		fi
+			
+	 	for bdg in  `${FLOWEYE} bridge list`; do
+			if [ "${CGI_bridge}" = "${bdg}" ]; then
+				echo "<option value=${bdg} selected>网桥${bdg}</option>"
+			else
+				echo "<option value=${bdg}>网桥${bdg}</option>"
+			fi
+		done
+	
+echo -n "
+	</select></td>
+	<td width=* align=left></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>内网地址</td>
+        <td align=left>
+		<select name=intype style=\"width:100%\" value=\"any\" onchange=\"onIntypeChanged(this)\">
+			<option value=\"any\" selected>任意地址</option>
+			<option value=\"net\">xxx.xxx.xxx.xxx/nn</option>
+			<option value=\"range\">n.n.n.n-m.m.m.m</option>
+		";
+			if [ "${tblexists}" != "" ]; then
+				echo "<option value=\"table\">IP群组</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+		<input type=text name=inipnet style=\"width:120px;display:none\"></input>
+		<input type=text name=iniprng style=\"width:160px;display:none\"></input>
+		<select name=iniptbl style=\"width:120px;display:none\">
+		";
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>内网端口</td>
+        <td><input type=text name=inport value=\"${CGI_inport}\" style=\"width:100%\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\">80或8000-8100，0表示任意端口)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>外网地址</td>
+        <td align=left>
+		<select name=outtype style=\"width:100%\" value=\"any\" onchange=\"onOuttypeChanged(this)\">
+			<option value=\"any\" selected>任意地址</option>
+			<option value=\"net\">xxx.xxx.xxx.xxx/nn</option>
+			<option value=\"range\">n.n.n.n-m.m.m.m</option>
+		";
+			if [ "${tblexists}" != "" ]; then
+				echo "<option value=\"table\">IP群组</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+		<input type=text name=outipnet style=\"width:120px;display:none\"></input>
+		<input type=text name=outiprng style=\"width:160px;display:none\"></input>
+		<select name=outiptbl style=\"width:120px;display:none\">
+		";
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>外网端口</td>
+        <td><input type=text name=outport value=\"${CGI_outport}\" style=\"width:100%\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\">80或8000-8100，0表示任意端口)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>应用协议</td>
+        <td align=left>
+		<input type=hidden name=appid value=\"${CGI_appid}\"></input>
+		<input type=text   name=appname value=\"${appname}\" disabled style=\"width:100%\">
+	</td>
+	<td width=* class=cssTDArial align=left>
+	  <input type=button name=tmp value=\"选择协议...\" style=\"width:80px\" onclick=\"selectApp('appid', 'appname')\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>每IP最大TCP连接数</td>
+        <td><input type=text name=maxtflow value=\"${CGI_maxtflow}\" style=\"width:100%\"></input></td>
+	<td width=* align=left>
+		<a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpflow')\" onmouseout=\"UnTip()\">[?]</a>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>每IP最大UDP连接数</td>
+        <td><input type=text name=maxuflow value=\"${CGI_maxuflow}\" style=\"width:100%\"></input></td>
+	<td width=* align=left>
+		<a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpflow')\" onmouseout=\"UnTip()\">[?]</a>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>每IP最大连接数</td>
+        <td><input type=text name=maxflow value=\"${CGI_maxflow}\" style=\"width:100%\"></input></td>
+	<td width=* align=left>
+		<a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpflow')\" onmouseout=\"UnTip()\">[?]</a>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"OnCancel('${CGI_policy}')\"></input>
+		<input type=hidden name=policy value=\"${CGI_policy}\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

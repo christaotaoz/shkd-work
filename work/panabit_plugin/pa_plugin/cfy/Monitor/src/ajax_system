@@ -1,0 +1,29 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+for nameval in `/usr/ramdisk/bin/floweye cpu stat`
+do
+        eval "${nameval}"
+done
+curtime=`date +%s`
+boottime=`sysctl -n kern.boottime | cut -d',' -f1 | cut -d'=' -f2`
+boottime=$((${curtime} - ${boottime}))
+bootday=$((${boottime} / 86400))
+dayhour=$((${bootday} * 24))
+boothour=$((${boottime} / 3600))
+boothour=$((${boothour} - ${dayhour}))
+bootsec=$((${boottime} % 3600))
+bootmin=$((${bootsec} / 60))
+bootsec=$((${boottime} % 60))
+curdate=`date "+%Y/%m/%d %H:%M:%S"`
+runtime="${bootday}/${boothour}:${bootmin}:${bootsec}"
+printf "[{curdate:'${curdate}',runtime:'${runtime}',totalmem:'${physmemM}',memrate:'${memrate}',\
+'cpurate':'${cpurate}',temperature:'${temperature}',sigdb:'${sigdb_version}',ipcnt:'${ipobj_count}',\
+flowcnt:'${flowcnt}',pps:'${pps}'}]"
+
+echo -n "
+";

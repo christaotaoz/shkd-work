@@ -1,0 +1,250 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_ipaddr}->帐号信息"
+. ../common/common.sh 
+[ "${CGI_sort}" = "" ] && CGI_sort="bytes"
+args="ipaddr=${CGI_ipaddr}&sort=${CGI_sort}"
+MOD_TAB_LIST="流量概况#/cgi-bin/Monitor/ipview_data?${args} 连接信息#/cgi-bin/Monitor/ipview_flow?${args} 虚拟身份#/cgi-bin/Monitor/ipview_account?${args} 共享用户#/cgi-bin/Monitor/ipview_lip?${args} 移动终端#/cgi-bin/Monitor/ipview_mobile?${args}"
+afm_load_page 30 "/cgi-bin/Monitor/ipview_usrinfo?${args}"
+myself="/cgi-bin/Monitor/`basename $0`"
+urlpath="${myself}?ipaddr=${CGI_ipaddr}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function kickoff(ipaddr)
+{
+        if (confirm(\"确定要让用户下线?\")) {
+                window.location.href = \"${myself}?action=kickoff&ipaddr=\" + ipaddr; 
+        }
+}
+</script>
+";
+analytical_memo_description_mini()
+{
+                echo "${1}" | \
+                awk -F';' 'BEGIN{ \
+                        split("dbid;fullname;identitycard;telephone;remark",columns,";");\
+                }{ \
+                        gsub(/ /,"+",$0); \
+                        if($0 ~ /^[^;|.]*;[^;|.]*;[^;|.]*;[^;|.]*;[.]*/) { \
+                                for(i=6;i<=NF;i++) \
+                                        $5=$5"\\;"$i;\
+                        } else { \
+                                $5=$0; \
+                                for(i=1;i<5;i++) \
+                                        $i=""; \
+                        } \
+                        for(i=1;i<5;i++) \
+                                printf columns[i]"="$i" "; \
+                        print columns[i]"="$i; \
+                }'
+}
+if [ "${CGI_action}" = "kickoff" ]; then
+        operator_check "${myself}"
+        errmsg=`${FLOWEYE} usrinfo logoff ip=${CGI_ipaddr}`
+        if [ "$?" != "0" ]; then
+                afm_dialog_msg "出现错误:${errmsg}"
+        else
+                afm_dialog_msg "操作成功!"
+		afm_load_page 0 "/cgi-bin/Monitor/ipview_data?ipaddr=${CGI_ipaddr}"
+                exit 0
+        fi
+fi
+
+echo -n "
+<body>
+";
+for nameval in `${FLOWEYE} ipobj get ${CGI_ipaddr}`
+do
+        tag=`echo ${nameval} | cut -d'=' -f1`
+        val=`echo ${nameval} | cut -d'=' -f2-`
+        export ${tag}="${val}"
+done
+if [ "${gtp_pstn}" = "1" ]; then
+	utype="pstn"
+	name="${nbname}"
+	birth="${life}"
+fi
+if [ ${usertype} -ne 0 ]; then
+	MOD_TAB_LIST="${MOD_TAB_LIST} 账号信息#/cgi-bin/Monitor/ipview_usrinfo?${args}"
+fi
+cgi_show_ipobj_info 
+cgi_print_mod_header "账号信息" 800
+idname="row1"
+no=1
+varlist=""
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1> 
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>用户名称</td>
+	<td align=left width=*>&nbsp;&nbsp;${nbname}&nbsp;&nbsp;
+"; if [ "${utype}" = "ad" -o "${utype}" = "usr" -o "${utype}" = "webrad" -o \
+         "${utype}" = "pppoe" -o "${weblogin}" = "1" ]; then 
+echo -n "
+	[<a href=\"javascript:kickoff('${CGI_ipaddr}')\">踢用户下线</a>]
+"; fi 
+echo -n "
+	</td>
+	</tr>
+";	if [ "${disable}" = "1" ]; then 
+echo -n "
+		<tr id=\"row1\" height=21>
+		<td width=100 align=center>用户状态</td>
+		<td width=120 align=left style=\"color:#ff0000\">被禁止</td>
+		</tr>
+";	fi 
+echo -n "
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>信息来源</td>
+";
+	case "${utype}" in
+	"pstn")
+		echo "<td align=left width=*>&nbsp;&nbsp;GN</td>"
+		;;
+	"pppoe")
+		varlist=`${FLOWEYE} pppoeacct get name=${nbname}`
+		if [ "${varlist}" != "NOT_FOUND" -a "${varlist}" != "NEXIST" ]; then
+			echo "<td align=left width=*>&nbsp;&nbsp;本地账号</td>"
+		else
+			echo "<td align=left width=*>&nbsp;&nbsp;外部RADIU账号</td>"
+		fi
+		;;
+	"webrad")
+		echo "<td align=left width=*>&nbsp;&nbsp;WEB&nbsp;RADIUS认证</td>"
+		;;
+	"DRCOM")
+		echo "<td align=left width=*>&nbsp;&nbsp;城市热点认证系统</td>"
+		;;
+	"static")
+		echo "<td align=left width=*>&nbsp;&nbsp;静态绑定</td>"
+		;;
+	"usr")
+		echo "<td align=left width=*>&nbsp;&nbsp;本地账号</td>"
+		;;
+	"web")
+		echo "<td align=left width=*>&nbsp;&nbsp;本地认证</td>"
+		;;
+	"AD")
+		echo "<td align=left width=*>&nbsp;&nbsp;AD认证</td>"
+		;;
+	"radlogin")
+		echo "<td align=left width=*>&nbsp;&nbsp;RADIUS</td>"
+		;;
+	"radius")
+		echo "<td align=left width=*>&nbsp;&nbsp;RADIUS数据包</td>"
+		;;
+	"pppoeacct")
+		varlist=`${FLOWEYE} pppoeacct get name=${nbname}`
+		if [ "${varlist}" != "NOT_FOUND" -a "${varlist}" != "NEXIST" ]; then
+			echo "<td align=left width=*>&nbsp;&nbsp;本地账号</td>"
+		else
+			echo "<td align=left width=*>&nbsp;&nbsp;外部RADIU账号</td>"
+		fi
+		;;
+	*)
+		if [ "${utype}" = "" ]; then
+			if [ "${uatype}" = "微信" ]; then
+				echo "<td align=left width=*>&nbsp;&nbsp;WEB认证+微信</td>"
+			else
+				echo "<td align=left width=*>&nbsp;&nbsp;${uatype}</td>"
+			fi
+		else
+			echo "<td align=left width=*>&nbsp;&nbsp;${utype}</td>"
+		fi
+		;;
+	esac
+
+echo -n "
+	</tr>
+"; if [ "${utype}" = "pstn" ]; then 
+echo -n "
+	<tr id=\"row2\" height=21>
+	<td width=100 align=center>SGSN控制面</td>
+	<td align=left width=*>&nbsp;&nbsp;${sgsn_ctrl}</td>
+	</tr>
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>SGSN用户面</td>
+	<td align=left width=*>&nbsp;&nbsp;${sgsn_data}</td>
+	</tr>
+	<tr id=\"row2\" height=21>
+	<td width=100 align=center>GGSN控制面</td>
+	<td align=left width=*>&nbsp;&nbsp;${ggsn_ctrl}</td>
+	</tr>
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>GGSN用户面</td>
+	<td align=left width=*>&nbsp;&nbsp;${ggsn_data}</td>
+	</tr>
+	<tr id=\"row2\" height=21>
+	<td width=100 align=center>位置信息</td>
+	<td align=left width=*>&nbsp;&nbsp;LAC=${lac},SAC=${sac},RAC=${rac},RAT=${rat}</td>
+	</tr>
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>IMSI</td>
+	<td align=left width=*>&nbsp;&nbsp;${imsi}</td>
+	</tr>
+	<tr id=\"row2\" height=21>
+	<td width=100 align=center>IMEI</td>
+	<td align=left width=*>&nbsp;&nbsp;${imei}</td>
+	</tr>
+	<tr id=\"row1\" height=21>
+	<td width=100 align=center>APN</td>
+	<td align=left width=*>&nbsp;&nbsp;${apn}</td>
+	</tr>
+"; fi 
+echo -n "
+"; if [ "${utype}" = "pppoe" -o "${utype}" = "pppoeacct" ]; then
+	if [ "${varlist}" != "NOT_FOUND" -a "${varlist}" != "NEXIST" ]; then
+        	for nameval in ${varlist}
+		do
+        		tag=`echo ${nameval} | cut -d'=' -f1`
+        		val=`echo ${nameval} | cut -d'=' -f2-`
+        		export CGI_${tag}="${val}"
+		done
+
+echo -n "
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>用&nbsp;户&nbsp;组</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_pool}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>用户姓名</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_cname}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>身&nbsp;份&nbsp;证</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_card}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>联系电话</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_phone}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>有效期至</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_expire}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>开通日期</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_start}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>创建时间</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_birth}</td>
+		</tr>
+		<tr id=\"row2\" height=21>
+		<td width=100 align=center>备注信息</td>
+		<td align=left width=*>&nbsp;&nbsp;${CGI_other}</td>
+		</tr>
+";	fi
+fi 
+echo -n "
+</table>
+</body>
+</html>
+";

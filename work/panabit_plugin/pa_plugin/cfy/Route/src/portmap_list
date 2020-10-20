@@ -1,0 +1,160 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function addPortmap()
+{
+	window.location.href = \"/cgi-bin/Route/portmap_add\";
+}
+function deletePortmap(id)
+{
+	if (confirm(\"确定要删除映射?\")) {
+		window.location.href = \"${myself}?action=delete&id=\" + id; 
+	}
+}
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 620, 700);
+}
+function showRtif(proxyname)
+{
+        var url;
+	url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+       	ShowWindow(url, \"\", 620, 700);
+}
+function showFlow(id, name)
+{
+        var url = \"/cgi-bin/Route/portmap_listflow?id=\" + id + \"&name=\" + name;
+        ShowWindow(url, \"\", 780, 360);
+}
+function editPortmap(id)
+{
+	window.location.href = \"/cgi-bin/Route/portmap_edit?id=\" + id;
+}
+function enablePortmap(id)
+{
+	window.location.href = \"${myself}?action=enable&id=\" + id; 
+}
+function disablePortmap(id)
+{
+	window.location.href = \"${myself}?action=disable&id=\" + id; 
+}
+function showIpinfo(ipaddr)
+{
+        var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+        ShowWindow(url, \"\", 650, 700);
+}
+function onload()
+{
+        if (document.body.clientWidth > 1200)
+                document.getElementById(\"mytbl\").style.width=\"100%\";
+        else
+                document.getElementById(\"mytbl\").style.width=\"1200\";
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat rmvportmap id=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat setportmap id=${CGI_id} disable=0`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat setportmap id=${CGI_id} disable=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body onload=\"onload()\">
+"; cgi_show_title "应用路由->策略->端口映射" 
+echo -n "
+<table id=mytbl width=\"100%\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=40  align=center>编号</td>
+	<td width=100 align=right>WAN线路</td>
+	<td width=80  align=right>WAN端口</td>
+	<td width=80  align=right>协议</td>
+	<td width=120 align=right>内网主机IP</td>
+	<td width=100 align=right>内网主机端口</td>
+	<td width=120 align=right>下一跳IP</td>
+	<td width=130 align=right>下一跳MAC</td>
+	<td width=100 align=right>相邻接口</td>
+	<td width=80  align=right>访问次数</td>
+	<td width=*   align=right>备注</td>
+	<td width=100 align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:addPortmap()\">添加映射>></a>&nbsp;</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} nat listportmap | while read id wanid wanname port proto mapip mapport mac gateway count rtif disable note theothers
+do 
+	[ "${note}" = "NULL" ] && note=""
+	if [ "${mac}" = "00:00:00:00:00:00" -o "${rtif}" = "NULL" -o "${disable}" = "1" ]; then 
+    		echo "<tr id=row4 height=24>"
+	else
+		echo "<tr id=${idname} height=24>"
+	fi
+
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:editPortmap('${id}')\">${id}</a>&nbsp;</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('${wanname}')\">${wanname}&nbsp;</a></td>
+	<td align=right>${port}&nbsp;</td>
+	<td align=right>${proto}&nbsp;</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIpinfo('${mapip}')\">${mapip}&nbsp;</a></td>
+	<td align=right>${mapport}&nbsp;</td>
+	<td align=right>${gateway}&nbsp;</td>
+	<td align=right>${mac}&nbsp;</td>
+"; if [ "${rtif}" != "NULL" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showRtif('${rtif}')\"><span>${rtif}</span>&nbsp;</a></td>
+"; else 
+echo -n "
+	<td align=right>${rtif}&nbsp;</td>
+"; fi 
+echo -n "
+	<td align=right>${count}&nbsp;</td>
+	<td align=right>${note}&nbsp;</td>
+	<td align=right>
+		<img style=\"margin-top:3px\" src=\"/img/delete.png\" title=\"删除映射\" onclick=\"deletePortmap('${id}')\" />&nbsp;
+		<img style=\"margin-top:3px\" src=\"/img/user.png\" title=\"当前会话\" onclick=\"showFlow('${id}', '${wanname}')\" />&nbsp;
+		"; if [ "${disable}" = "0" ]; then 
+echo -n "
+                <img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disablePortmap('${id}')\" title=\"禁用映射\" />&nbsp;
+		"; else 
+echo -n "
+                <img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enablePortmap('${id}')\" title=\"启用映射\" />&nbsp;
+		"; fi 
+echo -n "
+	</td>
+    </tr>
+";
+	if [ "${idname}" = "row1" ]; then
+        	idname="row2"
+	else
+		idname="row1"
+	fi
+done 
+echo -n "
+</table>
+</body>
+</html>
+";

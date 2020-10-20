@@ -1,0 +1,218 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Setup/`basename $0`" 
+[ "${CGI_gid}" = "" ] && CGI_gid=0
+[ "${CGI_sort}" = "" ] && CGI_sort="expire"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function importAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_import\";
+}
+function exportAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_export\";
+}
+function addAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_addacct\";
+}
+function modifyAcct(acct)
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_setacct?account=\" + acct;
+}
+function deleteAcct()
+{
+	var args;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			if (args == \"\")
+				args += accounts[i].value;
+			else
+				args += \" \" + accounts[i].value;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要删除这些账号?\"))
+		window.location.href = \"${myself}?action=delete&accounts=\" + args;
+}
+function onSelectItem(obj)
+{
+	var count0, count1;
+	var accounts = document.getElementsByName(\"accts\");
+	var delacct;
+	count0 = count1 = 0;
+	if (obj.value == \"_NULL_\") {
+        	for(i = 1;i < accounts.length; i++) {
+			accounts[i].checked = obj.checked;
+			if (accounts[i].checked) count1++;
+			else count0++;
+		}
+	}
+	else {
+       		for(i = 1;i < accounts.length; i++) {
+			if (accounts[i].checked)
+				count1++;
+			else 
+				count0++;
+       		}
+		if (count0 == 0 && count1 > 0)
+			accounts[0].checked = true;
+		else
+			accounts[0].checked = false;
+	}
+	delacct = document.getElementById(\"delacct\");
+	if (count1 > 0)
+		delacct.style.color = \"#0000ff\";
+	else
+		delacct.style.color = \"#545454\";
+}
+</script>
+<body>
+"; cgi_show_title "PPPOE旁路->账号管理" 1000 
+echo -n "
+<br>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	cmdargs=""
+	for acct in ${CGI_accounts}
+	do
+		cmdargs="${cmdargs} account=${acct}"
+	done
+	errmsg=`${FLOWEYE} l2route remove ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+fi
+
+echo -n "
+<table width=\"1180\" border=0 cellspacing=1 cellpadding=1> 
+<form method=post action=\"${myself}\">
+<tr id=tblhdr height=22>
+	<td width=382 align=left>选择服务组
+	<select name=gid value=\"${CGI_gid}\" style=\"width:105;height:21\">
+	";
+		if [ "${CGI_gid}" = "0" ]; then
+			echo "<option value=0 selected>所有账号</option>"
+		else
+			echo "<option value=0>所有账号</option>"
+		fi
+		${FLOWEYE} l2route list | while read gid name theothers
+		do
+			[ "${name}" = "NULL" ] && name="${gid}"
+			if [ "${gid}" = "${CGI_gid}" ]; then
+				echo "<option value=${gid} selected>${name}</option>"
+			else
+				echo "<option value=${gid}>${name}</option>"
+			fi
+		done
+	
+echo -n "
+        </select>账号
+		<input type=text style=\"width:130;height:21\" name=account value=${CGI_account}></input>
+		<input type=submit value=\"查询\" style=\"width:40;height:22\"></input>&nbsp;
+	</td>
+	<td width=* align=right>
+		<a id=delacct style=\"color:#545454;font-size:13px\" href=\"javascript:deleteAcct()\">删除账号</a>&nbsp;&nbsp;&nbsp;
+		<a style=\"color:#0000ff;font-size:13px\" href=\"javascript:addAcct()\">新增账号>></a>&nbsp;&nbsp;&nbsp;
+		<a style=\"color:#0000ff;font-size:13px\" href=\"javascript:importAcct()\">批量导入>></a>&nbsp;&nbsp;&nbsp;
+		<a style=\"color:#0000ff;font-size:13px\" href=\"javascript:exportAcct()\">账号导出>></a>&nbsp;
+	</td>
+</tr>
+</form>
+</table>
+";
+
+echo -n "
+<table width=1180 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=25  align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='_NULL_' onclick=\"onSelectItem(this)\"/></td>
+	<td width=35  align=right>序号</td>
+	<td width=110 align=right><a href=\"${myuself}?sort=gid&gid=${CGI_gid}\">服务组</a></td>
+	<td width=203 align=right><a href=\"${myself}?sort=account&gid=${CGI_gid}\">账号</a></td>
+	<td width=150 align=right><a href=\"${myself}?sort=expire&gid=${CGI_gid}\">有效期</a></td>
+	<td width=150 align=right><a href=\"${myself}?sort=leftime&gid=${CGI_gid}\">剩余时间</a></td>
+	<td width=*   align=right><a href=\"${myself}?sort=memo&gid=${CGI_gid}\">备注</a></td>
+</tr>
+";
+idname="row1"
+count=0
+case "${CGI_sort}" in
+"gid")
+	sortargs="-k1"
+	;;
+"account")
+	sortargs="-k2"
+	;;
+"expire")
+	sortargs="-k4"
+	;;
+"leftime")
+	sortargs="-n -r -k3"
+	;;
+"memo")
+	sortargs="-k5"
+	;;
+*)
+	sortargs="-k1"
+	;;
+esac
+${FLOWEYE} l2route list type=account id=${CGI_gid} | sort  ${sortargs} | \
+while read gid group name leftime expire memo
+do
+	if [ "${CGI_account}" != "" ]; then
+		case "${name}" in
+		*${CGI_account}*)
+			match=1;
+			;;
+		*)
+			match=0
+			;;
+		esac
+		[ ${match} -eq 0 ] && continue
+	fi
+	[ "${memo}" = "NULL" ] && memo=""
+	count=$((${count} + 1))
+
+echo -n "
+	<tr id=${idname}>
+	<td align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='${name}' onclick=\"onSelectItem(this)\"></td>
+	<td align=right>${count}&nbsp;</td>
+	<td align=right>${group}</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyAcct('${name}')\">${name}</a></td>
+	<td align=right>${expire}</td>
+";
+	if [ ${leftime} -lt 0 ]; then
+		echo "<td align=right><a style=\"color:#ff0000\">过期</a></td>"
+	else
+		leftd=$((${leftime} / 86400))
+		leftime=$((${leftime} - ${leftd} * 86400))
+		lefth=$((${leftime} / 3600))
+		leftm=$(((${leftime} - ${lefth} * 3600) / 60))
+		lefts=$((${leftime} % 60))
+		echo "<td align=right>${leftd}d${lefth}h${leftm}m${lefts}s</td>"
+	fi
+
+echo -n "
+	<td align=right>${memo}</td>
+	</tr>
+	
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

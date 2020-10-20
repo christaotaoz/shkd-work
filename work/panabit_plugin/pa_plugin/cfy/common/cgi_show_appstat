@@ -1,0 +1,56 @@
+
+# Show application or group's static
+# arg1: active page caption
+# arg2: application or group id
+# arg3: stat type (bps, flow, node)
+cgi_show_appstat()
+{
+	local daypng
+	local weekpng
+	local monthpng
+	local rdfpath
+	local errmsg
+	local caption="$1"
+	local appid="$2"
+	local type="$3"
+
+	if [ "${type}" != "bps" -a "${type}" != "flow" -a \
+	     "${type}" != "node" ]; then
+		afm_dialog_msg "Invalid arguments"
+		return 1
+	fi
+
+	daypng="${PGPATH}/admin/img/${appid}_day.png"
+	weekpng="${PGPATH}/admin/img/${appid}_week.png"
+	monthpng="${PGPATH}/admin/img/${appid}_month.png"
+
+	# Create rdf for the application if it doesn't exist!
+	cgi_apprdf_create ${appid}
+	rdfpath=${PGPATH}/rdf/${type}_${CGI_app}.rdf
+
+	# Create the report
+	errmsg=`${FLOWEYE} rrd graph -d -r ${PGPATH}/rrd -i ${rdfpath} -o ${daypng}`
+	errmsg=`${FLOWEYE} rrd graph -w -r ${PGPATH}/rrd -i ${rdfpath} -o ${weekpng}`
+	errmsg=`${FLOWEYE} rrd graph -m -r ${PGPATH}/rrd -i ${rdfpath} -o ${monthpng}`
+
+	cgi_show_tab ${caption}
+
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\"><tr>
+<td width=100 align=left style=\"font-size:12px;font-weight:bold;\">更新时间</td>
+<td align=left style=\"font-size:13px\">`date \"+%Y-%m-%d %H:%M:%S\"`</td> </tr> </table>"
+
+	echo "<p><b>最近一天流量趋势图</b></p>
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td width=30>&nbsp;</td><td><img src=\"/img/${appid}_day.png\"></img></td></tr></table>"
+
+	echo "<p><b>最近一周流量趋势图</b></p>
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td width=30>&nbsp;</td><td><img src=\"/img/${appid}_week.png\"></img></td></tr></table>"
+
+	echo "<p><b>最近一月流量趋势图</b></p>
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td width=30>&nbsp;</td><td><img src=\"/img/${appid}_month.png\"></img></td></tr></table>"
+
+	return 0
+}
+

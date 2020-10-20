@@ -1,0 +1,566 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_proxyname}->当前状态"
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=5
+afm_load_page ${CGI_refresh} "/cgi-bin/Monitor/proxy_show?proxyname=${CGI_proxyname}"
+MOD_TAB_LIST="`cgi_show_pxytablist ${CGI_proxyname}`"
+for nameval in `${FLOWEYE} nat getproxy ${CGI_proxyname}`
+do
+	tag=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	export ${tag}="${val}"
+done
+pingiplist="0.0.0.0"
+if [ "${type}" = "proxy" -o "${type}" = "pppoe" ]; then
+	if [ "${pingip}" != "0.0.0.0" ]; then
+		if [ "${pingip2}" != "0.0.0.0" ]; then
+			pingiplist="${pingip},&nbsp;${pingip2}"
+		else
+			pingiplist="${pingip}"
+		fi
+	else
+		if [ "${pingip2}" != "0.0.0.0" ]; then
+			pingiplist="${pingip2}"
+		fi
+	fi
+fi
+[ "${type}" = "pppoe" ] && mtu="${pppoemtu}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function proxyGraph(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_graph?time=day&proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 750, 800);
+}
+function proxyRtgraph(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/ifpxy_rtgraph?type=${type}&name=\" + proxyname;
+        ShowWindow(url, \"\", 720, 680);
+}
+function proxyTopApp(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_apprate?link=\" + proxyname;
+        ShowWindow(url, \"\", 740, 680);
+}
+function proxyShow(proxyname)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 620, 700);
+}
+function editProxy(name)
+{
+	var url = \"/cgi-bin/Route/proxy_edit?proxyname=\" + name;
+	ShowWindow(url, \"\", 700, 600);
+}
+function clearDNSStat(proxyname)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?action=cleardns&proxyname=\" + proxyname;
+	window.location.href = url;
+}
+function ifTop(ifname)
+{
+        var url = \"/cgi-bin/App/iftop/webmain?ifname=\" + ifname;
+        ShowWindow(url, \"\", 320, 620);
+}
+function ifShow(ifname)
+{
+        var url = \"/cgi-bin/Monitor/if_show?name=\" + ifname + \"&title=网络接口->\" + ifname;
+        ShowWindow(url, \"\", 720, 700);
+}
+function setLink(linkid)
+{
+	var url = \"/cgi-bin/Setup/policy_setlink?browsertitle=动态限速设置&link=\" + linkid;
+        ShowWindow(url, \"\", 500, 600);
+}
+function proxyPing(pxyid, ip)
+{
+	var url;
+	url = \"/cgi-bin/App/ping/webmain?wan_id=\" + pxyid;
+	if (ip != \"0.0.0.0\") url += \"&dopingnow=1&ip=\" + ip;
+        ShowWindow(url, \"\", 480, 500);
+}
+</script>
+";
+if [ "${CGI_action}" = "cleardns" ]; then
+	errmsg=`${FLOWEYE} nat config cleardns=${CGI_proxyname}`
+fi
+
+echo -n "
+<body>
+"; cgi_print_mod_header  "当前状态"  600 
+echo -n "
+<br>
+<table class=bgurl width=600 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=10></td>
+	<td align=left width=100>名称</td>
+	<td align=left width=*><b>${name}</b></td>
+</tr>	
+<tr id=row1>
+	<td></td>
+	<td align=left>所在接口</td>
+	<td align=left>
+		";
+		echo "<a href=\"javascript:ifShow('${ifname}')\">${ifname}</a>"
+		if [ "${type}" = "proxy" -o "${type}" = "pppoe" ]; then 
+			echo "&nbsp;&nbsp;<a href=\"javascript:ifTop('${ifname}')\">iftop</a>"
+		fi
+		
+echo -n "
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>MTU</td>
+	<td align=left>${mtu}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>VLAN</td>
+"; if [ "${vlan1}" = "0" ]; then 
+echo -n "
+	<td align=left>${vlan}</td>
+"; else 
+echo -n "
+	<td align=left>${vlan}/${vlan1}</td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>状态</td>
+	"; if [ "${linkup}" = "1" ]; then 
+echo -n "
+	<td align=left><img src=/img/yes.png style=margin-right:5px;vertical-align:middle; /></td>
+	"; else 
+echo -n "
+	<td align=left><img src=/img/no.png style=margin-right:5px;vertical-align:middle; /></td>
+	"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>最近掉线</td>
+"; [ "${lastdowntime}" = "" ] && lastdowntime="未掉线" 
+echo -n "
+	<td align=left>${lastdowntime}</td>
+</tr>
+"; if [ "${standby}" != "NULL" ]; then 
+echo -n "
+<tr id=row1>
+	<td></td>
+	<td align=left>待机</td>
+	"; if [ "${standby_state}" = "0" ]; then 
+echo -n "
+	<td align=left><a style=\"color:#0000ff\">正在工作</a></td>
+	"; else 
+echo -n "
+	<td align=left><a style=\"color:#00ff00\">待机</a></td>
+	"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>唤醒线路</td>
+	<td align=left><a style=\"color:#0000ff\" href=\"javascript:proxyShow('${standby}')\">${standby}</a></td>
+</tr>
+"; fi 
+echo -n "
+"; if [ "${type}" = "rtif" ]; then 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>IP地址</td>
+		<td align=left>${addr}</td>
+	</tr>	
+	<tr id=row1>
+		<td></td>
+		<td align=left>网络掩码</td>
+		<td align=left>${netmask}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>MAC地址</td>
+		<td align=left>${ifmac}</td>
+	</tr>	
+	<tr id=row1>
+		<td></td>
+		<td align=left>流入bps</td>
+		<td align=left>${inbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流出bps</td>
+		<td align=left>${outbps}</td>
+	</tr>
+"; elif [ "${type}" = "proxy" ]; then 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>IP地址</td>
+		<td align=left>${addr}</td>
+	</tr>	
+	<tr id=row1>
+		<td></td>
+		<td align=left>MAC地址</td>
+		<td align=left>${ifmac}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>网关IP</td>
+		<td align=left>${gateway}&nbsp;&nbsp;<a href=\"javascript:proxyPing('${proxyid}', '${gateway}')\">ping</a></td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>网关MAC</td>
+		"; if [ "${gwmac}" = "00-00-00-00-00-00" -o "${gwmac}" = "00:00:00:00:00:00" ]; then 
+echo -n "
+		<td align=left>${gwmac}&nbsp;<img src=/img/no.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; else 
+echo -n "
+		<td align=left>${gwmac}&nbsp;<img src=/img/yes.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; fi 
+echo -n "
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>DNS服务器</td>
+		<td align=left>${dnsaddr}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>心跳服务器</td>
+		"; if [ "${hbfail}" = "1" ]; then 
+echo -n "
+		<td align=left>${pingiplist}&nbsp;<img src=/img/no.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; else 
+echo -n "
+		<td align=left>${pingiplist}&nbsp;<img src=/img/yes.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; fi 
+echo -n "
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>连接数</td>
+		<td align=left>${flowcnt}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流入bps</td>
+		<td align=left>${inbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流出bps</td>
+		<td align=left>${outbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>DNS牵引统计</td>
+		<td align=left>${dnsreqs}/<a style=\"color:#00ff00;\">${dnsokper}%</a>[总数/成功率]&nbsp;&nbsp;&nbsp;
+			<a style=\"color:#0000ff\" href=\"javascript:clearDNSStat('${CGI_proxyname}')\">清除统计信息</a>
+		</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>线路延迟ms</td>
+		<td align=left>${curping_ms}/${minping_ms}/${maxping_ms}[当前/最小/最大]</td>
+	</tr>
+";
+	echo "<tr id=row1>"
+	echo "<td></td>"
+	echo "<td align=left>动态限速</td>"
+	if [ "${JOS_RELEASE}" != "0" ]; then 
+		if [ "${dyniprate}" = "1" ]; then 
+			echo "<td align=left><a style=\"color:#0000ff\">已启用</a>&nbsp;带宽${bandwidth}kbps&nbsp;&nbsp;\
+<a href=\"javascript:setLink('${linkid}')\">设置...</a></td>"
+		else
+			echo "<td align=left><a style=\"color:#ff0000\">禁用</a>&nbsp;带宽${bandwidth}kbps&nbsp;&nbsp;\
+<a href=\"javascript:setLink('${linkid}')\">设置...</a></td>"
+		fi
+	fi
+	echo "</tr>"
+
+echo -n "
+"; elif [ "${type}" = "pppoe" ]; then 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>网关IP</td>
+		<td align=left>${gateway}&nbsp;&nbsp;<a href=\"javascript:proxyPing('${proxyid}', '${gateway}')\">ping</a></td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>帐号/密码</td>
+		<td align=left>${username}/${password}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>IP/MAC</td>
+		<td align=left>${addr}/${ifmac}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>PPPOE网关</td>
+		"; if [ "${peermac}" = "ff:ff:ff:ff:ff:ff" ]; then 
+echo -n "
+		<td align=left><a style=\"color:#ff0000\"><b>未找到服务网关</b></td>
+		"; else 
+echo -n "
+		<td align=left>${peermac}[${acname}]</td>
+		"; fi 
+echo -n "
+	</tr>
+	"; [ "${peersvc}" = "NULL" ] && peersvc="" 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>服务名称</td>
+		<td align=left>${peersvc}</td>
+	</tr>
+	"; [ "${sessionid}" = "0x0000" ] && sessionid="" 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>会话ID</td>
+		<td align=left>${sessionid}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+	<td align=left>状态</td>
+	";
+	if [ ${disable} -eq 1 ]; then
+		echo "<td align=left><b style=\"color:#e0e0e0\">被禁用</b></td>"
+	else
+	case "${state}" in
+	"PRESTART")
+		echo "<td align=left><b style=\"color:#ff0000\">${waitime_left}秒后重拨</b></td>"
+		;;
+		
+	"START")
+		echo "<td align=left><b style=\"color:#ff0000\">寻找服务</b></td>"
+		;;
+	"PADR")
+		echo "<td align=left><b style=\"color:#ff0000\">请求服务</b></td>"
+		;;
+	"LCP")
+		echo "<td align=left><b style=\"color:#ff0000\">链路协商</b></td>"
+		;;
+	"PAP")
+		echo "<td align=left><b style=\"color:#ff0000\">用户认证(PAP)</b></td>"
+		;;
+	"CHAP")
+		echo "<td align=left><b style=\"color:#ff0000\">用户认证(CHAP)</b></td>"
+		;;
+	"IPCP")
+		echo "<td align=left><b style=\"color:#ff0000\">获取IP地址</b></td>"
+		;;
+	"DATA")
+		if [ "${ischap}" != "0" ]; then
+			echo "<td align=left><b style=\"color:#00ff00\">已连接(CHAP)</b></td>"
+		else
+			echo "<td align=left><b style=\"color:#00ff00\">已连接(PAP)</b></td>"
+		fi
+		;;
+	esac
+	fi
+	
+echo -n "
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>连接时间</td>
+		<td align=left>${connect_time}</td>
+	</tr>
+	"; 
+	if [ "${lasterr}" != "OK" ]; then 
+		echo "<tr id=row1>"
+		echo "<td></td>"
+		echo "<td align=left>错误信息</td>"
+		case "${lasterr}" in
+		"NOSERVICE")
+			echo "<td align=left><b style=\"color:#ff0000\">未找到服务</b></td>"
+			;;
+		"LCPNOTACKED")
+			echo "<td align=left><b style=\"color:#ff0000\">链路协商无应答</b></td>"
+			;;
+		"AUTHTIMEOUT")
+			echo "<td align=left><b style=\"color:#ff0000\">认证超时</b></td>"
+			;;
+		"AUTHFAIL")
+			echo "<td align=left><b style=\"color:#ff0000\">认证失败，用户名或密码不对</b></td>"
+			;;
+		"DATATIMEOUT")
+			echo "<td align=left><b style=\"color:#ff0000\">服务器无应答</b></td>"
+			;;
+		*)
+			echo "<td align=left><b style=\"color:#ff0000\">${lasterr}</b></td>"
+			;;
+	
+		esac
+		echo "</tr>"
+	fi 
+echo -n "
+	"; 
+		dnslist="${dnsaddr}"
+		if [ "${ipcp_ackdns2}" != "0.0.0.0" ]; then
+			dnslist="${dnslist},&nbsp;${ipcp_ackdns2}"
+		fi
+	
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>DNS服务器</td>
+		<td align=left>${dnslist}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>心跳服务器</td>
+		"; if [ "${hbfail}" = "1" ]; then 
+echo -n "
+		<td align=left>${pingiplist}&nbsp;<img src=/img/no.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; else 
+echo -n "
+		<td align=left>${pingiplist}&nbsp;<img src=/img/yes.png style=margin-right:5px;vertical-align:middle; /></td>
+		"; fi 
+echo -n "
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>连接数</td>
+		<td align=left>${flowcnt}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流入bps</td>
+		<td align=left>${inbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流出bps</td>
+		<td align=left>${outbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>DNS牵引统计</td>
+		<td align=left>${dnsreqs}/<a style=\"color:#00ff00;\">${dnsokper}%</a>[总数/成功率]&nbsp;&nbsp;&nbsp;
+			<a style=\"color:#0000ff\" href=\"javascript:clearDNSStat('${CGI_proxyname}')\">清除统计信息</a>
+		</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>线路延迟ms</td>
+		<td align=left>${curping_ms}/${minping_ms}/${maxping_ms}[当前/最小/最大]</td>
+	</tr>
+";
+	echo "<tr id=row1>"
+	echo "<td></td>"
+	echo "<td align=left>动态限速</td>"
+	if [ "${JOS_RELEASE}" != "0" ]; then 
+		if [ "${dyniprate}" = "1" ]; then 
+			echo "<td align=left><a style=\"color:#0000ff\">已启用</a>&nbsp;带宽${bandwidth}kbps&nbsp;&nbsp;\
+<a href=\"javascript:setLink('${linkid}')\">设置...</a></td>"
+		else
+			echo "<td align=left><a style=\"color:#ff0000\">禁用</a>&nbsp;带宽${bandwidth}kbps&nbsp;&nbsp;\
+<a href=\"javascript:setLink('${linkid}')\">设置...</a></td>"
+		fi
+	fi
+	echo "</tr>"
+
+echo -n "
+"; else 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>网关地址</td>
+		<td align=left>${addr}</td>
+	</tr>	
+	<tr id=row1>
+		<td></td>
+		<td align=left>MAC地址</td>
+		<td align=left>${ifmac}</td>
+	</tr>	
+	<tr id=row1>
+		<td></td>
+		<td align=left>流入bps</td>
+		<td align=left>${inbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>流出bps</td>
+		<td align=left>${outbps}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>在线用户</td>
+		<td align=left>${clntcnt}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>第一DNS</td>
+		<td align=left>${dns0}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>第二DNS</td>
+		<td align=left>${dns1}</td>
+	</tr>
+	<tr id=row1>
+		<td></td>
+		<td align=left>默认地址池</td>
+		<td align=left>${poolname}</td>
+	</tr>
+	"; case "${auth}" in
+	"local")
+               	auth="本地认证"
+		;;
+	"radius")
+		auth="RADIUS"
+                ;;
+	"localrad")
+		auth="先本地后RADIUS"
+                ;;
+	"free")
+		auth="免认证"
+                ;;
+	*)
+		auth="UNKNOWN"
+                ;;
+    	esac 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>认证方式</td>
+		<td align=left>${auth}</td>
+	</tr>
+	"; [ "${service}" = "NULL" ] && service="" 
+echo -n "
+	<tr id=row1>
+		<td></td>
+		<td align=left>服务名称</td>
+		<td align=left>${service}</td>
+	</tr>
+"; fi 
+echo -n "
+"; if [ "${dummypkt_stat}" != "0/0/0/0[if/vlan/nullvlan/arp]" ]; then 
+echo -n "
+<tr id=row3>
+	<td></td>
+	<td align=left>异常数据包</td>
+	<td align=left>${dummypkt_stat}</td>
+</tr>
+"; fi 
+echo -n "
+</table>
+</body>
+</html>
+";

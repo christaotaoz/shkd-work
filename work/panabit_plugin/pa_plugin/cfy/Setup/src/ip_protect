@@ -1,0 +1,124 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onIPChanged(ipobj)
+{
+	var ip = document.getElementsByName(\"ipobj\")[0];
+	ip.value = ipobj.value;
+	document.getElementsByName(\"addip\")[0].disabled = false;
+}
+function onProtectChanged(obj)
+{
+	if (obj.value == 1)
+		window.location.href = \"${myself}\" + \"?action=ipverify&ipverify=enable\";
+	else
+		window.location.href = \"${myself}\" + \"?action=ipverify&ipverify=disable\";
+}
+function onAddIP(ipgrp)
+{
+	var ipobj = document.getElementsByName(\"ipobj\")[0];
+	ipobj.value = TrimAll(ipobj.value);
+	if (ipobj.value == \"\") {
+		alert(\"请输入IP地址,比如10.1.1.1或10.1.1.0/24或10.1.1.1-10.1.1.127!\");
+		ipobj.select();
+		return false;
+	}
+	window.location.href = \"${myself}\" + \"?action=addip&ipgrp=\" + ipgrp +\"&ipobj=\" + ipobj.value;
+}
+function onRmvIP(ipgrp)
+{
+	var ipobj = document.getElementsByName(\"ipobj\")[0];
+	ipobj.value = TrimAll(ipobj.value);
+	if (ipobj.value == \"\") {
+		alert(\"请选择要删除的IP地址!\");
+		return false;
+	}
+	window.location.href = \"${myself}\" + \"?action=rmvip&ipgrp=\" + ipgrp +\"&ipobj=\" + ipobj.value;
+}
+</script>
+";
+if [ "${CGI_action}" = "addip" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} table addip 0 ${CGI_ipobj}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+if [ "${CGI_action}" = "rmvip" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} table rmvip 0 ${CGI_ipobj}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+if [ "${CGI_action}" = "ipverify" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} ipverify ${CGI_ipverify}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "参数配置->伪IP防护" 
+echo -n "
+<br>
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1><td align=left style=\"color:#0000ff;font:13px\">当启用伪IP防护后，不在合法IP列表里的内网IP产生的流量识别成\"内网IP伪装\"流量</td></tr>
+</table>
+<br>
+<table class=bgurl width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1 height=250>
+	<td width=80 align=center valign=center style=\"color:#0000ff;font:bold\">&nbsp;&nbsp;内网合法IP&nbsp;&nbsp;</td> 
+	<td width=250><select style=\"width:100%;height:100%\" name=iplist size=30 onchange=\"onIPChanged(this)\"> ";
+		${FLOWEYE} table get id=0 | while read ipobj
+		do
+			echo "<option value=\"${ipobj}\">${ipobj}</option>"
+		done 
+echo -n "</select>
+	</td>
+	<td align=top valign=top width=*>
+	    &nbsp;&nbsp;<input type=text style=\"width:200\" name=ipobj></input>
+	    <input type=button style=\"width:80;height:22px\" value=\"新增IP\" onclick=\"onAddIP('${CGI_ipgrp}')\"></input> &nbsp;&nbsp;
+	    <input type=button name=addip disabled style=\"width:80;height:22px\" value=\"删除IP\" onclick=\"onRmvIP('${CGI_ipgrp}')\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td align=center valign=center style=\"color:#0000ff;font:bold\">&nbsp;&nbsp;伪IP防护&nbsp;&nbsp;</td>
+	<td><select style=\"width:100%;height:100%\" name=ipprotect onchange=\"onProtectChanged(this)\"> ";
+		for expval in `${FLOWEYE} ipverify stat` 
+		do
+			eval "${expval}"
+		done
+		if [ ${ipverify_enable} -eq 0 ]; then
+			echo "<option value=0 selected>关闭</option>"
+			echo "<option value=1>打开</option>"
+		else
+			echo "<option value=0>关闭</option>"
+			echo "<option value=1 selected>打开</option>"
+		fi 
+echo -n "</select>
+	</td>
+	<td></td>
+</tr>
+</table>
+</body>
+</html>
+";

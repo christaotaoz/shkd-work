@@ -1,0 +1,24 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+FLOWEYE=/usr/ramdisk/bin/floweye
+firstelem=1
+printf "["
+${FLOWEYE} nat listproxy type=routerif.proxy.pppoe onlystat=1 | while read \
+type id name ifname linkup disable standby dnsreqs dnsfail flowcnt inbps outbps theothers
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{ id:'${id}',type:'${type}',state:'${linkup}',standby:'${standby}',disable:'${disable}',inbps:'${inbps}',outbps:'${outbps}',dnsreq:'${dnsreqs}',dnsfail:'${dnsfail}',flowcnt:'${flowcnt}'}"
+		firstelem=0
+	else
+		printf ",{ id:'${id}',type:'${type}',state:'${linkup}',standby:'${standby}',disable:'${disable}',inbps:'${inbps}',outbps:'${outbps}',dnsreq:'${dnsreqs}',dnsfail:'${dnsfail}',flowcnt:'${flowcnt}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

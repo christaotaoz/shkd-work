@@ -1,0 +1,197 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+myself="/cgi-bin/Route/`basename $0`"
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	echo "{ v:[ "
+	if [ "${CGI_ip}" != "" ]; then
+		errmsg=`floweye ping if=${CGI_wan} ip=${CGI_ip} seq=${CGI_seq} count=1 | awk '{print tag"\""$0"\"";if(++i>=2)exit;tag=","}'`
+		if [ "${errmsg}" = "" ]; then 
+			echo "\"ping err: ${CGI_ip}\""
+		else
+			echo "${errmsg}"
+		fi
+		#ping -c 1 ${CGI_ip} | awk '{print tag"\""$0"\"";if(++i>=2)exit;tag=","}'
+	fi
+	echo " ], seq: ${CGI_seq}}"
+	exit 0;
+fi
+. ../common/common.sh
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script>
+var result_count = 200;
+var g_wan, g_ip, g_lineType;
+var pingcnt = 0;
+var g_seq = 0;
+var iStoping = true;
+function cmdping()
+{
+	if(g_wan == \"\" || g_ip == \"\" || iStoping)
+		return ;
+	AJXS({type: 'POST', 
+				 url: '${myself}?ip=' + g_ip + '&wan=' + g_wan + '&seq=' + g_seq, 
+				 error: function(status){setTimeout(cmdping, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			d = undefined;
+		}
+		if(typeof(d) == \"undefined\") {
+			setTimeout(cmdping, 1000);
+			return;
+		}
+		lastnum = d.v.count;
+		var e;
+		var cell1;
+		var i = 0;
+		var pingbox = document.getElementById(\"pingbox\");
+		var topshow = document.getElementById(\"topshow\");
+		var wrapper = document.getElementById(\"wrapper\");
+		var len = pingbox.rows.length;
+		
+		if(pingbox.rows.length <= 0) {
+			e = pingbox.insertRow(-1);
+			e.style.color = \"#F00\";
+			e.style.fontSize = \"13px\";
+			cell1 = e.insertCell(0);
+			cell1.style.width = 20;
+			cell1.setAttribute('align', 'right');
+			cell1 = e.insertCell(1);
+			cell1.setAttribute('align', 'left');
+			cell1.innerText = 'PING ' + g_ip + '......';
+		}
+		for(; i < d.v.length; i++) {
+			if(pingbox.rows.length >= 200)
+				pingbox.deleteRow(1);
+			
+			if(d.v[i].indexOf(g_ip) == -1 && d.v[i].indexOf(\"err\") != -1)
+				break;
+			e = pingbox.insertRow(-1);
+			e.style.color = \"#00F\";
+			e.style.fontSize = \"13px\";
+			cell1 = e.insertCell(0);
+			cell1.style.width = 20;
+			cell1.setAttribute('align', 'right');
+			cell1 = e.insertCell(1);
+			cell1.setAttribute('align', 'left');
+			cell1.innerText = d.v[i];
+			if(d.v[i].indexOf(\"err\") != -1) {
+				e.style.backgroundColor = \"#FFC1B5\";
+			}
+			if(topshow.checked)
+				wrapper.scrollTop = wrapper.scrollHeight;
+		}
+		//var item = pingbox.children[0].children[0].cells[1].children[0];
+		
+		setTimeout(cmdping, 1000);
+	}});
+	
+	g_seq++;
+}
+function stoping()
+{
+	iStoping=true;
+	pingcnt=0;
+}
+function doping()
+{
+	var sbox = document.getElementById(\"wan_id\");
+	var pingbox = document.getElementById(\"pingbox\");
+	var count = document.getElementById(\"result_count\");
+	var wan = document.getElementById(\"wan_id\");
+	var ip = document.getElementById(\"ip\");
+	if(wan.value == \"\") {
+		alert(\"请选择一条作为ping的路由线路\");
+		return ;
+	}
+	if(ip.value == \"\"){
+		alert(\"被PING的IP地址不能为空！\");
+		return ;
+	}
+	for(i = pingbox.rows.length - 1;i >= 0; i--) 
+		pingbox.deleteRow(i);
+	result_count = count.value < 1 ? 200 : count.value;
+	g_wan = wan.value;
+	g_ip = ip.value;
+	g_seq = 0;
+	if(pingcnt <= 0) {
+		pingcnt++;
+		iStoping=false;
+		cmdping();
+	}
+}
+function newping()
+{
+	var url;
+	var wan = document.getElementById(\"wan_id\");
+	var ip = document.getElementById(\"ip\");
+	
+	if(wan.value == \"\") {
+		alert(\"请选择一条作为ping的路由线路\");
+		return ;
+	}
+	ip.value = TrimAll(ip.value);
+	if(ip.value == \"\"){
+		alert(\"被PING的IP地址不能为空！\");
+		return ;
+	}
+	url = \"/cgi-bin/Route/mini_ping?wan=\" + wan.value + \"&ip=\" + ip.value;
+	ShowWindow(url, \"\", 450, 500);
+}
+</script>
+<body>
+"; cgi_show_title "其它->PING工具" 
+echo -n "
+<br>
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:20\"></td>
+	<td align=left style=\"width:110px\">缓存结果</td>
+	<td align=left width=*>
+		<input type=\"text\" id=\"result_count\" value=\"200\" style=\"width:140px\"> 条
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left >路由线路</td>
+	<td align=left width=*> 
+		<select id=\"wan_id\" style=\"width:140px;height:19\">
+		";
+		${FLOWEYE} nat listproxy | while read type id name theothers
+		do
+			echo "<option value=${id}>${name}</option>"
+		done 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>被PING的IP地址</td>
+	<td align=left width=*>
+		<input type=\"text\" id=\"ip\" value=\"\" style=\"width:140px\">
+		<input type=\"checkbox\" id=\"topshow\" checked>跟随结果
+		<input type=\"button\" style=\"width:64\" value=\"PING\" onclick=\"doping();\">
+		<input type=\"button\" style=\"width:64\" value=\"STOP\" onclick=\"stoping();\">
+		<input type=\"button\" style=\"width:64\" value=\"新窗口\" onclick=\"newping();\">
+	</td>
+</tr>
+</table>
+<div id=\"boxtop\" style=\"border-radius:5px; border:1px solidred; padding:10px;width:750px;\"> 
+<div id=\"wrapper\" style=\"min-height:0px; overflow-y:auto; max-height:480px;\"> 
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\" style=\"font-size:12px\" id=pingbox>
+</table>
+</div> 
+</div>  
+</body>
+</html>
+";

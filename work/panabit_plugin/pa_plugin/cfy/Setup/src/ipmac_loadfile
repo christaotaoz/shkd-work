@@ -1,0 +1,68 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"ipmacfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请输入文件路径!\");
+		return false;
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} ipmac loadfile file=${CGI_ipmacfile}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+		rm -rf ${CGI_ipmacfile}
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "/cgi-bin/Setup/ipmac_list"
+		rm -rf ${CGI_ipmacfile}
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "MAC管控->从文件加载" 
+echo -n "
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3>
+<tr>
+    <td width=40></td>
+    <td style=\"font:13px bold\" width=*>(1) 文件为文本文件</td>
+</tr>
+<tr>
+    <td></td>
+    <td style=\"font:13px bold\" width=*>(2) 文件中每行格式为\"xxx.xxx.xxx.xxx nn:nn:nn:nn:nn:nn(或nn-nn-nn-nn-nn-nn)\"</td>
+</tr>
+</table>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr height=22>
+	<td width=20></td>
+	<td width=140 style=\"font:14px bold\" align=left><b>请输入文件路径:</b></td>
+	<td width=* class=cssTDArial align=left>
+		<input type=file name=ipmacfile style=\"width:450px\">
+	</td>
+	<td align=right><input type=submit style=\"width:90\" value=\"加载\"></input></td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

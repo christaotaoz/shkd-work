@@ -1,0 +1,89 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`"
+returnurl="/cgi-bin/Pppoe/pppoe_account"
+[ "${CGI_outDBType}" = "" ] && CGI_outDBType="local"
+fSuffix="txt"
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}" pppoeman
+	if [ ! -f ${PGETC}/pppoedb.conf ]; then
+		echo "" > ${TMPPATH}/pppoedb.conf
+	else
+		case ${CGI_outDBType} in
+			"csv")
+				cat ${PGETC}/pppoedb.conf | grep "^acct " | \
+				awk '{for(i=2;i<=NF;i++){x=index($i,"=");if(x==-1){out="";exit;};s=substr($i,1,x-1);out=out"\""s"\",";}print "#"substr(out,1,length(out)-1);exit;}' > ${TMPPATH}/pppoedb.conf.tmp
+				cat ${PGETC}/pppoedb.conf | grep "^acct " | \
+				awk '{out="";for(i=2;i<=NF;i++){x=index($i,"=");if(x==-1){continue;};s=substr($i,x+1);out=out"\""s"\",";}print substr(out,1,length(out)-1);}' >> ${TMPPATH}/pppoedb.conf.tmp
+				
+				fSuffix="csv"
+				mv -f ${TMPPATH}/pppoedb.conf.tmp ${TMPPATH}/pppoedb.${fSuffix}
+			;;
+			*)
+				cp -f ${PGETC}/pppoedb.conf ${TMPPATH}/pppoedb.${fSuffix}
+			;;
+		esac
+	fi
+fi
+pppoedb_file="/tmp/pppoedb.${fSuffix}"
+
+echo -n "
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"${returnurl}\";
+}
+</script>
+<body>
+"; cgi_show_title "基本对象->帐号导出" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3>
+"; if [ "${REQUEST_METHOD}" != "POST" ]; then 
+echo -n "
+<tr>
+    <td width=20></td>
+	<td width=100 style=\"font-size:13px\">导出类型：</td>
+    <td width=*>
+		<select style=\"width:140px\" name=\"outDBType\" value=\"0\">
+			<option value=\"local\" selected=\"\">本地格式</option>
+			<option value=\"csv\">CSV格式</option>
+		</select>
+	</td>
+</tr>
+"; else 
+echo -n "
+<tr>
+    <td width=20></td>
+    <td style=\"font:13px bold\" width=* colspan=2><a href=\"${pppoedb_file}\">在此处<b style=\"font-size:14px;color:#ff0000;\">点击鼠标右键，选择\"另存为...\"</b>菜单导出当前配置文件</a></td>
+</tr>
+"; fi 
+echo -n "
+</table>
+<br>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+"; if [ "${REQUEST_METHOD}" != "POST" ]; then 
+echo -n "
+		<input type=submit value=\"提交\"/>&nbsp;&nbsp;&nbsp;&nbsp;
+"; fi 
+echo -n "
+		<input type=button value=\"返回\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

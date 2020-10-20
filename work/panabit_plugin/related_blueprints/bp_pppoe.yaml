@@ -1,0 +1,51 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  address_pool_name: null
+  authentication_mode: null
+  first_dns: null
+  gateway: null
+  interface: null
+  name: null
+  radius_name: null
+  second_dns: null
+node_templates:
+  New_pppoe_server_1:
+    type: cloudify.pa.pppoe_server
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      address_pool_name:
+        get_input: address_pool_name
+      authentication_mode:
+        get_input: authentication_mode
+      connection_config:
+        host: 192.168.4.39
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+      first_dns:
+        get_input: first_dns
+      gateway:
+        get_input: gateway
+      interface:
+        get_input: interface
+      name:
+        get_input: name
+      radius_name:
+        get_input: radius_name
+      second_dns:
+        get_input: second_dns

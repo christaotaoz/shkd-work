@@ -1,0 +1,76 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+IPE_PPPOEPLAN=${PGBIN}/ipe_pppoeplan 
+MOD_TAB_LIST="基本配置#${myself} 计划列表#/cgi-bin/Route/plan_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+        window.location.href = \"${returl}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+        operator_check "${myself}"
+        errmsg=`${IPE_PPPOEPLAN} -e ${CGI_enable}`
+        if [ "$?" != "0" ]; then
+				afm_dialog_msg "操作失败:${errmsg}"
+		fi
+elif [ "${CGI_act}" = "reboot" ]; then
+		err="`${IPE_PPPOEPLAN} -k`"
+		CGI_enable=`${IPE_PPPOEPLAN} -e`
+else
+		CGI_enable=`${IPE_PPPOEPLAN} -e`
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "应用路由->其它->定时拨号" 
+echo -n "
+<br>
+"; cgi_print_mod_header "基本配置" 700 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=120 align=left><b>计划服务</b></td>
+        <td width=* align=left>
+                <select name=enable value=${CGI_enable} style=\"width:100\">
+";
+                        if [ ${CGI_enable} -eq 0 ]; then
+                                echo "<option value=1>启用</option>"
+                                echo "<option value=0 selected>禁用</option>" 
+                        else 
+                                echo "<option value=1 selected>启用</option>"
+                                echo "<option value=0>禁用</option>" 
+                        fi
+
+echo -n "
+                </select>
+        </td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+                <input type=submit style=\"width:80\" value=\"提交\" />
+        </td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

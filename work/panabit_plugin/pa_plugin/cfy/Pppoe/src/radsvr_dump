@@ -1,0 +1,20 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="RADIUS服务\"${CGI_name}\"内部信息"
+. ../common/common.sh 
+
+echo -n "
+<body style=\"margin: 0px; padding: 0px 0px\">
+<textarea style=\"width:100%;height:100%\" rows=60 cols=50>
+"; /usr/ramdisk/bin/floweye radsvr get id=${CGI_id} 
+echo -n "
+</textarea>
+<br>
+</body>
+</html>
+";

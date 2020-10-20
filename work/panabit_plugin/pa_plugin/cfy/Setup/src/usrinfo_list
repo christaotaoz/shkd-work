@@ -1,0 +1,279 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+[ "${CGI_group}" = "" ] && CGI_group="-1"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddGroup()
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_addgrp\";
+}
+function onModifyGrpName(grpid)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_setgrp?ipgrp=\" + grpid;
+}
+function onDeleteGroup(grpid)
+{
+	if (confirm(\"确认要删除用户组?\"))
+		window.location.href = \"${myself}?action=deletegrp&group=\" + grpid;
+}
+function onGroupChanged(grp)
+{
+	window.location.href = \"${myself}\" + \"?group=\" + grp.value;
+}
+function onAddUser(ipgrp)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_add?group=\" + ipgrp;
+}
+function deleteUser(name, group)
+{
+	if (confirm(\"确定要删除账号?\")) {
+		window.location.href = \"${myself}\" + \"?action=delete&name=\" + name + \"&group=\" + group;
+	}
+}
+function modifyPasswd(name)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_setpasswd?usrname=\" + name;
+}
+function  enableUser(name, group)
+{
+	window.location.href = \"${myself}?action=enable&name=\" + name + \"&group=\" + group;
+}
+function  disableUser(name, group)
+{
+	window.location.href = \"${myself}?action=disable&name=\" + name + \"&group=\" + group;
+}
+function onExport()
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_export\";
+}
+function onImport()
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_import\";
+}
+function modifyUser(name)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_set?group=${CGI_group}&name=\" + name;
+}
+function listOnline(name)
+{
+	var url = \"/cgi-bin/Setup/usrinfo_listonline?name=\" + name;
+	ShowWindow(url, \"\", 640, 700);
+}
+function onload()
+{
+	if (document.body.clientWidth > 1200) {
+		document.getElementById(\"mytbl1\").style.width = \"100%\";
+		document.getElementById(\"mytbl2\").style.width = \"100%\";
+	}
+	else {
+		document.getElementById(\"mytbl1\").style.width = \"1200\";
+		document.getElementById(\"mytbl2\").style.width = \"1200\";
+	}
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo delete name=${CGI_name}` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}?group=${CGI_group}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "deletegrp" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo rmvgrp id=${CGI_group}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "enable" ]; then
+	errmsg=`${FLOWEYE} usrinfo set name=${CGI_name} enable=1` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}?group=${CGI_group}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	errmsg=`${FLOWEYE} usrinfo set name=${CGI_name} enable=0` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}?group=${CGI_group}"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body onload=\"onload()\">
+"; cgi_show_title "Web认证->账号管理" 
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=0 cellpadding=0>
+<tr id=tblhdr height=22>
+	<td width=60 align=center>用户组</td>
+	<td width=120 align=center>
+		<select style=\"width:100%;height:100%;\" name=group value=\"${CGI_group}\" onchange=\"onGroupChanged(this)\">
+		";
+			if [ "${CGI_group}" = "-1" ]; then
+				echo "<option value=\"-1\" selected>所有用户</option>"
+			else
+				echo "<option value=\"-1\">所有用户</option>"
+			fi
+			${FLOWEYE} usrinfo listgrp | while read grpid grpname theothers
+			do
+				if [ "${grpid}" = "${CGI_group}" -o "${grpname}" = "${CGI_group}" ]; then
+					echo "<option value=\"${grpid}\" selected>${grpname}</option>"
+				else
+					echo "<option value=\"${grpid}\">${grpname}</option>"
+				fi
+			done
+		
+echo -n "</select>
+	</td>
+        <td width=*   align=right>&nbsp;&nbsp;
+	<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddGroup()\">创建组>></a>&nbsp;&nbsp;&nbsp;
+	"; if [ ${CGI_group} -gt 0 ]; then 
+echo -n "
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onModifyGrpName('${CGI_group}')\">修改名称</a>
+		&nbsp;&nbsp;
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onDeleteGroup('${CGI_group}')\">删除组</a>
+		&nbsp;&nbsp;
+	"; else 
+echo -n "
+		<a style=\"color:#c0c0c0;font-size:14px\">修改名称</a>
+		&nbsp;&nbsp;
+		<a style=\"color:#c0c0c0;font-size:14px\">删除组</a>
+	"; fi 
+echo -n "
+         &nbsp;&nbsp;<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onExport()\">配置导出</a>
+         &nbsp;&nbsp;<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onImport()\">配置导入</a>
+	 &nbsp;&nbsp;
+	</td>
+</tr>
+</table>
+<table id=mytbl2 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=60  align=center>编号</td>
+	<td width=120 align=right><a href=\"${myself}?sort=group&group=${CGI_group}\">用户组</a></td>
+	<td width=*   align=right><a href=\"${myself}?sort=account&group=${CGI_group}\">账号名称</a></td>
+	<td width=100 align=right>账号状态</td>
+	<td width=120 align=right><a href=\"${myself}?sort=ip&group=${CGI_group}\">绑定IP</a></td>
+	<td width=100 align=right><a href=\"${myself}?sort=maxonline&group=${CGI_group}\">最大在线</a></td>
+	<td width=100 align=right><a href=\"${myself}?sort=curonline&group=${CGI_group}\">当前在线</a></td>
+	<td width=150 align=right><a href=\"${myself}?sort=ltime&group=${CGI_group}\">最近访问</a></td>
+        <td width=120 align=right>
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddUser('${CGI_group}')\">添加账号>></a>
+&nbsp;&nbsp;
+	</td>
+</tr>
+";
+if [ "${CGI_group}" = "" ]; then
+	echo "</table></body></html>"
+	exit 0
+fi
+no=1
+idname="row1"
+if [ ${CGI_group} -ge 0 ]; then
+	cmdargs="group=${CGI_group}"
+else
+	cmdargs=""
+fi
+case "${CGI_sort}" in
+"group")
+        sortargs="-k1"
+        ;;
+"account")
+        sortargs="-k3"
+        ;;
+"ip")
+        sortargs="-k8 -r"
+        ;;
+"maxonline")
+        sortargs="-n -k7 -r"
+        ;;
+"curonline")
+        sortargs="-n -k5 -r"
+        ;;
+"ltime")
+        sortargs="-n -k10"
+	;;
+*)
+	sortargs="-k3"
+	;;
+esac
+${FLOWEYE} usrinfo list ${cmdargs} | sort ${sortargs} | while read group grpname name passwd refcnt enabled maxlogin ipaddr uid ltime theothers
+do 
+echo -n "
+";	if [ ${enabled} -eq 0 ]; then 
+echo -n "
+	<tr id=row4>
+";	else 
+echo -n "
+	<tr id=\"${idname}\">
+";	fi 
+echo -n "
+	<td align=center>${no}</td>
+	<td align=right>${grpname}</td>
+	<td align=right>${name}</td>
+	"; if [ ${enabled} -eq 0 ]; then 
+echo -n "
+	<td align=right><img src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" title=\"账号被禁止\" /></td>
+	"; else 
+echo -n "
+	<td align=right><img src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align: middle;\" title=\"账号可正常使用\" /></td>
+	"; fi 
+echo -n "
+	"; [ "${ipaddr}" = "0.0.0.0" ] && ipaddr="" 
+echo -n "
+	<td align=right>${ipaddr}</td>
+	<td align=right>${maxlogin}</td>
+	"; if [ ${refcnt} -gt 0 ]; then 
+echo -n "
+	<td align=right><img src=\"/img/user.png\" onclick=\"listOnline('${name}')\" title=\"显示在线用户\" />
+		<a style=\"color:#0000ff\">&nbsp;${refcnt}</a></td>
+	"; else 
+echo -n "
+	<td align=right>${refcnt}</td>
+	"; fi 
+echo -n "
+	<td align=right>${ltime}</td>
+	<td align=right>
+		<img src=\"/img/edit.png\" onclick=\"modifyUser('${name}')\" title=\"修改账号\" />&nbsp;
+		<img src=\"/img/passwd.png\" onclick=\"modifyPasswd('${name}')\" title=\"修改密码\" />&nbsp;
+		<img src=\"/img/delete.png\" onclick=\"deleteUser('${name}', '${CGI_group}')\" title=\"删除账号\" />&nbsp;
+        "; if [ ${enabled} -ne 0 ]; then 
+echo -n "
+                <img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disableUser('${name}', '${CGI_group}')\" title=\"禁止用户\" />&nbsp;
+        "; else 
+echo -n "
+                <img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enableUser('${name}', '${CGI_group}')\" title=\"启用用户\" />&nbsp;
+        "; fi 
+echo -n "&nbsp;
+	</td>
+	</tr>
+";
+	no=$((${no} + 1))
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done 
+echo -n "
+</table>
+</body>
+</html>
+";

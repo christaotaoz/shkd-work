@@ -1,0 +1,376 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel()
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_listime\";
+}
+function onMonthChanged(obj)
+{
+	var i;
+	var sday = document.getElementsByName(\"startday\")[0];
+	var eday = document.getElementsByName(\"endday\")[0];
+	sday.options.length = 0;
+	eday.options.length = 0;
+	if (obj.value == \"0\") {
+		for (i = 1; i <= 7; i++) {
+			var opt1 = document.createElement(\"option\");
+			var opt2 = document.createElement(\"option\");
+			opt1.value = i;
+			opt2.value = i;
+			switch (i) {
+			case 1:
+				opt1.text = \"星期一\";
+				opt2.text = \"星期一\";
+				break;
+			case 2:
+				opt1.text = \"星期二\";
+				opt2.text = \"星期二\";
+				break;
+			case 3:
+				opt1.text = \"星期三\";
+				opt2.text = \"星期三\";
+				break;
+			case 4:
+				opt1.text = \"星期四\";
+				opt2.text = \"星期四\";
+				break;
+			case 5:
+				opt1.text = \"星期五\";
+				opt2.text = \"星期五\";
+				break;
+			case 6:
+				opt1.text = \"星期六\";
+				opt2.text = \"星期六\";
+				break;
+			case 7:
+				opt1.text = \"星期日\";
+				opt2.text = \"星期日\";
+				break;
+			}
+			sday.options.add(opt1);
+			eday.options.add(opt2);
+		}
+		sday.selectedIndex = 0;
+		eday.selectedIndex = 6;
+	}
+	else {
+		var cnt = 31;
+		if (obj.value == \"4\" || obj.value == \"6\" ||
+		    obj.value == \"9\" || obj.value == \"11\"){ 
+			cnt = 30;
+		}
+		else
+		if (obj.value == \"2\") {
+			cnt = 29;
+		}
+		
+		for (i = 1; i <= cnt; i++) {
+			opt1 = document.createElement(\"option\");
+			opt1.value = i;
+			opt1.text  = i;
+			opt2 = document.createElement(\"option\");
+			opt2.value = i;
+			opt2.text  = i;
+			sday.options.add(opt1);
+			eday.options.add(opt2);
+		}
+		sday.selectedIndex = 0;
+		eday.selectedIndex = cnt - 1;
+	}
+}
+</script>
+";
+cgi_show_wday()
+{
+	local wday=$1
+	local i=1
+	while [ $i -le 7 ]; do
+		if [ "${wday}" = "$i" ]; then
+			selected="selected"
+		else
+			selected=""
+		fi
+		case "$i" in
+		"1")
+			echo "<option value=$i ${selected}>星期一</option>"
+			;;
+		"2")
+			echo "<option value=$i ${selected}>星期二</option>"
+			;;
+		"3")
+			echo "<option value=$i ${selected}>星期三</option>"
+			;;
+		"4")
+			echo "<option value=$i ${selected}>星期四</option>"
+			;;
+		"5")
+			echo "<option value=$i ${selected}>星期五</option>"
+			;;
+		"6")
+			echo "<option value=$i ${selected}>星期六</option>"
+			;;
+		"7")
+			echo "<option value=$i ${selected}>星期日</option>"
+			;;
+		esac
+		i=$(($i + 1))
+	done
+}
+cgi_show_mday()
+{
+	local mon=$1
+	local mday=$2
+	local i=1
+	local dcnt=31
+	if [ ${mon} -eq 4 -o ${mon} -eq 6 -o ${mon} -eq 9 -o ${mon} -eq 11 ]; then
+		dcnt=30
+	elif [ ${mon} -eq 2 ]; then
+		dcnt=29
+	fi
+	while [ $i -le ${dcnt} ]; do
+		if [ "${mday}" = "$i" ]; then
+			selected="selected"
+		else
+			selected=""
+		fi
+		echo "<option value=$i ${selected}>${i}号</option>"
+	
+		i=$(($i + 1))
+	done
+}
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Setup/conlimit_listime"
+	errmsg=`${FLOWEYE} conlimit settime id=${CGI_schid} month=${CGI_month} startday=${CGI_startday} \
+endday=${CGI_endday} start=${CGI_starthour}:${CGI_startmin}:${CGI_startsec} \
+end=${CGI_endhour}:${CGI_endmin}:${CGI_endsec} group=${CGI_policygrp} disable=${CGI_status} \
+ipmin=${CGI_ipmin} ipmax=${CGI_ipmax}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/conlimit_listime"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "连接控制->策略调度->修改时段" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table style=\"font:14px;table-layout:nowrap;\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=100 align=left>时段编号</td>
+	<td width=* align=left>${CGI_schid}
+		<input type=hidden name=schid value=\"${CGI_schid}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left>是否有效</td>
+        <td align=left>
+        <select name=status style=\"width:60\">
+	";
+		if [ "${CGI_status}" = "1" -o "${CGI_status}" = "yes" ]; then
+                	echo "<option value=0>有效</option>"
+                	echo "<option value=1 selected>无效</option>"
+		else
+                	echo "<option value=0 selected>有效</option>"
+                	echo "<option value=1>无效</option>"
+		fi
+	
+echo -n "
+        </select>
+        </td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>时段日期</td>
+        <td align=left>
+	<select name=month value=\"${CGI_month}\" style=\"width:60\" onchange=\"onMonthChanged(this)\">
+	";     if [ "${CGI_month}" = "0" ]; then
+			echo "<option value=\"0\" selected>每周</option>"
+		else
+			echo "<option value=\"0\">每周</option>"
+		fi
+		mon=1
+		while [ ${mon} -le 12 ]; do
+			if [ ${CGI_month} -eq ${mon} ]; then
+				echo "<option value=${mon} selected>${mon}月</option>"
+			else
+				echo "<option value=${mon}>${mon}月</option>"
+			fi
+			mon=$((${mon} + 1))
+		done 
+echo -n "
+	</select>
+	<select name=startday value=\"${CGI_startday}\" style=\"width:65\">
+	";
+		if [ "${CGI_month}" = "0" ]; then
+			cgi_show_wday "${CGI_startday}"
+		else
+			cgi_show_mday "${CGI_month}" "${CGI_startday}"
+		fi
+	
+echo -n "
+	</select>至<select name=endday value=\"${CGI_endday}\" style=\"width:65\">
+	";
+		if [ "${CGI_month}" = "0" ]; then
+			cgi_show_wday "${CGI_endday}"
+		else
+			cgi_show_mday "${CGI_month}" "${CGI_endday}"
+		fi
+	
+echo -n "
+	</select>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>开始时刻</td>
+        <td align=left>
+        <select name=starthour value=\"${CGI_starthour}\" style=\"width:56\">
+	";
+		hour=0
+		while [ ${hour} -le 23 ]; do
+			if [ ${hour} -eq ${CGI_starthour} ]; then
+				echo "<option value=${hour} selected>${hour}</option>"
+			else
+				echo "<option value=${hour}>${hour}</option>"
+			fi
+			hour=$((${hour} + 1))
+		done
+	
+echo -n "
+        </select>时<select name=startmin value=\"${CGI_startmin}\" style=\"width:56\">
+	";
+		min=0
+		while [ ${min} -le 59 ]; do
+			if [ ${min} -eq ${CGI_startmin} ]; then
+				echo "<option value=${min} selected>${min}</option>"
+			else
+				echo "<option value=${min}>${min}</option>"
+			fi
+			min=$((${min} + 1))
+		done
+	
+echo -n "
+        </select>分<select name=startsec value=\"${CGI_startsec}\" style=\"width:56\">
+	";
+		sec=0
+		while [ ${sec} -le 59 ]; do
+			if [ ${sec} -eq ${CGI_startsec} ]; then
+				echo "<option value=${sec} selected>${sec}</option>"
+			else
+				echo "<option value=${sec}>${sec}</option>"
+			fi
+			sec=$((${sec} + 1))
+		done
+	
+echo -n "
+	</select>秒
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>结束时刻</td>
+        <td align=left>
+	<select name=endhour value=\"${CGI_endhour}\" style=\"width:56\">
+	";
+		hour=0
+		while [ ${hour} -le 23 ]; do
+			if [ ${hour} -eq ${CGI_endhour} ]; then
+				echo "<option value=${hour} selected>${hour}</option>"
+			else
+				echo "<option value=${hour}>${hour}</option>"
+			fi
+			hour=$((${hour} + 1))
+		done
+	
+echo -n "
+	</select>时<select name=endmin value=\"${CGI_endmin}\" style=\"width:56\">
+	";
+		min=0
+		while [ ${min} -le 59 ]; do
+			if [ ${min} -eq ${CGI_endmin} ]; then
+				echo "<option value=${min} selected>${min}</option>"
+			else
+				echo "<option value=${min}>${min}</option>"
+			fi
+			min=$((${min} + 1))
+		done
+	
+echo -n "
+	</select>分<select name=endsec value=\"${CGI_endsec}\" style=\"width:56\">
+	";
+		sec=0
+		while [ ${sec} -le 59 ]; do
+			if [ ${sec} -eq ${CGI_endsec} ]; then
+				echo "<option value=${sec} selected>${sec}</option>"
+			else
+				echo "<option value=${sec}>${sec}</option>"
+			fi
+			sec=$((${sec} + 1))
+		done
+	
+echo -n "
+	</select>秒
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>在线用户</td>
+        <td align=left><input type=text name=ipmin style=\"width:56px\" value=\"${CGI_ipmin}\"></input>至<input type=text name=ipmax style=\"width:56px\" value=\"${CGI_ipmax}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>策略组</td>
+        <td align=left>
+	<select name=policygrp value=\"${CGI_policygrp}\" style=\"width:208\">
+	";
+		${FLOWEYE} conlimit listgrp | while read pid name
+		do
+			if [ "${CGI_policygrp}" = "${pid}" ]; then
+				echo "<option value=\"${pid}\" selected>${name}</option>"
+			else
+				echo "<option value=\"${pid}\">${name}</option>"
+			fi
+		done
+		if [ "${CGI_policygrp}" = "0" ]; then
+			echo "<option value=\"0\" selected>空策略组</option>"
+		else
+			echo "<option value=\"0\">空策略组</option>"
+		fi
+	
+echo -n "
+	</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

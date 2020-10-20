@@ -1,0 +1,160 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+alarm_config_file="${PGETC}/alarm_config.conf"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\">
+function showConfig()
+{
+	var url = \"/cgi-bin/Maintain/alarm_config\";
+	ShowWindow(url, \"\", 748, 400); 
+}
+</script>
+";
+createMyhtml()
+{
+	local curpps=$1
+	local dpps=$2
+	
+	if [ ${dpps} -gt 0 ]; then
+		if [ ${curpps} -ge ${dpps} ]; then
+			echo "<span style='color: #ff0000;'>${curpps}</span>"
+		else
+			echo "<span style='color: #008000;'>${curpps}</span>"
+		fi
+	else
+		echo "<span>${curpps}</span>"
+	fi
+}
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+fi
+if [ -f ${alarm_config_file} ]; then
+	. ${alarm_config_file}
+fi
+syn_out=$((${syn_out}+0))
+syn_in=$((${syn_in}+0))
+icmp_out=$((${icmp_out}+0))
+icmp_in=$((${icmp_in}+0))
+ack_out=$((${ack_out}+0))
+ack_in=$((${ack_in}+0))
+fragment_out=$((${fragment_out}+0))
+fragment_in=$((${fragment_in}+0))
+inside_in=0
+inside_out=0
+inside_tcp_in=0
+inside_tcp_out=0
+inside_udp_in=0
+inside_udp_out=0
+inside_insyn=0
+inside_inack=0
+inside_inicmp=0
+inside_infragment=0
+for ifa in `floweye if list | grep " inside " | awk '{print $1;}'`
+do
+	for nv in `floweye if get ${ifa} | grep ^pps | sed 's/-/_/g'`
+	do
+		eval "${nv}"
+	done
+	inside_in=$((${inside_in}+${pps_in}))
+	inside_out=$((${inside_out}+${pps_out}))
+	inside_tcp_in=$((${inside_tcp_in}+${pps_tcp_in}))
+	inside_tcp_out=$((${inside_tcp_out}+${pps_tcp_out}))
+	inside_udp_in=$((${inside_udp_in}+${pps_udp_in}))
+	inside_udp_out=$((${inside_udp_out}+${pps_udp_out}))
+	inside_insyn=$((${inside_insyn}+${pps_insyn}))
+	inside_inack=$((${inside_inack}+${pps_inack}))
+	inside_inicmp=$((${inside_inicmp}+${pps_inicmp}))
+	inside_infragment=$((${inside_infragment}+${pps_infragment}))
+done
+inside_syn_str="`createMyhtml ${inside_insyn} ${syn_in}`"
+inside_ack_str="`createMyhtml ${inside_inack} ${ack_in}`"
+inside_icmp_str="`createMyhtml ${inside_inicmp} ${icmp_in}`"
+inside_fragment_str="`createMyhtml ${inside_infragment} ${fragment_in}`"
+outside_in=0
+outside_out=0
+outside_tcp_in=0
+outside_tcp_out=0
+outside_udp_in=0
+outside_udp_out=0
+outside_insyn=0
+outside_inack=0
+outside_inicmp=0
+outside_infragment=0
+for ifa in `floweye if list | grep " outside " | awk '{print $1;}'`
+do
+	for nv in `floweye if get ${ifa} | grep ^pps | sed 's/-/_/g'`
+	do
+		eval "${nv}"
+	done
+	outside_in=$((${outside_in}+${pps_in}))
+	outside_out=$((${outside_out}+${pps_out}))
+	outside_tcp_in=$((${outside_tcp_in}+${pps_tcp_in}))
+	outside_tcp_out=$((${outside_tcp_out}+${pps_tcp_out}))
+	outside_udp_in=$((${outside_udp_in}+${pps_udp_in}))
+	outside_udp_out=$((${outside_udp_out}+${pps_udp_out}))
+	outside_insyn=$((${outside_insyn}+${pps_insyn}))
+	outside_inack=$((${outside_inack}+${pps_inack}))
+	outside_inicmp=$((${outside_inicmp}+${pps_inicmp}))
+	outside_infragment=$((${outside_infragment}+${pps_infragment}))
+done
+outside_syn_str="`createMyhtml ${outside_insyn} ${syn_out}`"
+outside_ack_str="`createMyhtml ${outside_inack} ${ack_out}`"
+outside_icmp_str="`createMyhtml ${outside_inicmp} ${icmp_out}`"
+outside_fragment_str="`createMyhtml ${outside_infragment} ${fragment_out}`"
+
+echo -n "
+<body>
+"; cgi_show_title "系统概况->攻击告警" 
+echo -n "
+<br>
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=tblhdr height=22>
+	<td width=90 align=center>告警对象</td>
+	<td width=120 align=center>当前外网包(pps)</td>
+	<td width=120 align=center>当前阀值(pps)</td>
+	<td width=120 align=center>当前内网包(pps)</td>
+	<td width=120 align=center>当前阀值(pps)</td>
+</tr>
+<tr id=row1> 
+	<td align=center>SYN</td>
+	<td align=right>${outside_syn_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${syn_out}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right>${inside_syn_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${syn_in}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr id=row1>
+	<td align=center>ICMP</td>
+	<td align=right>${outside_icmp_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${icmp_out}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right>${inside_icmp_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${icmp_in}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr id=row1>
+	<td align=center>ACK</td>
+	<td align=right>${outside_ack_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${ack_out}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right>${inside_ack_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${ack_in}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr id=row1>
+    <td align=center>碎片</td>
+	<td align=right>${outside_fragment_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${fragment_out}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right>${inside_fragment_str}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+	<td align=right><a style=\"color:#00f\" href=\"javascript:showConfig()\">${fragment_in}</a>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

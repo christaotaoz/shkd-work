@@ -1,0 +1,221 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=0
+[ "${CGI_topn}" = "" ] && CGI_topn="30"
+[ "${CGI_statype}" = "" ] && CGI_statype="last"
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/app_topn"
+cgiargs="title=${CGI_title}&refresh=${CGI_refresh}&statype=${CGI_statype}&topn=${CGI_topn}&group=${CGI_group}&bridge=${CGI_bridge}"
+cgiurl="${cgipath}?${cgiargs}"
+[ ${CGI_refresh} -ne 0 ] && afm_load_page  ${CGI_refresh} "${cgiurl}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function ShowDetail(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ip_detail?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 500, 640);
+}
+function ShowFlow(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ip_flow?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 650, 700);
+}
+function onselected()
+{
+        var i;
+	var count;
+        var apps;
+	count = 0;
+        apps = document.getElementsByName(\"appselect\");
+        for (i = 0; i < apps.length; i++) {
+                if (apps[i].checked) count++;
+        }
+	document.getElementsByName(\"showselect\")[0].disabled = count > 0 ? false : true;
+}
+function ShowSelected()
+{
+        var i;
+        var url;
+        var apps;
+        var datasrc;
+        var statype;
+        var title;
+        datasrc=\"\";
+        statype = document.getElementsByName(\"statype\")[0];
+        apps = document.getElementsByName(\"appselect\");
+        for (i = 0; i < apps.length; i++) {
+                if (apps[i].checked) {
+                        if (statype.value == \"last\" || statype.value == \"all\") 
+                                datasrc = datasrc + \",\" + apps[i].value + \".bps\";
+                        else
+                        if (statype.value == \"bpsup\") 
+                                datasrc = datasrc + \",\" + apps[i].value + \".bpsout\";
+                        else
+                        if (statype.value == \"bpsdn\") 
+                                datasrc = datasrc + \",\" + apps[i].value + \".bpsin\";
+                        else
+                        if (statype.value == \"flow\") 
+                                datasrc = datasrc + \",\" + apps[i].value + \".flow\";
+                }
+        }
+        if (statype.value == \"last\" || statype.value == \"all\")
+                title = \"流量趋势图\"
+        else
+        if (statype.value == \"bpsup\")
+                title = \"上行流量趋势图\"
+        else
+        if (statype.value == \"bpsdn\")
+                title = \"下行流量趋势图\"
+        else
+        if (statype.value == \"flow\")
+                title = \"连接趋势图\"
+        url = \"/cgi-bin/Monitor/appreport?datasrc=\" + datasrc + \"&title=\" + title;
+        ShowWindow(url, \"scrollbars=1,resizable=0\", 670, 850);
+}
+function showapp(appid, appname)
+{
+        var url = \"/cgi-bin/Monitor/appview_topip?appid=\" + appid +
+              \"&appname=\" + appname;
+        ShowWindow(url, \"scrollbars=1,resizable=1\", 720, 800);
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+                document.getElementById(\"mytbl2\").style.width=\"100%\";
+	}
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+                document.getElementById(\"mytbl2\").style.width=\"1280\";
+	}
+}
+</script>
+<body onload=\"onload()\">
+"; [ "${CGI_browsertitle}" = "" ] && cgi_show_title "Top排名->Top应用" 
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=0 cellpadding=0>
+<form method=post action=\"${cgipath}\">
+<tr id=tblhdr>
+	<td width=170 align=left>&nbsp;选择线路
+	<select name=bridge value=\"${CGI_bridge}\" style=\"width:100\">";
+		for bdg in 0 `${FLOWEYE} bridge list`; do
+			selected=""
+			[ ${bdg} -eq ${CGI_bridge} ] && selected="selected"
+			if [ ${bdg} -eq 0 ]; then
+				echo "<option value=${bdg} ${selected}>所有线路</option>"
+			else
+				echo "<option value=${bdg} ${selected}>网桥${bdg}</option>"
+			fi
+		done 
+echo -n "
+	</select>
+	</td>
+	<td width=272 align=left>&nbsp;显示前<select name=topn value=\"${CGI_topn}\" style=\"width:70\"> ";
+		for tm in 10 20 30 50 100 0; do
+			if [  ${tm} -eq 0 ]; then
+				tmdesc="所有"
+			else
+				tmdesc="${tm}"
+			fi
+			if [ "${CGI_topn}" = "${tm}" ]; then
+				echo "<option selected value=${tm}>${tmdesc}</option>"
+			else
+				echo "<option value=${tm}>${tmdesc}</option>"
+			fi
+		done 
+echo -n "</select>项&nbsp;隔
+	<select name=refresh value=\"${CGI_refresh}\" style=\"width:70\">
+	";
+		for tm in 15 30 45 60 100 0; do
+			if [ ${tm} -eq 0 ]; then
+				tmdesc="不刷新"
+			else
+				tmdesc="${tm}"
+			fi
+			if [ "${CGI_refresh}" = "${tm}" ]; then
+				echo "<option selected value=${tm}>${tmdesc}</option>"
+			else
+				echo "<option value=${tm}>${tmdesc}</option>"
+			fi
+		done
+	
+echo -n "
+	</select>&nbsp;秒刷新</td>
+	<td width=* align=left>
+		<input type=submit value=\"刷  新\" style=\"width:70\"></input>&nbsp;&nbsp;
+		<input type=button name=showselect disabled value=\"选中应用对比分析\" style=\"width:120\" onclick=\"javascript:ShowSelected()\"></input>
+		<input type=hidden name=title value=\"${CGI_title}\"></input>
+	</td>
+</tr>
+</form>
+</table>
+";
+urlpath="${cgipath}?title=${CGI_title}&refresh=${CGI_refresh}&topn=${CGI_topn}&group=${CGI_group}&bridge=${CGI_bridge}"
+
+echo -n "
+<table id=mytbl2 width=\"100%\" border=0 cellspacing=1 cellpadding=0>
+<tr id=tblhdr>
+	<td width=*   align=left>&nbsp;协议名称</td>
+	<td width=120 align=right><a href=\"${urlpath}&statype=flow\">连接数</a></td>
+	<td width=120 align=right><a href=\"${urlpath}&statype=bpsup\">上行bps</a></td>
+	<td width=120 align=right><a href=\"${urlpath}&statype=bpsdn\">下行bps</a></td>
+	<td width=120 align=right><a href=\"${urlpath}&statype=natbpsup\">代理上行bps</a></td>
+	<td width=120 align=right><a href=\"${urlpath}&statype=natbpsdown\">代理下行bps</a></td>
+	<td width=260 align=center><a href=\"${urlpath}&statype=all\">累计流量</a></td>
+	<td width=260 align=center><a href=\"${urlpath}&statype=last\">最近10分钟流量</a></td>
+</tr>
+";
+args="sort=${CGI_statype} bridge=${CGI_bridge}"
+[ ${CGI_topn} -ne 0 ] && args="${args} topn=${CGI_topn}"
+idname="row1"
+${FLOWEYE} app stat ${args} | \
+while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall natupbps natdownbps theother
+do
+
+echo -n "
+	<tr id=${idname}>
+	<td align=left>
+		<input type=checkbox name=appselect value=\"${appid}\" onclick=\"onselected()\"></input>
+		<a href=\"javascript:showapp('${appid}', '${appname}')\">${appname}
+	</td>
+	<td align=right>${flow}</td>
+	<td align=right>${rup}</td>
+	<td align=right>${rdown}</td>
+	<td align=right>${natupbps}</td>
+	<td align=right>${natdownbps}</td>
+	"; wid=`echo "${per1}" |awk '{print ($1 * 110.00) / 100.00}'` 
+echo -n "
+	<td><table cellpading=0 cellspacing=0>
+	    <tr id=row5><td width=80 align=right>${all}</td>
+	    <td align=left>&nbsp;<img src=\"/img/data_bar.gif\" width=${wid} height=10 alt=\"${per1}%\" border=0>&nbsp;${per1}</td>
+	    </tr></table>
+	</td>
+	"; wid=`echo "${per2}" |awk '{print ($1 * 110.00) / 100.00}'` 
+echo -n "
+	<td><table cellpading=0 cellspacing=0>
+	    <tr id=row5><td width=80 align=right>${lall}</td>
+	    <td align=left>&nbsp;<img src=\"/img/data_bar.gif\" width=${wid} height=10 alt=\"${per2}%\" border=0>&nbsp;${per2}</td>
+	    </tr></table>
+	</td>
+	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

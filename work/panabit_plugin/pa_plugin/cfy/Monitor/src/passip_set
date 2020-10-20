@@ -1,0 +1,82 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<title>IP设置</title>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\">
+function onCancel()
+{
+	window.returnValue = \"NONE\";
+	window.close();
+}
+var srcWin;
+var srcOrigin;
+function setpassip(passip)
+{
+	var i;
+	var outobj, dropobj; 
+	var url = \"/cgi-bin/Monitor/ajax_set_passip?passip=\" + passip;
+	AJXS({type: 'POST', 
+	       url: url, 
+	     success: function(data) { 
+		var d;
+		try {
+			d = eval('('+data+')');
+		} catch(e) {
+			alert(\"FAIL\");
+			return;
+		}
+		if (d[0].errmsg != \"OK\") {
+			alert(d[0].errmsg);
+			window.close();
+		}
+		else {
+			if(typeof srcWin == \"object\") {
+				var passip = document.getElementsByName(\"passip\")[0];
+				window.returnValue = passip.value;
+				srcWin.postMessage(\"passip:\"+ window.returnValue, srcOrigin);
+			}
+			window.close();
+		}
+	}});
+}
+function onOK()
+{
+	var passip = document.getElementsByName(\"passip\")[0];
+	setpassip(passip.value);
+}
+SetDialogPostEvent(function(event){
+	if(event.data == 'Hello Panabit') {
+		event.source.postMessage(event.data, event.origin);
+		srcWin = event.source;
+		srcOrigin = event.origin;
+	}
+});
+</script>
+</head>
+";
+if [ "${CGI_passip}" = "" ]; then
+	CGI_passip=`/usr/ramdisk/bin/floweye policy stat | grep "^passip=" | cut -d'=' -f2`
+fi
+
+echo -n "
+<body>
+<base target=\"_self\">
+<div style=\"overflow: auto; position:absolute;left:8px;top:8px;height:10px;width:280px;border:2px\"></div>
+<div style=\"overflow: auto; position:absolute;left:8px;top:29px;height:40px;width:280px;border:2px\">
+<a style=\"font-size:13px;\"><b>IP地址</b>:</a><input type=text style=\"width:125px;font-size:13px\" name=passip value=\"${CGI_passip}\" />
+<input type=button name=btnok value=\"确定\" align=center style=\"width:95px\" onclick=\"onOK()\"></input>
+</div>
+</body>
+</html>
+";

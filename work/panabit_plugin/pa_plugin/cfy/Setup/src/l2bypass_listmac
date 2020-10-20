@@ -1,0 +1,63 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+afm_load_page 30 "${myself}?id=${CGI_id}"
+
+echo -n "
+<body>
+"; cgi_show_title "其它功能->PPPOE旁路->在线用户" 
+echo -n "
+<br>
+<div>红色表示账号不在列表中，灰色表示账号过期</div>
+<table width=760 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=120 align=center>MAC地址</td>
+	<td width=120 align=center>用户账号</td>
+	<td width=100 align=center>服务名称</td>
+	<td width=90  align=center>流入速率</td>
+	<td width=90  align=center>流出速率</td>
+	<td width=140 align=center>发现时间</td>
+	<td width=*   align=center>操作</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} l2route list type=mac id=${CGI_id} | \
+while read id service mac inbps outbps ttl birth account expdeny nexist theothers
+do 
+	[ "${account}" = "NULL" ] && account=""
+	if [ ${nexist} -eq 1 ]; then
+		echo "<tr id=row3>"
+	elif [ ${expdeny} -ne 0 ]; then
+		echo "<tr id=row4>"
+	else
+		echo "<tr id=${idname}>"
+	fi
+
+echo -n "
+	<td align=right>${mac}&nbsp;</td>
+	<td align=right>${account}&nbsp;</td>
+	<td align=right>${service}&nbsp;</td>
+	<td align=right>${inbps}&nbsp;</td>
+	<td align=right>${outbps}&nbsp;</td>
+	<td align=right>${birth}&nbsp;</td>
+	<td align=center></td>
+	</tr>
+"; 	
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

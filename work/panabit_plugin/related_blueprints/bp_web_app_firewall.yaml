@@ -1,0 +1,25 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+    url:
+        type: string
+        description: >
+            target url for closing pop windows
+    close_popup_windows:
+        type: string
+        description: >
+            close pop windows or not, input true or false
+        default: true
+
+
+node_templates:
+    web_app_firewall_conf:
+        type: cloudify.pa.web_app_firewall
+        properties:
+            url: { get_input: url }
+            close_popup_windows: { get_input: close_popup_windows }
+          

@@ -1,0 +1,33 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+   # - plugin.yaml
+    - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+    - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+node_templates:
+    pa_get_gateway_interface:
+        type: cloudify.pa.pa_get_gateway_interface
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

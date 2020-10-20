@@ -1,0 +1,49 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+afm_load_page 30 "/cgi-bin/Route/portmap_listflow?id=${CGI_id}&name=${CGI_name}"
+
+echo -n "
+<body>
+"; cgi_show_title "策略->端口映射->当前会话[${CGI_name}]" 
+echo -n "
+<br>
+<table width=753 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=80  align=center>应用名称</td>
+	<td width=30  align=center>协议</td>
+	<td width=410 align=center>会话信息</td>
+	<td width=120 align=center>接入时间</td>
+	<td width=*   align=center>流量</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} nat listnpmflow id=${CGI_id} | \
+while read birth appname proto src sport dst dport mapip mapport upbytes downbytes theothers 
+do 
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${appname}</td>
+	<td align=center>${proto}</td>
+	<td align=left>&nbsp;${src}:${sport}->${dst}:${dport}->${mapip}:${mapport}</td>
+	<td align=center>${birth}</td>
+	<td align=right>${upbytes}/${downbytes}</td>
+	</tr>
+"; 	
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

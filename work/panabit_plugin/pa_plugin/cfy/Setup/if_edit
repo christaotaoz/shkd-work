@@ -1,0 +1,46 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+CGI_browsertitle="网卡${CGI_ifname}参数"
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Setup/`basename $0`"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cmdargs="name=${CGI_ifname} mode=${CGI_mode} zone=${CGI_zone}"
+	[ "${CGI_peer}" != "none" ] && cmdargs="${cmdargs} peer=${CGI_peer}"
+	errmsg=`${FLOWEYE} if set ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		yes=1
+		if [ "${CGI_ifspeed}" != "" ]; then
+  			errmsg=`${FLOWEYE} em setspeed ${CGI_ifname} ${CGI_ifspeed}`
+			if [ "$?" != "0" ]; then
+				yes=0
+				afm_dialog_msg "设置速率失败:${errmsg}"
+			fi
+		fi
+		if [ ${yes} -eq 1 ]; then
+		fi
+	fi
+fi
+for nameval in `${FLOWEYE} if get ${CGI_ifname}`
+do
+	name=`echo ${nameval} | cut -d'=' -f1`
+	if [ "${name}" = "mode" -o "${name}" = "zone" -o \
+	     "${name}" = "peer" -o "${name}" = "media" -o \
+	     "${name}" = "driver" ]; then
+		eval "CGI_${nameval}"
+	fi
+done
+CGI_ifspeed="${CGI_media}"
+
+if [ "${CGI_driver}" = "PANAOS" ]; then
+	emif=`echo ${CGI_ifname} | grep "^em"`
+	igbif=`echo ${CGI_ifname} | grep "^igb"`
+fi 

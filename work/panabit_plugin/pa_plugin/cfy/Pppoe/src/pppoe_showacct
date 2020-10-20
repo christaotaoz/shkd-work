@@ -1,0 +1,22 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="PPPOE’À∫≈"
+. ../common/common.sh 
+myself="/cgi-bin/Pppoe/`basename $0`"
+
+echo -n "
+<body>
+<br>
+<textarea style=\"width:480;height:550\" rows=45 cols=40>
+"; ${FLOWEYE} pppoesvr get mac=${CGI_mac} 
+echo -n "
+</textarea>
+<br>
+</body>
+</html>
+";

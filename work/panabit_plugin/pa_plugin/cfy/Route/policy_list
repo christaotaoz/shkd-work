@@ -1,0 +1,248 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/cfy/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddRule() 
+{
+	window.location.href = \"/cgi-bin/Route/policy_addrule\";
+}
+function modifyRule(polno) 
+{
+	window.location.href = \"/cgi-bin/Route/policy_setrule?id=\" + polno;
+}
+function deleteRule(polno)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"${myself}?action=remove&id=\" + polno;
+	}
+}
+function showProxy(proxyname)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+	ShowWindow(url, \"\", 350, 400); 
+}
+function showIPGrp(gname)
+{
+	var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+	ShowWindow(url, \"\", 860, 630); 
+}
+function showApp(appid, appname)
+{
+	var url = \"/cgi-bin/Monitor/app_show?appid=\" + appid + \"&title=\" + appname;
+	ShowWindow(url, \"\", 700, 540); 
+}
+function enablePolicy(polno)
+{
+	window.location.href = \"${myself}?action=enable&id=\" + polno;
+}
+function disablePolicy(polno)
+{
+	window.location.href = \"${myself}?action=disable&id=\" + polno;
+}
+function getpolicystats()
+{
+	var i, pktobj;
+	AJXS({type: 'POST', 
+	       url: '/cgi-bin/Route/ajax_policy_stat', 
+	     error: function(status){setTimeout(getpolicystats, 3000);},
+	   success: function(data) { 
+		var d;
+		try {
+			d = eval('('+data+')');
+		} catch(e) {
+			setTimeout(getpolicystats, 3000);
+			return;
+		}
+		for (i = 0; i < d.length; i++) {
+			pktobj = document.getElementById(\"pkts_\" + d[i].id);
+			if (pktobj != null) pktobj.innerHTML = d[i].pkts;
+		}
+		setTimeout(getpolicystats, 3000);
+	}});
+}
+</script>
+";
+if [ "${CGI_action}" = "remove" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} route remove id=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		WEB_LOGGER "删除路由策略" "id=${CGI_id}"
+	fi
+fi
+if [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} route enable id=${CGI_id}`
+	[ "$?" != "0" ] && afm_dialog_msg "出现错误:${errmsg}"
+fi
+if [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} route disable id=${CGI_id}`
+	[ "$?" != "0" ] && afm_dialog_msg "出现错误:${errmsg}"
+fi
+
+echo -n "
+<body onload=\"getpolicystats()\">
+"; cgi_show_title "应用路由->策略->策略路由" 
+echo -n "
+<br>
+<table width=\"1280\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=40  align=center>序号</td>
+        <td width=80  align=right>源接口</td>
+        <td width=70  align=right>VLAN</td>
+        <td width=50  align=right>TTL</td>
+        <td width=150 align=right>源地址/端口</td>
+        <td width=150 align=right>目标地址/端口</td>
+        <td width=60  align=right>协议</td>
+        <td width=100 align=right>应用</td>
+        <td width=60  align=right>DSCP</td>
+        <td width=60  align=right>动作</td>
+        <td width=110 align=right>目标线路</td>
+        <td width=110 align=right>下一跳</td>
+        <td width=80  align=right>包计数</td>
+        <td width=*   align=right><a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onAddRule()\">添加策略>>&nbsp;</a></td>
+</tr> 
+";
+idname="row1"
+${FLOWEYE} route list | while read polno iniftype inifname proto appid appname \
+srctype srcip srcport dsttype dstip dstport dscp disabled vlan ttl action nexthop gateway state pkts theothers
+do 
+echo -n "
+"; if [ ${disabled} -ne 0 ]; then 
+echo -n "
+	<tr id=row4 height=22>
+"; elif [ ${state} -eq 0 ]; then 
+echo -n "
+	<tr id=row3 height=22>
+"; else 
+echo -n "
+	<tr id=${idname} height=22>
+"; fi 
+echo -n "
+	<td align=center>${polno}</td>
+"; if [ "${iniftype}" = "posvr" -a "${inifname}" = "all" ]; then 
+echo -n "
+	<td align=right>PPPOE服务&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right>${inifname}&nbsp;</td>
+"; fi 
+echo -n "
+"; if [ "${vlan}" = "0-0" ]; then 
+echo -n "
+	<td align=right>any&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right>${vlan}&nbsp;</td>
+"; fi 
+echo -n "
+"; if [ "${ttl}" = "0-255" ]; then 
+echo -n "
+	<td align=right></td>
+"; else 
+echo -n "
+	<td align=right>${ttl}</td>
+"; fi 
+echo -n "
+"; if [ "${srcport}" = "any" ]; then
+	 srcport=""
+    else
+	 srcport="/${srcport}"
+    fi
+
+echo -n " 
+	"; if [ "${srctype}" = "table" ]; then 
+echo -n "
+		<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${srcip}')\">${srcip}</a>${srcport}&nbsp;</td>
+	"; else 
+echo -n "
+		<td align=right>${srcip}${srcport}&nbsp;</td>
+	"; fi 
+echo -n "
+	"; if [ "${dstport}" = "any" ]; then
+		 dstport=""
+	    else
+		 dstport="/${dstport}"
+	    fi
+	
+echo -n " 
+	"; if [ "${dsttype}" = "table" ]; then 
+echo -n "
+		<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${dstip}')\">${dstip}</a>${dstport}&nbsp;</td>
+	"; else 
+echo -n "
+		<td align=right>${dstip}${dstport}&nbsp;</td>
+	"; fi 
+echo -n "
+	<td align=right>${proto}&nbsp;</td>
+	"; if [ "${appid}" = "any" ]; then 
+echo -n "
+	<td align=right>any&nbsp;</td>
+	"; else 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showApp('${appid}', '${appname}')\">${appname}&nbsp;</a></td>
+	"; fi 
+echo -n "
+	<td align=right>${dscp}&nbsp;</td>
+";
+	if [ "${action}" = "nat" ]; then
+		action="NAT"
+	elif [ "${action}" = "route" ]; then
+		action="路由"
+	fi
+	echo "<td align=right>${action}&nbsp;</td>"
+	if [ ${state} -eq 0 ]; then
+		color="#ff0000"
+	else
+		color="#0000ff"
+	fi
+	wgname="${nexthop#_wg.}"
+	if [ "${wgname}" = "_NULL_" ]; then
+		echo "<td align=right><a style=\"color:#ff0000\"><b>空线路</b></a></td>"
+	elif [ "${wgname}" != "${nexthop}" ]; then
+		echo "<td align=right><a style=\"color:${color}\" href=\"javascript:showWanGroup('${wgname}')\">${wgname}</a></td>"
+	else
+		echo "<td align=right><a style=\"color:${color}\" href=\"javascript:showProxy('${nexthop}')\">${nexthop}</a></td>"
+	fi
+	[ "${gateway}" = "0.0.0.0" ] && gateway=""
+	[ "${gateway}" = "NULL" ] && gateway=""
+	echo "<td align=right>${gateway}</td>"
+
+echo -n "
+	<td align=right><span id=pkts_${polno}>${pkts}</span></td>
+	<td align=right>
+                <img src=\"/img/edit.png\" style=\"margin-top: 3px\" onclick=\"modifyRule('${polno}')\" title=\"修改策略\" />&nbsp;
+                <img src=\"/img/delete.png\" style=\"margin-top: 3px\" onclick=\"deleteRule('${polno}')\" title=\"删除策略\" />&nbsp;
+	"; if [ ${disabled} -eq 0 ]; then 
+echo -n "
+                <img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disablePolicy('${polno}')\" title=\"禁用策略\" />&nbsp;
+	"; else 
+echo -n "
+                <img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enablePolicy('${polno}')\" title=\"启用策略\" />&nbsp;
+	"; fi 
+echo -n "
+	</td>
+       	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

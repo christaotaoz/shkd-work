@@ -1,0 +1,245 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=0
+[ "${CGI_topn}" = "" ] && CGI_topn="20"
+[ "${CGI_appid}" = "" ] && CGI_appid="http"
+[ "${CGI_statype}" = "" ] && CGI_statype="all"
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="refresh=${CGI_refresh}&statype=${CGI_statype}&appid=${CGI_appid}&topn=${CGI_topn}&appname=${CGI_appname}&bridge=${CGI_bridge}"
+cgiurl="${cgipath}?${cgiargs}"
+[ ${CGI_refresh} -ne 0 ] && afm_load_page  ${CGI_refresh} "${cgiurl}"
+[ "${width}" = "" ] && width=700
+MOD_TAB_LIST="协议配置#/cgi-bin/Protocol/sysapp_config?appid=${CGI_appid}&appname=${CGI_appname} \
+趋势图表#/cgi-bin/Monitor/appview_graph?${cgiargs} \
+在线用户#/cgi-bin/Monitor/appview_topip?${cgiargs} \
+连接排名#/cgi-bin/Monitor/appview_topflowip?${cgiargs} \
+有关策略#/cgi-bin/Monitor/appview_policy?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function modifyRule(grp, id)
+{
+	var url = \"/cgi-bin/Setup/policy_setrule?group=\" + grp + \"&polno=\" + id;
+        ShowWindow(url, \"\", 640, 720);
+}
+function openPolicyTime()
+{
+        var url = \"/cgi-bin/Setup/policy_listtime\";
+        ShowWindow(url, \"\", 840, 500);
+}
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 320);
+}
+function showIPGrp(gname)
+{
+        var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+        ShowWindow(url, \"\", 860, 630);
+}
+function showApp(appid, appname)
+{
+        var url = \"/cgi-bin/Monitor/app_show?appid=\" + appid + \"&title=\" + appname;
+        ShowWindow(url, \"\", 700, 540);
+}
+function setLink(linkid)
+{
+        var url = \"/cgi-bin/Setup/policy_setlink?showrate=1&link=\" + linkid;
+        if (\"${JOS_RELEASE}\" == \"2\" || \"${JOS_RELEASE}\" == \"3\")
+                ShowWindow(url, \"\", 540, 610);
+        else
+                ShowWindow(url, \"\", 540, 350);
+}
+</script>
+<body>
+"; cgi_show_title "应用协议->`${FLOWEYE} app name ${CGI_appid}`档案" ${width} 
+echo -n "
+"; cgi_show_app_info ${CGI_appid} ${width} 
+echo -n "
+<br>
+"; cgi_print_mod_header "有关策略" ${width} 
+echo -n "
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22px>
+        <td width=30  align=center>序号</td>
+        <td width=50  align=center>线路</td>
+        <td width=40  align=center>流向</td>
+        <td width=100  align=center>内网地址</td>
+        <td width=100  align=center>外网地址</td>
+        <td width=50  align=center>协议</td>
+        <td width=60  align=center>应用</td>
+        <td width=60  align=center>共享</td>
+        <td width=60  align=center>动作</td>
+        <td width=50  align=center>IP限速</td>
+        <td width=30  align=center>DSCP</td>
+        <td width=50  align=center>优先级</td>
+        <td width=50  align=center>匹配后</td>
+</tr>
+";
+curgrp=`${FLOWEYE} policy getcurgrp | cut -d' ' -f1`
+idname="row1"
+${FLOWEYE} policy getbyapp ${CGI_appid}  | \
+while read polno bridge dir appid appname proto from intype inip inport to \
+outtype outip outport action nextstep iprate prclevel pktbps pktbps2 tos pri natip linkid theothers
+do 
+echo -n "
+        <tr id=${idname}>
+	<td align=center>
+		<a style=\"color:#0000ff\" href=\"javascript:modifyRule('${curgrp}', '${polno}')\">${polno}</a>
+	</td>
+        ";
+        bdgname="${bridge}"
+        [ "${bdgname}" = "any" -o "${bdgname}" = "0" ] && bdgname="任意"
+        if [ ${JOS_RELEASE} -ne 0 -a "${linkid}" != "0" ]; then 
+echo -n "
+        <td align=center><a style=\"color:#0000ff\" href=\"javascript:setLink('${linkid}')\">${bdgname}</a></td>
+        "; else 
+echo -n "
+        <td align=center>${bdgname}</td>
+        "; fi 
+echo -n "
+        "; if [ "${dir}" = "in" ]; then 
+echo -n "
+        <td align=center>下行</td>
+        "; elif [ "${dir}" = "out" ]; then 
+echo -n "
+        <td align=center>上行</td>
+        "; else 
+echo -n "
+        <td align=center>any</td>
+        "; fi 
+echo -n "
+        "; if [ "${intype}" = "table" ]; then
+                if [ "${inport}" = "any" ]; then 
+echo -n "
+                        <td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}</a></td>
+        ";     else 
+echo -n "
+                        <td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}:${inport}</a></td>
+        ";     fi 
+echo -n "
+        "; else
+                if [ "${inport}" = "any" ]; then 
+echo -n "
+                        <td align=center>${inip}</td>
+        ";     else 
+echo -n "
+                        <td align=center>${inip}:${inport}</td>
+        ";     fi
+            fi 
+echo -n "
+        "; if [ "${outtype}" = "table" ]; then
+                if [ "${outport}" = "any" ]; then 
+echo -n "
+                    <td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}</a></td>
+        ";     else 
+echo -n "
+                    <td align=center><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}:${outport}</a></td>
+        ";     fi 
+echo -n "
+        "; else
+                if [ "${outport}" = "any" ]; then 
+echo -n "
+                        <td align=center>${outip}</td>
+        ";     else 
+echo -n "
+                        <td align=center>${outip}:${outport}</td>
+        ";     fi
+            fi 
+echo -n "
+	<td align=center>${proto}</td>
+        "; if [ "${appid}" = "any" ]; then 
+echo -n "
+        <td align=center>任意协议</td>
+        "; else 
+echo -n "
+        <td align=center><a style=\"color:#0000ff\" href=\"javascript:showApp('${appid}', '${appname}')\">${appname}</a></td>
+        "; fi 
+echo -n "
+        "; if [ "${natip}" != "0" ]; then 
+echo -n "
+        <td align=center>${natip}</td>
+        "; else 
+echo -n "
+        <td align=center></td>
+        "; fi 
+echo -n "
+	";
+	case "${action}" in
+	"deny")
+		echo "<td align=center>阻断</td>"
+		;;
+	"permit")
+		echo "<td align=center>允许</td>"
+		;;
+	ROUTE*)
+		pxy=`echo ${action} | cut -d'-' -f2`
+		echo "<td align=center>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">包转发->${pxy}</a>"
+		echo "</td>"
+		;;
+	PROXY*)
+		pxy=`echo ${action} | cut -d'-' -f2`
+		echo "<td align=center>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">${action}</a>"
+		echo "</td>"
+		;;
+	DUP*)
+		pxy=`echo ${action} | cut -d'-' -f2`
+		echo "<td align=center>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">数据镜像->${pxy}</a>"
+		echo "</td>"
+		;;
+	*)
+		echo "<td align=center>${action}</td>"
+		;;
+	esac
+        [ "${iprate}" = "0" ] && iprate="" 
+echo -n "
+        <td align=right>${iprate}</td>
+        "; if [ "${tos}" != "0" ]; then 
+echo -n "
+        <td align=center>${tos}</td>
+        "; else 
+echo -n "
+        <td align=center></td>
+        "; fi 
+echo -n "
+        "; if [ "${pri}" != "0" ]; then 
+echo -n "
+        <td align=center>${pri}</td>
+        "; else 
+echo -n "
+        <td align=center></td>
+        "; fi 
+echo -n "
+        "; if [ "${nextstep}" = "continue" ]; then 
+echo -n "
+        <td align=center>继续</td>
+        "; else 
+echo -n "
+        <td align=center>停止</td>
+        "; fi 
+echo -n "
+        </tr>
+";
+        if [ "${idname}" = "row1" ]; then
+                idname="row2"
+        else
+                idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

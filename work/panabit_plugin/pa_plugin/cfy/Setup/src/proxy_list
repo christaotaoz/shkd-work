@@ -1,0 +1,74 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script language=\"javascript\">
+function onAddProxy()
+{
+	window.location.href = \"/cgi-bin/Setup/proxy_add\";
+}
+function onDeleteProxy(name)
+{
+	if (confirm(\"系统将删除所有使用此代理的规则，确定要删除此代理吗?\")) 
+		window.location.href = \"${myself}?action=delete&proxyname=\" + name; 
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat rmvproxy ${CGI_proxyname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "策略对象->流量代理" 
+echo -n "
+<br>
+<table width=900 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+	<td width=130 align=center>代理名称</td>
+	<td width=120 align=center>所在网卡</td>
+	<td width=130 align=center>IP地址</td>
+	<td width=130 align=center>网关地址</td>
+	<td width=130 align=center>DNS服务器地址</td>
+	<td width=120 align=center>VLAN&nbsp;Tag</td>	
+	<td width=* align=center><a style=\"color:#0000ff\" href=\"javascript:onAddProxy()\">添加代理>></a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} nat listproxy type=proxy | while read type id name ifname addr gateway dnsaddr vlan theothers
+do
+    echo "<tr id=${idname}>"
+    echo "<td align=center>${name}</td>"
+    echo "<td align=center>${ifname}</td>"
+    echo "<td align=center>${addr}</td>"
+    echo "<td align=center>${gateway}</td>"
+    echo "<td align=center>${dnsaddr}</td>"
+    [ "${vlan}" = "0" ] && vlan=""
+    echo "<td align=center>${vlan}</td>"
+    echo "<td align=center><a style=\"color:#0000ff\" href=\"/cgi-bin/Setup/proxy_edit?proxyname=${name}\">编辑</a>&nbsp;&nbsp;&nbsp;<a style=\"color:#0000ff\" href=\"javascript:onDeleteProxy('${name}')\">删除</a></td>"
+    echo "</tr>"
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done
+echo "</table>"
+
+echo -n "
+</body>
+</html>
+";

@@ -1,0 +1,12 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+result=`floweye dbifpxy get name=${CGI_name} type=${CGI_datatype}`
+echo ${result}
+
+echo -n "
+";

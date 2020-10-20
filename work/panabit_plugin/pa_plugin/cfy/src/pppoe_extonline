@@ -1,0 +1,267 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+[ "${CGI_poolid}" = "" ] && CGI_poolid=0
+[ "${CGI_server}" = "" ] && CGI_server=0
+[ "${CGI_sort}" = "" ] && CGI_sort="birth"
+[ "${CGI_vlan}" = "" ] && CGI_vlan=0
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function importAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_import\";
+}
+function exportAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_export\";
+}
+function addAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_addacct\";
+}
+function modifyAcct(acct)
+{
+	var url = \"/cgi-bin/Pppoe/pppoe_editacct?where=online&account=\" + acct;
+	ShowWindow(url, \"\", 750, 400);
+}
+function deleteAcct()
+{
+	var args, mac;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			mac = accounts[i].value.substr(0, 17);
+			if (args == \"\")
+				args = mac;
+			else
+				args += \" \" + mac;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要强制下线这些用户?\"))
+		window.location.href = \"${myself}?action=kickoff&maclist=\" + args;
+}
+function bindAcct(action)
+{
+	var args, mac, name;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			mac = accounts[i].value.substr(0, 17);
+			name = accounts[i].value.substr(17); 
+			if (args == \"\")
+				args = name + \":\" + mac;
+			else
+				args += \" \" + name + \":\" + mac;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要绑定这些用户?\")) {
+		window.location.href = \"${myself}?action=\" + action + 
+				       \"&namelist=\" + args;
+	}
+}
+function onSelectItem(obj)
+{
+	var count0, count1;
+	var accounts = document.getElementsByName(\"accts\");
+	var delacct;
+	count0 = count1 = 0;
+	if (obj.value == \"_NULL_\") {
+        	for(i = 1;i < accounts.length; i++) {
+			accounts[i].checked = obj.checked;
+			if (accounts[i].checked) count1++;
+			else count0++;
+		}
+	}
+	else {
+       		for(i = 1;i < accounts.length; i++) {
+			if (accounts[i].checked)
+				count1++;
+			else 
+				count0++;
+       		}
+		if (count0 == 0 && count1 > 0)
+			accounts[0].checked = true;
+		else
+			accounts[0].checked = false;
+	}
+	delacct = document.getElementById(\"delacct\");
+	if (count1 > 0) {
+		delacct.style.color = \"#0000ff\";
+	}
+	else {
+		delacct.style.color = \"#545454\";
+	}
+}
+function showIp(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 650, 700);
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + name;
+        ShowWindow(url, \"\", 350, 380);
+}
+function editIppool(id) 
+{
+	var url = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+	ShowWindow(url, \"\", 680, 300);
+}
+function showAcct(mac)
+{
+	var url = \"/cgi-bin/Pppoe/pppoe_showacct?mac=\" + mac;
+	
+	ShowWindow(url, \"\", 500, 600);
+}
+function showClntpxy(id)
+{
+	var url = \"/cgi-bin/Pppoe/clntpxy_show?name=\" + id;
+	ShowWindow(url, \"\", 350, 420);
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; 
+cgi_show_title "PPPOE代理->在线用户"
+if [ "${CGI_action}" = "kickoff" ]; then
+	cmdargs=""
+	for mac in ${CGI_maclist}
+	do
+		cmdargs="${cmdargs} mac=${mac}"
+	done
+	errmsg=`${FLOWEYE} pppoesvr rmvclnt ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+fi
+
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=20  align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='_NULL_' onclick=\"onSelectItem(this)\"/></td>
+	<td width=35  align=right>序号</td>
+	<td width=130 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mac&${sortargs}\">MAC地址</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ip&${sortargs}\">IP地址</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=account&${sortargs}\">账号</a></td>
+	<td width=55  align=right><a style=\"color:#0000ff\">VLAN</td>
+	<td width=45  align=right><a style=\"color:#0000ff\">MTU</td>
+	<td width=90  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=pool&${sortargs}\">地址池</a></td>
+	<td width=90  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=server&${sortargs}\">服务器</a></td>
+	<td width=80  align=right>状态</td>
+	<td width=80  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=inbps&${sortargs}\">流入速率</a></td>
+	<td width=80  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=outbps&${sortargs}\">流出速率</a></td>
+	<td width=*   align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=birth&${sortargs}\">在线时间</a></td>
+	<td width=120 align=right><a id=delacct style=\"color:#545454;font-size:13px\" href=\"javascript:deleteAcct()\">强制下线</a>&nbsp;</td>
+</tr>
+";
+case "${CGI_sort}" in
+"pool")
+	sortargs="-k19"
+	;;
+"account")
+	sortargs="-k3"
+	;;
+"state")
+	sortargs="-k1"
+	;;
+"ip")
+	sortargs="-k10"
+	;;
+"mac")
+	sortargs="-k9"
+	;;
+"mtu")
+	sortargs="-k10"
+	;;
+"server")
+	sortargs="-k5"
+	;;
+"birth")
+	sortargs="-k13"
+	;;
+"inbps")
+	sortargs="-n -k12"
+	;;
+"outbps")
+	sortargs="-n -k14"
+	;;
+*)
+	sortargs="-k1"
+	;;
+esac
+idname="row1"
+count=0
+${FLOWEYE} clntpxy list | grep "${CGI_filter}" | sort  ${sortargs} | while read state id \
+name outif mtu outvlan vlan0 vlan1 clntmac ipaddr gwaddr inbps inbpsfmt outbps outbpsfmt onlintime svrname poolid poolname theothers
+do
+	count=$((${count} + 1))
+	[ "${poolname}" = "NULL" ] && poolname=""
+	[ "${name}" = "NULL" ] && name=""
+	[ "${svrname}" = "NULL" -o "${svrname}" = "(null)" ] && svrname=""
+	if [ "${expired}" = "1" ]; then
+		echo "<tr id=row3>"
+	else
+		echo "<tr id=${idname}>"
+	fi
+
+echo -n "
+	<td align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='${clntmac}${name}' onclick=\"onSelectItem(this)\" /></td>
+	<td align=right>${count}&nbsp;</td>
+	<td align=right>${clntmac}&nbsp;</td>
+	<td align=right>${ipaddr}&nbsp;</td>
+	<td align=right>${name}&nbsp;</td>
+	<td align=right>${vlan0}/${vlan1}&nbsp;</td>
+	<td align=right>${mtu}</td>
+"; if [ "${poolname}" != "" ]; then 
+echo -n "
+	<td align=right><a href=\"javascript:editIppool('${poolid}')\">${poolname}</a>&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right></td>
+"; fi 
+echo -n "
+"; if [ "${svrname}" != "" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showServer('${svrname}')\">${svrname}</a></td>
+"; else 
+echo -n "
+	<td align=right></td>
+"; fi 
+echo -n "
+	<td align=right>${state}</td>
+	<td align=right>${inbpsfmt}&nbsp;</td>
+	<td align=right>${outbpsfmt}&nbsp;</td>
+	<td align=right>${onlinetime}</td>
+	<td align=right>
+		<a href=\"javascript:showAcct('${clntmac}')\">本地侧</a>&nbsp;
+		<a href=\"javascript:showClntpxy('${id}')\">代理侧</a>&nbsp;
+	</td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

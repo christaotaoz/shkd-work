@@ -1,0 +1,71 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Monitor/`basename $0`"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height)
+{
+ 	ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+</script>
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlp3day\" style=\"display:none\">查看最近三天趋势图</span>
+<span id=\"hlpall\" style=\"display:none\">查看最近一周、一月的趋势图</span>
+"; 
+cgi_show_title "系统概况->在线用户趋势"
+pngsize="width=800 height=260"
+
+echo -n "
+";
+errmsg=`${FLOWEYE} chart show ${pngsize} tag=ip  yname="ip-count" outimg=${TMPPATH}/ip_day.png hours=24`
+ipcount=`${FLOWEYE} ipobj stat | grep "ip_count" | cut -d'=' -f2`
+
+echo -n "
+<br>
+<table style=\"width:800; font:bold 14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近24小时在线IP趋势(当前在线IP数${ipcount})</b></td>
+        <td align=right>
+                <a href=\"javascript:popupurl('/cgi-bin/Monitor/iptrend_graph?time=3day', 700, 800)\"
+                   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+                <a href=\"javascript:popupurl('/cgi-bin/Monitor/iptrend_graph?time=mon', 700, 800)\"
+                   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+        </td>
+</tr>
+</table>
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/ip_day.png\"></img></td></tr>
+</table>
+<br>
+"; 
+errmsg=`${FLOWEYE} chart show ${pngsize} tag=appobj.natipcnt yname="ip-count" outimg=${TMPPATH}/natip_day.png hours=24` 
+ipcount=`${FLOWEYE} appobj stat | grep "natipcnt" | cut -d'=' -f2`
+
+echo -n "
+<br>
+<table style=\"width:800; font:bold 14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近24小时路由共享用户趋势(当前在线用户数${ipcount})</b></td>
+        <td align=right>
+                <a href=\"javascript:popupurl('/cgi-bin/Monitor/natip_graph?time=3day', 700, 800)\"
+                   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+                <a href=\"javascript:popupurl('/cgi-bin/Monitor/natip_graph?time=mon', 700, 800)\"
+                   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+        </td>
+</tr>
+</table>
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/natip_day.png\"></img></td></tr>
+</body>
+</html>
+";

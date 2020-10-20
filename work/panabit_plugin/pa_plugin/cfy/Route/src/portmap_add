@@ -1,0 +1,161 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+returnurl="/cgi-bin/Route/portmap_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var wan = document.getElementsByName(\"wan\")[0];
+	var port  = document.getElementsByName(\"port\")[0];
+	var mapip = document.getElementsByName(\"mapip\")[0];
+	var mapport = document.getElementsByName(\"mapport\")[0];
+	var gateway = document.getElementsByName(\"gateway\")[0];
+	var note = document.getElementsByName(\"note\")[0];
+	if (wan.value == \"\") {
+		alert(\"请选择WAN线路!\");
+		wan.select();
+		return false;
+	}
+	port.value = TrimAll(port.value);
+	mapport.value = TrimAll(mapport.value);
+	if (!IsDigitIn(mapport.value, 0, 65535)) {
+		alert(\"非法端口!\");
+		mapport.select();
+		return false;
+	}
+	mapip.value = TrimAll(mapip.value);
+	if (!IsIPAddr(mapip.value)) {
+		alert(\"非法IP!\");
+		mapip.select();
+		return false;
+	}
+	gateway.value = TrimAll(gateway.value);
+	if (!IsIPAddr(gateway.value)) {
+		alert(\"非法IP!\");
+		gateway.select();
+		return false;
+	}
+	note.value = TrimAll(note.value);
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"${returnurl}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	[ "${CGI_gateway}" = "" ] && CGI_gateway="0.0.0.0"
+	cmdargs="wan=${CGI_wan} port=${CGI_port} proto=${CGI_proto} mapip=${CGI_mapip} mapport=${CGI_mapport} gateway=${CGI_gateway}"
+	[ "${CGI_note}" != "" ] && cmdargs="${cmdargs} note=${CGI_note}"
+	errmsg=`${FLOWEYE} nat addportmap ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${returnurl}"
+		exit 0
+	fi
+else
+	CGI_gateway="0.0.0.0"
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "策略->端口映射->添加" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=30></td>
+        <td width=120 align=left>WAN线路</td>
+        <td width=* align=left>
+		<select name=wan style=\"width:120\" value=\"${CGI_wan}\">
+		";
+		${FLOWEYE} nat listproxy | while read type id name theothers
+		do
+			[ "${type}" = "rtif" ] && continue
+			echo "<option value=\"${name}\">${name}</option>"
+		done
+		${FLOWEYE} wangroup list | while read id name theothers
+		do
+			echo "<option value=\"_wg.${name}\">${name}</option>"
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>WAN端口</td>
+        <td align=left><input type=text name=port style=\"width:120px\" value=\"${CGI_port}\" />&nbsp;(格式为NN或NN-MM)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>协议</td>
+        <td align=left>
+		<select name=proto style=\"width:120\" value=\"${CGI_proto}\">
+		"; for proto in TCP UDP; do
+			if [ "${CGI_proto}" = "${proto}" ]; then
+				echo "<option value=\"${proto}\" selected>${proto}</option>"
+			else
+				echo "<option value=\"${proto}\">${proto}</option>"
+			fi
+		   done 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>内网主机IP</td>
+        <td align=left>
+		<input type=text name=mapip style=\"width:120px\" value=\"${CGI_mapip}\" />&nbsp;(xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>内网主机端口</td>
+        <td align=left><input type=text name=mapport style=\"width:120px\" value=\"${CGI_mapport}\" />&nbsp;(0表示使用WAN端口)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>下一跳</td>
+        <td align=left>
+		<input type=text name=gateway style=\"width:120px\" value=\"${CGI_gateway}\" />&nbsp;(xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>备注</td>
+        <td align=left>
+		<input type=text name=note style=\"width:200px\" value=\"${CGI_note}\" />&nbsp;(不超过32个英文字符，不能有空格)
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn style=\"width:80\" value=\"提交\"></input>
+		<input type=button id=newbtn style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

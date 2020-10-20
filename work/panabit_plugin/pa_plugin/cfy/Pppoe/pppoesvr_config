@@ -1,0 +1,31 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+MOD_TAB_LIST="基本参数#/cgi-bin/Pppoe/pppoesvr_config 服务列表#/cgi-bin/Pppoe/pppoesvr_list"
+
+fail=0
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	cmdargs="${cmdargs} enable=${CGI_enable} keepalive=${CGI_keepalive}"
+	cmdargs="${cmdargs} radexptime=${CGI_radexptime}"
+	cmdargs="${cmdargs} ignorecache=${CGI_ignorecache}"
+	cmdargs="${cmdargs} auto_macbind=${CGI_auto_macbind}"
+	errmsg=`${FLOWEYE} pppoesvr config ${cmdargs}`
+	if [ "$?" != "0" ]; then 
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+if [ ${fail} -eq 0 ]; then 
+	for nameval in `${FLOWEYE} pppoesvr stat`
+	do
+		eval "CGI_${nameval}"
+	done
+	[ "${CGI_radexptime}" = "0" ] && CGI_radexptime=600
+	[ "${CGI_auto_macbind}" = "" ] && CGI_auto_macbind=0
+fi
+

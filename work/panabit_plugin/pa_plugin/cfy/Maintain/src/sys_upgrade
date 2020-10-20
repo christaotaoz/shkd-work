@@ -1,0 +1,263 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"sigdbfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"ÇëÊäÈëÉı¼¶°üËùÔÚÂ·¾­!\");
+		return false;
+	}
+	if (confirm(\"È·¶¨ÒªÉÏ´«Éı¼¶°ü?\"))
+		return true;
+	else
+		return false;
+}
+</script>
+";
+RAMDISK=/usr/ramdisk
+if [ ! -d ${RAMDISK} ]; then
+	afm_dialog_msg "/usr/ramdisk²»´æÔÚ!"
+	exit 0
+fi
+if [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}"
+	# verify the archive
+	fileok=`tar ztvf ${CGI_sigdbfile} | grep panabit.inf`
+	if [ "${fileok}" = "" ]; then
+		afm_dialog_msg "ÎŞĞ§µÄÏµÍ³:°æ±¾ĞÅÏ¢ÂëÎÄ¼ş²»´æÔÚ!"
+		rm -rf ${CGI_sigdbfile}
+		afm_load_page 0 "${myself}"
+		sync
+		exit 0
+	fi
+	# give it more space for upgrading
+	rm -rf ${RAMDISK}/admin/tmp/*
+	mkdir -p ${RAMDISK}/sysupgrade
+	rm -rf ${RAMDISK}/sysupgrade/*
+	mkdir -p ${RAMDISK}/tmp
+	rm -rf ${RAMDISK}/tmp/*
+	errmsg=`tar xzvf ${CGI_sigdbfile} -C ${RAMDISK}/sysupgrade 2>&1`
+	if [ "$?" != "0" ]; then
+		rm -rf ${RAMDISK}/sysupgrade/*
+		rm -rf ${CGI_sigdbfile}
+		sync
+		afm_dialog_msg "½â°üÏµÍ³°üÊ±³öÏÖÎÊÌâ£¬ÇëÁªÏµ³§¼ÒÈ·±£ÏµÍ³°üµÄÕıÈ·ĞÔ!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	rm -rf ${CGI_sigdbfile}	
+	sync
+	panabitinf=`find ${RAMDISK}/sysupgrade -name panabit.inf`
+	if [ "${panabitinf}" = "" ]; then
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_dialog_msg "ÎŞĞ§µÄÏµÍ³:°æ±¾ĞÅÏ¢ÂëÎÄ¼ş²»´æÔÚ!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	. ${panabitinf}
+	# Check BSD version
+	jrel=`${FLOWEYE} jflow stat | grep jflow_jos_release | cut -d'=' -f2`
+	if [ ${jrel} -le 1 ]; then
+		curbsd=`uname -r | cut -d'.' -f1`
+		pkgbsd=`echo ${BSDVER} | cut -d'.' -f1`
+		if [ "${curbsd}" != "${pkgbsd}" ]; then
+			afm_dialog_msg "BSD°æ±¾²»Ò»ÖÂ£¬µ±Ç°BSD°æ±¾Îª`uname -r |cut -d'-' -f1`£¬Éı¼¶°üÊÊÓÃµÄBSD°æ±¾Îª${BSDVER}"
+			rm -rf ${RAMDISK}/sysupgrade/*
+			afm_load_page 0 "${myself}"
+			exit 0
+		fi
+	elif [ ${jrel} -gt 1 ]; then
+		curbsd="`uname -r | cut -d'-' -f1`"
+		if [ "${curbsd}" != "${BSDVER}" ]; then
+			afm_dialog_msg "BSD°æ±¾²»Ò»ÖÂ£¬µ±Ç°BSD°æ±¾Îª${curbsd}£¬Éı¼¶°üÊÊÓÃµÄBSD°æ±¾Îª${BSDVER}"
+			rm -rf ${RAMDISK}/sysupgrade/*
+			afm_load_page 0 "${myself}"
+			exit 0
+		fi
+	fi
+fi
+if [ "${CGI_action}" = "upgrade" ]; then
+	mkdir -p ${RAMDISK}/tmp
+	rm -f ${RAMDISK}/tmp/sys_up_success
+	fontsz="14px"
+	kerneldir=`find ${RAMDISK}/sysupgrade -name kernel`
+	admindir=`find ${RAMDISK}/sysupgrade -name admin`
+	bindir=`find ${RAMDISK}/sysupgrade -name bin`
+        if [ "${kerneldir}" = "" -o "${admindir}" = "" -o "${bindir}" = "" ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">Éı¼¶°üÓĞÎÊÌâ£¬ÇëÁªÏµ³§¼Ò!</p></b></br>"
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+       	# verify the package.
+       	if [ ! -f ${kerneldir}/joskm.ko -o ! -f ${bindir}/panaos -o ! -f ${bindir}/floweye ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">Éı¼¶°üÓĞÎÊÌâ£¬ÇëÁªÏµ³§¼Ò!</p></b></br>"
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	pkgroot=`dirname ${kerneldir}`
+	binroot=`dirname ${bindir}`
+	admroot=`dirname ${admindir}`
+	if [ "${pkgroot}" != "${binroot}" -o "${pkgroot}" != "${admroot}" ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">Éı¼¶°üÓĞÎÊÌâ£¬ÇëÁªÏµ³§¼Ò!</p></b></br>"
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ -d ${pkgroot}/usr ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">Éı¼¶°üÖĞ³öÏÖÁËÒì³£Ä¿Â¼!</Ò!</p></b></br>"
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	. /etc/PG.conf
+	if [ ! -f ${PGPATH}/admin/.htpasswd ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">±¾µØÏµÍ³ÒÑËğ»µ£¬ÇëÁªÏµ³§¼Ò!</p></b></br>"
+		rm -rf ${RAMDISK}/sysupgrade/*
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ -d ${PGPATH}/usr ]; then
+		echo "<br><b><p style=\"color:#ff0000;font-size:${fontsz}\">±¾µØÏµÍ³ÖĞ³öÏÖÁËÒì³£Ä¿Â¼£¬É¾³ıÖ®!</Ò!</p></b></br>"
+		rm -Rf ${PGPATH}/usr
+	fi
+	echo "<br><b><p style=\"color:#0000ff;font-size:${fontsz}\">Éı¼¶°üÕıÈ·ÓĞĞ§£¬¿ªÊ¼¸üĞÂ......</p></b>"
+        cp -f ${PGPATH}/admin/.htpasswd ${DATAPATH}/.htpasswd
+        cp -Rf ${pkgroot}/* ${PGPATH}/
+        cp -f ${DATAPATH}/.htpasswd ${PGPATH}/admin/.htpasswd
+	rm -f ${DATAPATH}/.htpasswd
+	# upgrade kernel part
+        cp -f ${kerneldir}/*.ko /boot/kernel/
+	sync
+	sync
+	rm -rf ${RAMDISK}/sysupgrade/*
+	# Copy to ramdisk
+	cp -Rf ${PGPATH}/* ${RAMDISK}/
+	echo "upgrade_system yes" >> ${EVENTFILE}
+	waitsecs=30
+	echo "<br><b><p style=\"color:#0000ff;font-size:${fontsz}\">ÕıÔÚ¸üĞÂ£¬ĞèÒª${waitsecs}Ãë×óÓÒ£¬ÇëÄÍĞÄµÈ´ı......</p></b>"
+	WEB_LOGGER "Éı¼¶ÏµÍ³" ""
+	# Delete the tmp file
+	afm_load_page ${waitsecs} "${myself}?action=afterupgrade"
+	exit 0
+fi
+if [ "${CGI_action}" = "afterupgrade" ]; then
+	if [ -f ${RAMDISK}/tmp/sys_up_success ]; then
+		rm -f ${RAMDISK}/tmp/sys_up_success
+		afm_dialog_msg "Éı¼¶³É¹¦!"
+	else
+		afm_dialog_msg "Éı¼¶Ê§°Ü!"
+	fi
+fi
+
+echo -n "
+<body>
+"; 
+[ "${CGI_browsertitle}" = "" ] && cgi_show_title "ÏµÍ³Éı¼¶->ÏµÍ³¸üĞÂ"
+if [ "${CGI_action}" = "upload" ]; then 
+
+echo -n "
+<br>
+<table style=\"width:100%; font-size:14px;\">
+<tr>
+<td width=20></td>
+<td align=left>ÄúÉÏ´«µÄÏµÍ³Éı¼¶°ü´´½¨ÓÚ\"${BUILDDATE}\", ´úºÅÎª\"${BUILDREL}\"</td></tr>
+<table>
+<br>
+<table style=\"width:100%; font-size:14px;\">
+<tr>
+<td width=20></td>
+<td align=left>Çëµã»÷´Ë´¦<a style=\"color:#0000ff;font-size:15px\" href=\"${myself}?action=upgrade\"><b>½øĞĞÉı¼¶</b></a>(×¢Òâ£¬Éı¼¶¹ı³Ì»áÖĞ¶ÏÍøÂç¼¸ÃëÖÓ)</td></tr>
+</table>
+<br>
+<table style=\"width:100%; font-size:14px;\">
+<tr>
+<td width=20></td>
+<td align=left>Èç¹û²»ÏëÉı¼¶,µã»÷´Ë´¦<a style=\"color:#0000ff;font-size:15px\" href=\"${myself}?action=return\"><b>É¾³ı</b></a>¸Õ²ÅÉÏ´«µÄÉı¼¶°ü£¬ÒÔÃâÕ¼ÓÃ±¦¹óµÄflash¿Õ¼ä</td><r>
+</table></body></html>
+";
+	exit 0
+fi
+[ -f ${PGPATH}/etc/panabit.inf ] && . ${PGPATH}/etc/panabit.inf
+if [ ${JOS_RELEASE} -ne 0 ]; then
+	for nameval in `${FLOWEYE} key info`; do
+		eval "${nameval}"
+	done
+else
+	cantupgrade=0
+fi
+if [ "${cantupgrade}" = "1" ]; then
+	echo "<br><p style=\"color:#ff0000;font-size:15px\">ÎŞĞ§µÄÉı¼¶ÆÚÏŞ£¬ÇëÁªÏµ³§¼Ò»ñÈ¡Éı¼¶License!</p></br>"
+	exit 0
+fi
+freebsdver=`uname -r | cut -d'-' -f1`
+
+echo -n "
+<br>
+<table style=\"width:800; border-bottom:1px #ccc dotted; font-size:14px;font-bold:true;\">
+<tr><td align=left><b>ĞÅÏ¢ÌáÊ¾</b></td></tr>
+</table>
+<br>
+<table style=\"width:800; font-size:13px;font-bold:true;\" cellpadding=3> 
+<tr>
+    <td width=20></td>
+"; if [ "${TOPSEC}" != "" ]; then 
+echo -n "
+    <td align=left>1. µ±Ç°°æ±¾\"${BUILDREL}\"</td>
+"; else 
+echo -n "
+    <td align=left>1. µ±Ç°°æ±¾´úºÅ\"${BUILDREL}\"£¬´´½¨ÓÚ${BUILDDATE}[${freebsdver}]</td>
+"; fi 
+echo -n "
+</tr>
+<tr>
+    <td width></td>
+    <td align=left>2. µÚÒ»²½: ÉÏ´«Éı¼¶°ü£¬Èç¹ûÏµÍ³ÉÏ´«³É¹¦£¬ÏµÍ³»áÌáÊ¾Éı¼¶</td>
+</tr>
+<tr>
+    <td></td>
+    <td align=left>3. µÚ¶ş²½: Éı¼¶£¬Éı¼¶¹ı³Ì»á»¨·Ñ¼¸ÃëÊ±¼ä£¬ÔÚ´ËÆÚ¼äÄÚ£¬ÍøÂç»áÖĞ¶Ï£¬Òò´ËÇëÊÂÏÈ×öºÃ×¼±¸</td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; border-bottom:1px #ccc dotted; font-size:14px;font-bold:true;\">
+<tr><td align=left><b>Éı¼¶ÏµÍ³</b></td></tr>
+</table>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr height=22>
+	<td width=20></td>
+	<td width=140 style=\"font-bold:true;font-size:14px\" align=left>ÇëÊäÈëÉı¼¶°üÂ·¾¶</td>
+	<td width=* class=cssTDArial align=left>
+		<input type=file name=sigdbfile style=\"width:450px\">
+	</td>
+	<td align=right>
+		<input type=hidden name=action value=upload></input>
+		<input type=submit style=\"width:90\" value=\"ÉÏ´«Éı¼¶°ü\"></input>
+	</td>
+</tr>
+</table>
+</form>
+";
+if [ "${CGI_action}" = "afterupgrade" ]; then
+	if [ ! -e ${RAMDISK}/sysupgrade/panabit.tar.gz ]; then
+		afm_dialog_msg "Çë¹Ø±Õµ±Ç°ä¯ÀÀÆ÷´°¿Ú£¬ÖØĞÂµÇÂ½ÏµÍ³ÒÔÈÃÉı¼¶Ğ§¹ûÏÔÏÖ!"
+	fi
+fi
+
+echo -n "
+</body>
+</html>
+";

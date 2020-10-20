@@ -1,0 +1,57 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddGroup(frm)
+{
+	var grp = document.getElementsByName(\"grpname\")[0];
+	grp.value = TrimAll(grp.value);
+	if (!IsName(grp.value)) {
+		alert(\"名称中不能有&之类的特殊字符!\");
+		grp.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Setup/policy_getgrp"
+	errmsg=`${FLOWEYE} policy addgrp ${CGI_grpname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/policy_getgrp"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body> 
+"; cgi_show_title "流量控制策略->策略组->创建策略组" 
+echo -n "
+<br>
+<table width=\"76%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<form method=post onsubmit=\"return beforeAddGroup(this)\" action=\"/cgi-bin/Setup/policy_addgrp\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>请输入策略组名称</td>
+	<td width=200 align=left>
+		<input type=text class=text name=grpname style=\"width:100%\" size=32></input>
+	</td>
+	<td align=right width=120px><input type=submit style=\"width:100\" value=\"创建策略组\"></input>
+	<td width=*></td>
+</tr>
+</table>
+</form>
+</table>
+</center>
+</body>
+</html>
+";

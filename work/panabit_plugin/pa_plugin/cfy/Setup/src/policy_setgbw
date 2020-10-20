@@ -1,0 +1,151 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeSetGBW(frm)
+{
+	var gbwin = document.getElementsByName(\"gbwin\")[0];
+	var gbwout= document.getElementsByName(\"gbwout\")[0];
+	var brname= document.getElementsByName(\"brname\")[0];
+	gbwout.value = TrimAll(gbwout.value);
+	if (gbwout.value == \"\") {
+		alert(\"请输入出口上行带宽,如果想关闭上行带宽保证功能,请输入0!\");
+		gbwout.select();
+		return false;
+	}
+	
+	if (!IsDigitIn(gbwout.value, 0, 10000000)) {
+		alert(\"请输入0~10000000之间的数字\");
+		gbwout.select();
+		return false;
+	}
+	
+	gbwin.value = TrimAll(gbwin.value);
+	if (gbwin.value == \"\") {
+		alert(\"请输入出口下行带宽,如果想关闭下行带宽保证功能,请输入0!\");
+		gbwin.select();
+		return false;
+	}
+	if (!IsDigitIn(gbwin.value, 0, 10000000)) {
+		alert(\"请输入0~10000000之间的数字\");
+		gbwin.select();
+		return false;
+	}
+	brname.value = TrimAll(brname.value);
+	if (brname.value == \"\") {
+		alert(\"请输入网桥名称!\");
+		brname.select();
+		return false;
+	}
+	
+	return true;
+}
+function onBridgeChanged(obj) 
+{
+	window.location.href = \"${myself}?bridge=\" + obj.value;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy setgbw bridge=${CGI_bridge} name=${CGI_brname} in=${CGI_gbwin} out=${CGI_gbwout}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_bridge}" = "" ]; then
+	for bdg in `${FLOWEYE} bridge list`; do
+		CGI_bridge="${bdg}"
+		break
+	done
+fi
+if [ "${CGI_bridge}" != "" ]; then
+	for nameval in `${FLOWEYE} policy getgbw bridge=${CGI_bridge}`; do
+		tag=`echo ${nameval} | cut -d'=' -f1`
+		val=`echo ${nameval} | cut -d'=' -f2`
+		case "${tag}" in
+		"inbw")
+			CGI_gbwin="${val}"
+			;;
+		"outbw")
+			CGI_gbwout="${val}"
+			;;
+		"name")
+			CGI_brname="${val}"
+			;;
+		esac
+	done
+fi
+[ "${CGI_gbwin}" = "" ] && CGI_gbwin="0"
+[ "${CGI_gbwout}" = "" ] && CGI_gbwout="0"
+
+echo -n "
+<body>
+"; cgi_show_title "参数配置->网桥带宽" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeSetGBW(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=100 align=left>网&nbsp;桥</td>
+	<td width=* align=left>
+	<select name=bridge style=\"width:100\" value=\"${CGI_bridge}\" onchange=\"onBridgeChanged(this)\">
+	";
+		for bdg in `${FLOWEYE} bridge list`; do
+			if [ "${bdg}" = "${CGI_bridge}" ]; then
+				echo "<option value=${bdg} selected>网桥${bdg}</option>"
+			else
+				echo "<option value=${bdg}>网桥${bdg}</option>"
+			fi
+		done
+	
+echo -n "</select></td>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>网桥名称</td>
+	<td align=left>
+		<input type=text name=brname style=\"width:100px\" value=\"${CGI_brname}\"></input>&nbsp;(最大长度31个字符，1个汉字需2个字符)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>上行带宽</td>
+	<td align=left>
+		<input type=text name=gbwout style=\"width:100px\" value=\"${CGI_gbwout}\"></input>&nbsp;(kbps,填0将自动关闭上行带宽预留和保证功能)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>下行带宽</td>
+	<td align=left>
+		<input type=text name=gbwin style=\"width:100px\" value=\"${CGI_gbwin}\"></input>&nbsp;(kbps,填0将自动关闭下行带宽预留和保证功能)</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

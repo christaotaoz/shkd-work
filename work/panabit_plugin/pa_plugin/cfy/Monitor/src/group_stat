@@ -1,0 +1,557 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+if [ "${REFRESH_INTERNAL}" != "" ]; then
+	CGI_refresh="${REFRESH_INTERNAL}"
+else
+	[ "${CGI_refresh}" = "" ] && CGI_refresh=60
+fi
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgiurl="/cgi-bin/Monitor/`basename $0`?refresh=${CGI_refresh}&bridge=${CGI_bridge}&bdgname=${CGI_bdgname}"
+afm_load_page  ${CGI_refresh} "${cgiurl}"
+page_width=1170
+chart_width=590
+
+echo -n "
+"; if [ "${TOPSEC}" = "" ]; then 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/jq.js\"></script>
+<script type=\"text/javascript\" src=\"/img/highcharts.js\"></script>
+<script type=\"text/javascript\" src=\"/img/highcharts-3d.js\"></script>
+"; else 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/FusionCharts.js\"></script>
+"; fi 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupUrl(url, width, height)
+{
+ 	ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+function openGroup(grpid, grpname)
+{
+	var url = \"/cgi-bin/Monitor/grpview?bridge=${CGI_bridge}&group=\" + grpid;
+ 	ShowWindow(url, \"toolbar=no,menubar=no,scrollbars=1,resizable=0,location=no\", 862, 920);
+}
+function showUsrgrp()
+{
+	var url = \"/cgi-bin/Monitor/usrgrp_view?bridge=${CGI_bridge}\";
+ 	ShowWindow(url, \"scrollbars=1,resizable=0,statusbar=0\", 540, 500);
+}
+function showIP(ipaddr, online, ttl, outbyte, inbyte, outrate, inrate)
+{
+        var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr +
+              \"&online=\" + online + \"&ttl=\" + ttl + \"&outbyte=\" + outbyte +
+              \"&inbyte=\" + inbyte + \"&outrate=\" + outrate + \"&inrate=\" + inrate;
+        ShowWindow(url, \"\", 650, 700);
+}
+function showIPTrend()
+{
+        var url = \"/cgi-bin/Monitor/ip_trend\";
+        ShowWindow(url, \"\", 845, 680);
+}
+function showTopIP()
+{
+        var url = \"/cgi-bin/Monitor/ip_topn?title=\" + \"系统概况->Top用户\";
+        ShowWindow(url, \"\", 940, 700);
+}
+function showApp(appid, appname)
+{
+        var url = \"/cgi-bin/Monitor/appview_topip?appid=\" + appid +
+              \"&appname=\" + appname;
+        ShowWindow(url, \"scrollbars=1,resizable=1\", 744, 760);
+}
+function showTopApp()
+{
+        var url = \"/cgi-bin/Monitor/app_topn?title=\" + \"系统概况->Top应用\";
+        ShowWindow(url, \"\", 940, 700);
+}
+function numberformat(num)
+{
+        if (num >= 1024 * 1024 * 1024)
+                return ((num / (1024 * 1024 * 1024))).toFixed(2) + 'G';
+        else
+        if (num >= 1024 * 1024)
+                return ((num / (1024 * 1024))).toFixed(2) + 'M';
+        else     
+        if (num >= 1024)
+                return ((num / 1024)).toFixed(2) + 'K';
+        else
+                return num;
+}
+function piechart(json, render, name)
+{
+	var options_flow = ({
+		chart: {
+			renderTo: render,
+			type: 'pie',
+			options3d: {
+					enabled: false,
+					alpha: 45,
+					beta: 0
+			}
+		},
+        title: {
+		enabled: false,
+		text:'',
+            x: -20
+        },
+		colors:[],
+        xAxis: {
+			type: 'datetime',
+			tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'Arial',
+					fontSize:'10px'
+				}
+			}
+        },
+        yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+            title: {
+                text: \"flows/s\"
+            },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: \"#808080\"
+            }]
+        },plotOptions:{
+				area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+				pie: {
+					depth: 35,
+					size: '75%',
+					dataLabels: {
+                        			enabled: true,
+  						style: { fontFamily: 'Microsoft YaHei', lineHeight: '12px', fontSize: '9px', fontWeight:'normal'},
+						formatter:function(){
+								return this.point.name+ ' '+(this.percentage).toFixed(1)+'%'
+						}
+                    },
+                    showInLegend: false
+				},
+				spline:{
+					marker:{
+						radius:0,
+						lineWidth:0.5
+					},
+					lineWidth:1
+				}
+		},
+        tooltip: {
+            formatter:function(){
+					return this.point.name+ ' '+(this.percentage).toFixed(1)+'%'+' '+numberformat(this.y);
+				}
+        },
+        legend: {
+            layout: \"vertical\",
+            align: \"right\",
+            verticalAlign: \"middle\",
+            borderWidth: 0,
+			itemStyle:{font:'normal 9px Arial'},
+			itemMarginBottom: 5, 
+			maxHeight: '300px',
+			labelFormatter:function(){
+                        return this.name+ ' '+ '('+(this.percentage).toFixed(2)+'%)'
+                }
+        },
+		credits:{enabled: false},
+        series: [{name: name, data: []}]
+    });
+	
+	var s = json.split(',');
+	var data = [];
+	var colors = [];
+	
+	for (i = 0; i < s.length - 1; i++) {
+		t = (s[i]).split(' ');
+		data.push([t[0], parseInt(t[1])]);
+		colors.push(t[2]);
+	}
+		
+	options_flow.colors = colors;
+	options_flow.series[0].data = data;
+	var chart = new Highcharts.Chart(options_flow);
+}
+\$(document).ready(function(){
+	"; if [ "${TOPSEC}" = "" ]; then  
+echo -n "
+		$.ajax({
+			url: 'ajax_group_stat',
+			type:'post',
+			data: {type: 'flowchart_10', bridge: ${CGI_bridge}},
+			success:function(json){
+				piechart(json, \"pieCanvas2\", \"最近10分钟流量分布\");
+			}
+		});
+		$.ajax({
+			url: 'ajax_group_stat',
+			type:'post',
+			data: {type: 'flowchart_all', bridge: ${CGI_bridge}},
+			success:function(json){
+				piechart(json, \"pieCanvas1\", \"累计流量分布\");
+			}
+		});
+		$.ajax({
+			url: 'ajax_group_stat',
+			type:'post',
+			data: {type: 'flowchart_flowcnt', bridge: ${CGI_bridge}},
+			success:function(json){
+				piechart(json, \"pieCanvas3\", \"当前连接数分布\");
+			}
+		});
+	"; fi 
+echo -n "
+})
+function initpie()
+{
+"; if [ "${TOPSEC}" != "" ]; then  
+echo -n "
+"; 	pieAttrs="showPercentageValues='1' showPercentInToolTip='0' showZeroPies='1' showBorder='1' decimals='2' enableSmartLabels='1' enableRotation='0' bgColor='ffffff, e9e9e9' baseFontSize='12' baseFontColor='0' numberScaleValue='1024,1024,1024,1024' numberScaleUnit='KB,MB,GB,TB' " 
+echo -n "
+	var allXML = \"<chart caption='累计流量分布(Bytes)' ${pieAttrs}>\";
+	var lastXML= \"<chart caption='最近10分钟流量分布(Bytes)'  ${pieAttrs}>\";
+	var flowXML= \"<chart caption='当前应用连接分布' borderColor='000000' labelPadding='5' baseFontSize='12' baseFontColor='0'>\";
+	var bpsXML = \"<chart caption='当前应用速率分布(bits/s)' borderColor='000000' labelPadding='5' baseFontSize='12' baseFontColor='0' showSum='1' numberScaleValue='1000,1000,1000' numberScaleUnit='K,M,G'>\";
+	var chartAll  = new FusionCharts(\"/img/Pie3D.swf\", \"ChartId0\", \"${chart_width}\", \"298\");
+	var chartLast = new FusionCharts(\"/img/Pie3D.swf\", \"ChartId1\", \"${chart_width}\", \"298\");
+	var chartFlow = new FusionCharts(\"/img/MSBar2D.swf\", \"ChartId2\", \"${chart_width}\", \"388\");
+	var chartBps  = new FusionCharts(\"/img/StackedBar2D.swf\", \"ChartId3\", \"${chart_width}\", \"388\");
+	var categories = \"<categories>\";
+	var flowData = \"<dataset seriesname='连接数' color='0000FF'>\";
+	var bpsUpData = \"<dataset seriesname='上行速率' color='FF0000' showValues='0'>\"; 
+	var bpsDownData = \"<dataset seriesname='下行速率' color='0000FF' showValues='0'>\";
+	
+"; 
+	${FLOWEYE} app stat app=group sort=last bridge=${CGI_bridge} pie shownum | \
+	while read appid appname color flowcnt allbytes allper1 allper2 lastbytes lastper1 lastper2 theothers
+	do 
+echo -n "
+		allXML  += \"<set name='${appname}' color='${color}' value='${allbytes}'/>\";
+		lastXML += \"<set name='${appname}' color='${color}' value='${lastbytes}'/>\";
+";	done 
+echo -n "
+";
+	${FLOWEYE} app stat bridge=${CGI_bridge} app=group showsum shownum | \
+	while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall theother
+	do 
+echo -n "
+		categories += \"<category label='${appname}' />\";
+		flowData += \"<set value='${flow}' \";
+		bpsUpData += \"<set value='${rup}' \";
+		bpsDownData += \"<set value='${rdown}' \";
+	"; if [ "${appid}" != "total" ]; then 
+echo -n "
+		flowData += \"link='P-detailWin,scrollbars=1,resizable=0,width=940,height=1000-/cgi-bin/Monitor/grpview%3Fbridge%3D${CGI_bridge}%26group%3D${appid}' />\";
+ 		bpsUpData += \"link='P-detailWin,scrollbars=1,resizable=0,width=940,height=1000-/cgi-bin/Monitor/grpview%3Fbridge%3D${CGI_bridge}%26group%3D${appid}' />\";
+		bpsDownData += \"link='P-detailWin,scrollbars=1,resizable=0,width=940,height=1000-/cgi-bin/Monitor/grpview%3Fbridge%3D${CGI_bridge}%26group%3D${appid}' />\";
+	"; else 
+echo -n "
+		flowData += \"/>\";
+		bpsUpData += \"/>\";
+		bpsDownData += \"/>\";
+	"; fi 
+echo -n "
+";	done 
+echo -n "
+	allXML += \"</chart>\";
+	lastXML+= \"</chart>\";
+	flowData += \"</dataset>\";
+	bpsUpData += \"</dataset>\";
+	bpsDownData += \"</dataset>\";
+	flowXML+= categories + \"</categories>\" + flowData + \"</chart>\";
+	bpsXML += categories + \"</categories>\" + bpsUpData + bpsDownData + \"</chart>\";
+	chartAll.setDataXML(allXML);
+	chartLast.setDataXML(lastXML);
+	chartFlow.setDataXML(flowXML);
+	chartBps.setDataXML(bpsXML);
+	chartAll.render(\"pieAll\");
+	chartLast.render(\"pieLast\");
+	chartFlow.render(\"barFlow\");
+	chartBps.render(\"barBps\");
+"; fi 
+echo -n "
+}
+</script>
+<body onload=\"javascript:initpie()\">
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlp3day\" style=\"display:none\">查看最近三天趋势图</span>
+<span id=\"hlpall\" style=\"display:none\">查看最近一周、一月的趋势图</span>
+"; 
+if [ ${CGI_bridge} -eq 0 ]; then
+	cgi_show_title "系统概况->流量概况"
+else
+	cgi_show_title "网桥->${CGI_bdgname}"
+fi
+
+echo -n "
+"; if [ "${TOPSEC}" = "" ]; then 
+echo -n "
+<table width=${page_width} border=0 cellspacing=1 cellpadding=2>
+<tr id=ajax-tblhdr>
+<td align=left width=${chart_width}>&nbsp;最近10分钟分布</td>
+<td align=left width=*>累计流量分布</td>
+</tr>
+</table>
+<table width=${page_width} border=0 cellspacing=1 cellpadding=1>
+<tr id=row5>
+<td><div id=\"pieCanvas2\" style=\"overflow: auto; position:relative;height:290px;width:${chart_width}px;\"></div></td>
+<td><div id=\"pieCanvas1\" style=\"overflow: auto; position:relative;height:290px;width:${chart_width}px;\"></div></td>
+</tr>
+</table>
+<table width=${page_width} border=0 cellspacing=0 cellpadding=0>
+<tr id=tblhdr>
+	<td width=${chart_width} align=left style=\"background: url('/img/hd_bg.gif');border-bottom: 1px dotted #ddd;color: #CE6C04;\">&nbsp;当前连接数分布</td>
+	<td width=*>
+		<table style=\"width:100%\" border=0 cellspacing=0 cellpadding=0>
+		<tr id=tblhdr>
+			<td width=100 align=left><a href=\"javascript:showUsrgrp()\" style=\"color:#CE6C04;font-size:13px;\">&nbsp;自定义协议组...</a></td>
+			<td width=100 align=right>连接数</td>
+			<td width=100 align=right>上行速率</td>
+			<td width=100 align=right>下行速率</td>
+			<td width=100 align=right>代理上行</td>
+			<td width=* align=right>代理下行&nbsp;</td>
+    		</tr>
+		</table>
+	</td>
+</tr>
+<tr>
+	<td height=280>
+		<div id=\"pieCanvas3\" style=\"overflow: auto; position:relative;height:290px;width:590px;\"></div>
+	</td>
+	<td>
+		<table style=\"width:100%\" border=0 cellspacing=0 cellpadding=0>
+		";
+		idname="row1"
+		${FLOWEYE} app stat bridge=${CGI_bridge} app=group sort=last showsum | \
+		while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall nateup natedown theother
+		do 
+echo -n "
+		       <tr id=${idname} height=19>
+		";    if [ "${appid}" != "total" ]; then 
+echo -n "
+				<td width=100 align=left>&nbsp;<a href=\"javascript:openGroup('${appid}', '${appname}')\">${appname}</a></td>
+		";    else 
+echo -n "
+				<td width=100 align=left>&nbsp;<b>${appname}</b></td>
+		";    fi 
+echo -n "
+			
+				<td width=100 align=right>${flow}</td>
+				<td width=100 align=right>${rup}</td>
+				<td width=100 align=right>${rdown}</td>
+				<td width=100 align=right>${nateup}</td>
+				<td width=*   align=right>${natedown}&nbsp;</td>
+			</tr>
+		";
+			if [ "${idname}" = "row1" ]; then
+				idname="row2"
+			else
+				idname="row1"
+			fi
+		done 
+echo -n "
+		</table>
+	</td>
+</tr>
+</table>
+"; else 
+echo -n "
+<table width=${page_width} border=0 cellspacing=0 cellpadding=1>
+<tr>
+<td width=${chart_width} height=390><div id=\"barBps\" style=\"overflow: auto; position:relative;height:100%;width:100%\"></div></td>
+<td width=${chart_width} height=390><div id=\"barFlow\" style=\"overflow: auto; position:relative;height:100%;width:100%\"></div></td>
+</tr>
+<tr>
+<td width=${chart_width} height=300><div id=\"pieLast\" style=\"overflow: auto; position:relative;height:100%;width:100%\"></div></td>
+<td width=${chart_width} height=300><div id=\"pieAll\" style=\"overflow: auto; position:relative;height:100%;width:100%\"></div></td>
+</tr>
+<tr>
+<td width=${chart_width} height=5></td>
+<td width=${chart_width} height=5></td>
+</tr>
+</table>
+"; fi 
+echo -n "
+"; 
+if [ "${CGI_bridge}" = "0" ]; then
+	if [ ${JOS_RELEASE} -eq 0 ]; then
+
+echo -n "
+<br>
+<table width=${page_width} border=0 cellspacing=0 cellpadding=0>
+<tr>
+	<td valign=top width=${chart_width}>
+		<table style=\"width:100%\" border=0 cellspacing=0 cellpadding=0>
+		<tr id=tblhdr height=22>
+			<td width=100 align=center>Top10协议</td>
+			<td width=60 align=center>连接数</td>
+			<td width=150 align=center>当前bps(上/下)</td>
+			<td width=* align=center>代理bps(上/下)</td>
+    		</tr>
+		";
+		no=1
+		idname="row1"
+		${FLOWEYE} app stat bridge=${CGI_bridge} sort=bpsdn topn=10 showsum | \
+		while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall nateup natedown theother
+		do 
+echo -n "
+		       	<tr id=${idname} height=20>
+			"; if [ "${appid}" = "total" ]; then 
+echo -n "
+			<td align=left><b>&nbsp;&nbsp;${appname}&nbsp;&nbsp;<a href=\"javascript:showTopApp()\" style=\"color:#0000ff\">[更多协议...]</a></b></td>
+			"; else 
+echo -n "
+			<td align=left>&nbsp;&nbsp;&nbsp;<a href=\"javascript:showApp('${appid}', '${appname}')\" style=\"color:#0000ff\">${appname}</a></td>
+			"; fi 
+echo -n "
+			<td align=right>${flow}</td>
+			<td align=right>${rup}/${rdown}</td>
+			<td align=right>${nateup}/${natedown}</td>
+			</tr>
+		";
+			if [ "${idname}" = "row1" ]; then
+				idname="row2"
+			else
+				idname="row1"
+			fi
+			no=$((${no} + 1))
+		done 
+echo -n "
+		</table>
+	</td>
+	<td valign=top width=*}>
+		<table style=\"width:100%\" border=0 cellspacing=0 cellpadding=0>
+		<tr id=tblhdr height=22>
+			<td width=100 align=center>Top10用户</td>
+			<td width=80 align=center>在线时间</td>
+			<td width=60 align=center>连接数</td>
+			<td width=100 align=center>流入速率</td>
+			<td width=* align=center>流出速率</td>
+    		</tr>
+		";
+		no=1
+		idname="row1"
+		${FLOWEYE} ipobj list -s inbps -n 10 -summary | \
+		while read ip onlinesec ttl flowcnt mac inbyte outbyte inrate outrate accounts iecookies chromecookies natips account theothers 
+		do 
+echo -n "
+		       	<tr id=${idname} height=20>
+		"; 
+			if [ "${ip}" = "0.0.0.0" ]; then 
+				curipcnt=`${FLOWEYE} ipobj stat | grep "ip_count" | cut -d'=' -f2`
+				natipcnt=`${FLOWEYE} appobj stat | grep "natipcnt" | cut -d'=' -f2`
+		
+echo -n "
+				<td align=center><a href=\"javascript:showTopIP()\" style=\"color:#0000ff\"><b>更多用户...</b></a></td>
+				<td align=right></td>
+				<td align=right>在线用户数:${curipcnt}</td>
+				<td align=right>共享用户数:${natipcnt}</td>
+				<td align=center><a href=\"javascript:showIPTrend()\" style=\"color:#0000ff\"><b>趋势图...</b></td>
+		"; 	else 
+echo -n "
+				<td align=left>&nbsp;&nbsp;<a href=\"javascript:showIP('${ip}', '${onlinesec}', '${ttl}', '${outbyte}', '${inbyte}', '${outrate}', '${inrate}')\">&nbsp;${ip}</a></td>
+				<td align=right>${onlinesec}</td>
+				<td align=right>${flowcnt}</td>
+				<td align=right>${inrate}</td>
+				<td align=right>${outrate}</td>
+		";	fi 
+echo -n "
+			</tr>
+		";
+			if [ "${idname}" = "row1" ]; then
+				idname="row2"
+			else
+				idname="row1"
+			fi
+			no=$((${no} + 1))
+		done 
+echo -n "
+		</table>
+	</td>
+</tr>
+</table>
+"; 
+	fi 
+fi
+
+echo -n "
+";
+TMPPATH=${PGPATH}/admin/tmp
+DSUP=""
+DSDOWN=""
+DSFLOW=""
+for appgrp in `${FLOWEYE} app stat app=group | awk '{print $1}'`
+do
+	DSUP="${DSUP} tag=${appgrp}.bpsout"
+	DSDOWN="${DSDOWN} tag=${appgrp}.bpsin"
+	DSFLOW="${DSFLOW} tag=${appgrp}.flow"
+done
+comargs="bridge=${CGI_bridge} width=${page_width} height=280" 
+updaypng=day_group_upbw_stat_${CGI_bridge}.png
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${updaypng} hours=24 ${DSUP}`
+downdaypng=day_group_downbw_stat_${CGI_bridge}.png
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${downdaypng} hours=24 ${DSDOWN}`
+
+echo -n "
+<br>
+<table style=\"width:${page_width}; font-bold:true; font-size:14px; color:#CE6C04\">
+<tr>
+	<td align=left><b>最近24小时上行流量趋势图</b></td>
+	<td align=right>
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=bpsout&time=3day', 700, 800)\" 
+		   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=bpsout&time=mon', 700, 800)\" 
+		   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=${page_width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${updaypng}\"></img></td></tr>
+</table>
+<br>
+<table style=\"width:${page_width}; font-bold:true; font-size:15px; color:#CE6C04\">
+<tr>
+	<td align=left><b>最近24小时下行流量趋势图</b></td>
+	<td align=right>
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=bpsin&time=3day', 700, 800)\" 
+		   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=bpsin&time=mon', 700, 800)\" 
+		   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=${page_width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${downdaypng}\"></img></td<</tr>
+</table>
+";
+daypng=flow_stat_day_${CGI_bridge}.png
+errmsg=`${FLOWEYE} chart show ${comargs} yname="#flow" outimg=${TMPPATH}/${daypng} hours=24 ${DSFLOW}`
+
+echo -n "
+<br>
+<table style=\"width:${page_width}; font-bold:true; font-size:15px; color:#CE6C04\">
+<tr>
+	<td align=left><b>最近24小时连接趋势图</b></td>
+	<td align=right>
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=flow&time=3day', 700, 800)\"
+		   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+		<a href=\"javascript:popupUrl('/cgi-bin/Monitor/grpgraph?bridge=${CGI_bridge}&type=flow&time=mon', 700, 800)\" 
+		   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=${page_width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr> <td><img src=\"/tmp/${daypng}\"></img></td> </tr>
+</table>
+</body>
+</html>
+";

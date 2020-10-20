@@ -1,0 +1,169 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeEditProxy(frm)
+{
+	var addr = document.getElementsByName(\"addr\")[0];
+	var gateway = document.getElementsByName(\"gateway\")[0];
+	var ifname = document.getElementsByName(\"ifname\")[0];
+	var dnsaddr = document.getElementsByName(\"dnsaddr\")[0];
+	var vlan = document.getElementsByName(\"vlan\")[0];
+	var pingip = document.getElementsByName(\"pingip\")[0];
+	addr.value = TrimAll(addr.value);
+	if (!IsIPAddr(addr.value)) {
+		alert(\"请输入代理的IP地址!\");
+		addr.select();
+		return false;
+	}
+	if (addr.value == \"0.0.0.0\" || addr.value == \"255.255.255.255\") {
+		alert(\"代理的IP地址不能为0.0.0.0或255.255.255.255!\");
+		addr.select();
+		return false;
+	}
+	gateway.value = TrimAll(gateway.value);
+	if (!IsIPAddr(gateway.value)) {
+		alert(\"请输入网关地址!\");
+		gateway.select();
+		return false;
+	}
+	dnsaddr.value = TrimAll(dnsaddr.value);
+	if (dnsaddr.value != \"\" && !IsIPAddr(gateway.value)) {
+		alert(\"请输入网关地址!\");
+		dnsaddr.select();
+		return false;
+	}
+	vlan.value = TrimAll(vlan.value);
+	if (!IsDigitIn(vlan.value, 0, 65535)) {
+		alert(\"VLAN TAG不对!\");
+		vlan.select();
+		return false;
+	}
+	pingip.value = TrimAll(pingip.value);
+	if (pingip.value != \"\" && !IsIPAddr(pingip.value)) {
+		alert(\"请输入正确的心跳服务器IP!\");
+		pingip.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请选择网卡!\");
+		ifname.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Setup/proxy_list\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat setproxy name=${CGI_proxyname} ifname=${CGI_ifname} \
+addr=${CGI_addr} gateway=${CGI_gateway} dns=${CGI_dnsaddr} vlan=${CGI_vlan} \
+pingip=${CGI_pingip}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "/cgi-bin/Setup/proxy_list"
+		exit 0
+	fi
+else
+	for tagval in `${FLOWEYE} nat getproxy ${CGI_proxyname}`
+	do
+		eval "CGI_${tagval}"
+	done
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "策略对象->数据代理->修改代理" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeEditProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>代理名称</td>
+	<td width=400 align=left>${CGI_proxyname}<input type=hidden name=proxyname value=\"${CGI_proxyname}\"></input></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>所在网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:120\" value=\"${CGI_ifname}\">
+		";
+		for ifname in `${FLOWEYE} if list | grep outside | awk '{print $1}'`; do
+			if [ "${CGI_ifname}" = "${ifname}" ]; then
+				echo "<option value=\"${ifname}\" selected>${ifname}</option>"
+			else
+				echo "<option value=\"${ifname}\">${ifname}</option>"
+			fi
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>IP地址</td>
+        <td align=left>
+		<input type=text name=addr style=\"width:120px\" value=\"${CGI_addr}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>网关地址</td>
+        <td align=left>
+		<input type=text name=gateway style=\"width:120px\" value=\"${CGI_gateway}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>DNS服务器地址</td>
+        <td align=left>
+		<input type=text name=dnsaddr style=\"width:120px\" value=\"${CGI_dnsaddr}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>VLAN-Tag</td>
+        <td align=left>
+		<input type=text name=vlan style=\"width:120px\" value=\"${CGI_vlan}\"></input>(0~65535,外出VLAN Tag, 0表示外出数据包不带Tag)
+	</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left>心跳服务器IP</td>
+        <td align=left>
+                <input type=text name=pingip style=\"width:120px\" value=\"${CGI_pingip}\"></input>(通过ping此IP来做健康检查,0.0.0.0表示关闭健康检查)
+        </td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

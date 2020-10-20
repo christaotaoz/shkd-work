@@ -1,0 +1,92 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function showGraph(args) {
+	var url;
+        url = \"/cgi-bin/Monitor/vlink_stat?\" + args;
+        ShowWindow(url, \"scrollbars=1,resizable=0\", 680, 800);
+}
+function onAddVlink()
+{
+        window.location.href = \"/cgi-bin/Monitor/vlink_add\";
+}
+function modifyVlink(args)
+{
+        window.location.href = \"/cgi-bin/Monitor/vlink_set?\" + args;
+}
+function deleteVlink(vlinkid)
+{
+        if (confirm(\"确定要删除该链路?\"))
+                window.location.href = \"/cgi-bin/Monitor/vlink_list?action=remove\" + \"&vlinkid=\" + vlinkid;
+}
+</script>
+";
+if [ "${CGI_action}" = "remove" ]; then
+        operator_check "${myself}"
+        errmsg=`${FLOWEYE} vlink remove id=${CGI_vlinkid}`
+        if [ "$?" != "0" ]; then
+                afm_dialog_msg "出现错误:${errmsg}"
+        else
+                afm_load_page 0 "${myself}"
+                exit 0
+        fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "系统概况->虚拟链路" 
+echo -n "
+<table width=1180 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+        <td width=60  align=center>编号</td>
+        <td width=200 align=right>链路名称</td>
+	<td width=120 align=right>流入接口</td>
+	<td width=150 align=right>内网地址</td>
+	<td width=150 align=right>外网地址</td>
+	<td width=150 align=right>上行速率(bps)</td>
+	<td width=150 align=right>下行速率(bps)</td>
+        <td width=* align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddVlink()\">添加>>&nbsp;&nbsp;&nbsp;</a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} vlink list | while read vlinkid vlinkname from intype inip to outtype outip upbps downbps ifname theothers
+do 
+
+echo -n "
+       	<tr id=${idname}>
+       	<td align=center>${vlinkid}</td>
+       	<td align=right>${vlinkname}</td>
+	<td align=right>${ifname}</td>
+	<td align=right>${inip}</td>
+	<td align=right>${outip}</td>
+	<td align=right>${upbps}</td>
+	<td align=right>${downbps}</td>
+       	<td align=right>
+                <a style=\"color:#0000ff\" href=\"javascript:modifyVlink('vlinkid=${vlinkid}&vlinkname=${vlinkname}&ifname=${ifname}&intype=${intype}&inip=${inip}&outtype=${outtype}&outip=${outip}')\">&nbsp;&nbsp;编辑&nbsp;&nbsp;</a>
+                <a style=\"color:#0000ff\" href=\"javascript:deleteVlink('${vlinkid}')\">&nbsp;&nbsp;删除&nbsp;&nbsp;</a>
+		<a style=\"color:#0000ff\" href=\"javascript:showGraph('vlinkid=${vlinkid}&vlinkname=${vlinkname}&ifname=${ifname}&intype=${intype}&inip=${inip}&outtype=${outtype}&outip=${outip}')\">统计信息</a>&nbsp;&nbsp;
+	</td>
+	</tr>
+";
+       	if [ "${idname}" = "row1" ]; then
+               	idname="row2"
+       	else
+               	idname="row1"
+       	fi
+done
+
+echo -n "
+</body>
+</html>
+";

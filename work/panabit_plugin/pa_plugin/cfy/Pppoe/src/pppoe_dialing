@@ -1,0 +1,210 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+[ "${CGI_server}" = "" ] && CGI_server=0
+[ "${CGI_sort}" = "" ] && CGI_sort="birth"
+[ "${CGI_vlan}" = "" ] && CGI_vlan=0
+sortargs="server=${CGI_server}&vlan=${CGI_vlan}"
+MOD_TAB_LIST="在线用户#/cgi-bin/Pppoe/pppoe_online 正在拨号#/cgi-bin/Pppoe/pppoe_dialing"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function importAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_import\";
+}
+function exportAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_export\";
+}
+function addAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_addacct\";
+}
+function modifyAcct(acct)
+{
+	var url = \"/cgi-bin/Pppoe/pppoe_editacct?where=online&account=\" + acct;
+	ShowWindow(url, \"\", 750, 400);
+}
+function onSelectItem(obj)
+{
+	var count0, count1;
+	var accounts = document.getElementsByName(\"accts\");
+	var delacct;
+	count0 = count1 = 0;
+	if (obj.value == \"_NULL_\") {
+        	for(i = 1;i < accounts.length; i++) {
+			accounts[i].checked = obj.checked;
+			if (accounts[i].checked) count1++;
+			else count0++;
+		}
+	}
+	else {
+       		for(i = 1;i < accounts.length; i++) {
+			if (accounts[i].checked)
+				count1++;
+			else 
+				count0++;
+       		}
+		if (count0 == 0 && count1 > 0)
+			accounts[0].checked = true;
+		else
+			accounts[0].checked = false;
+	}
+	delacct = document.getElementById(\"delacct\");
+	bindmac = document.getElementById(\"bindmac\");
+	if (count1 > 0) {
+		bindmac.style.color = \"#0000ff\";
+		delacct.style.color = \"#0000ff\";
+	}
+	else {
+		bindmac.style.color = \"#545454\";
+		delacct.style.color = \"#545454\";
+	}
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxyr_show?proxyname=\" + name;
+        ShowWindow(url, \"\", 350, 380);
+}
+function editIppool(id) 
+{
+	var url = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+	ShowWindow(url, \"\", 680, 300);
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; cgi_show_title "PPPOE认证->在线用户->拨号退出" 
+echo -n "
+";
+if [ "${CGI_action}" = "kickoff" ]; then
+	cmdargs=""
+	for mac in ${CGI_maclist}
+	do
+		cmdargs="${cmdargs} mac=${mac}"
+	done
+	errmsg=`${FLOWEYE} pppoesvr rmvclnt ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+elif [ "${CGI_action}" = "bindmac" ]; then
+	cmdargs=""
+	for name in ${CGI_namelist}
+	do
+		cmdargs="${cmdargs} bindmac=${name}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct config ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+fi
+
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=25  align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='_NULL_' onclick=\"onSelectItem(this)\"/></td>
+	<td width=40  align=center>序号</td>
+	<td width=160 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mac&${sortargs}\">MAC地址</a></td>
+	<td width=180 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=account&${sortargs}\">账号</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=state&${sortargs}\">状态</a></td>
+	<td width=100 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=vlan&${sortargs}\">VLAN</a></td>
+	<td width=100 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mtu&${sortargs}\">MTU</a></td>
+	<td width=160 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=server&${sortargs}\">服务器</a></td>
+	<td width=*   align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=birth&${sortargs}\">在线时间</a></td>
+</tr>
+";
+case "${CGI_sort}" in
+"pool")
+	sortargs="-k4"
+	;;
+"account")
+	sortargs="-k2"
+	;;
+"state")
+	sortargs="-k12"
+	;;
+"mac")
+	sortargs="-k7"
+	;;
+"mtu")
+	sortargs="-k10"
+	;;
+"server")
+	sortargs="-k5"
+	;;
+"birth")
+	sortargs="-k13"
+	;;
+*)
+	sortargs="-k1"
+	;;
+esac
+cmdargs=""
+[ "${CGI_vlan}" != "0" -a "${CGI_vlan}" != "" ] && cmdargs="${cmdargs} vlan=${CGI_vlan}"
+[ "${CGI_server}" != "0" -a "${CGI_server}" != "" ] && cmdargs="${cmdargs} server=${CGI_server}"
+idname="row1"
+count=0
+${FLOWEYE} pppoesvr listclnt ${cmdargs} | grep "${CGI_filter}" | sort  ${sortargs} | while read sid \
+name poolid poolname svrname pctime clntmac svrmac ipaddr uip mtu vlan state birth expired auth theothers
+do
+	[ "${name}" = "" -o "${poolid}" = "" ] && continue
+	[ "${state}" = "CONNECTED" ] && continue
+	count=$((${count} + 1))
+	[ "${poolname}" = "NULL" ] && poolname=""
+	[ "${name}" = "NULL" ] && name=""
+	[ "${svrname}" = "NULL" ] && svrname=""
+	if [ "${expired}" = "1" ]; then
+		echo "<tr id=row3>"
+	else
+		echo "<tr id=${idname}>"
+	fi
+
+echo -n "
+	<td align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='${name}&${clntmac}' onclick=\"onSelectItem(this)\"></td>
+	<td align=center>${count}&nbsp;</td>
+	<td align=right>${clntmac}&nbsp;</td>
+"; if [ "${name}" != "" -a "${auth}" = "local" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyAcct('${name}')\">${name}</a>&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right>${name}&nbsp;</td>
+"; fi 
+echo -n "
+	<td align=right>${state}&nbsp;</td>
+	<td align=right>${vlan}&nbsp;</td>
+	<td align=right>${mtu}&nbsp;</td>
+"; if [ "${svrname}" != "" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showServer('${svrname}')\">${svrname}</a></td>
+"; else 
+echo -n "
+	<td align=right></td>
+"; fi 
+echo -n "
+	<td align=right>${birth}</td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

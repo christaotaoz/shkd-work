@@ -1,0 +1,346 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+[ "${CGI_poolid}" = "" ] && CGI_poolid=0
+[ "${CGI_server}" = "" ] && CGI_server=0
+[ "${CGI_sort}" = "" ] && CGI_sort="birth"
+[ "${CGI_vlan}" = "" ] && CGI_vlan=0
+sortargs="poolid=${CGI_poolid}&server=${CGI_server}&vlan=${CGI_vlan}"
+MOD_TAB_LIST="在线用户#/cgi-bin/Pppoe/pppoe_online 正在拨号#/cgi-bin/Pppoe/pppoe_dialing"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function importAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_import\";
+}
+function exportAcct()
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_export\";
+}
+function addAcct()
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_addacct\";
+}
+function modifyAcct(acct)
+{
+	var url = \"/cgi-bin/Pppoe/pppoe_editacct?where=online&account=\" + acct;
+	ShowWindow(url, \"\", 750, 400);
+}
+function deleteAcct()
+{
+	var args, mac;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			mac = accounts[i].value.substr(0, 17);
+			if (args == \"\")
+				args = mac;
+			else
+				args += \" \" + mac;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要强制下线这些用户?\"))
+		window.location.href = \"${myself}?action=kickoff&maclist=\" + args;
+}
+function bindAcct(action)
+{
+	var args, mac, name;
+	var accounts = document.getElementsByName(\"accts\");
+	args=\"\";
+       	for(i = 1;i < accounts.length; i++) {
+		if (accounts[i].checked) {
+			mac = accounts[i].value.substr(0, 17);
+			name = accounts[i].value.substr(17); 
+			if (args == \"\")
+				args = name + \":\" + mac;
+			else
+				args += \" \" + name + \":\" + mac;
+		}
+	}
+	if (args != \"\" && confirm(\"确定要绑定这些用户?\")) {
+		window.location.href = \"${myself}?action=\" + action + 
+				       \"&namelist=\" + args;
+	}
+}
+function onSelectItem(obj)
+{
+	var count0, count1;
+	var accounts = document.getElementsByName(\"accts\");
+	var delacct;
+	count0 = count1 = 0;
+	if (obj.value == \"_NULL_\") {
+        	for(i = 1;i < accounts.length; i++) {
+			accounts[i].checked = obj.checked;
+			if (accounts[i].checked) count1++;
+			else count0++;
+		}
+	}
+	else {
+       		for(i = 1;i < accounts.length; i++) {
+			if (accounts[i].checked)
+				count1++;
+			else 
+				count0++;
+       		}
+		if (count0 == 0 && count1 > 0)
+			accounts[0].checked = true;
+		else
+			accounts[0].checked = false;
+	}
+	delacct = document.getElementById(\"delacct\");
+	bindmac = document.getElementById(\"bindmac\");
+	if (count1 > 0) {
+		bindmac.style.color = \"#0000ff\";
+		delacct.style.color = \"#0000ff\";
+	}
+	else {
+		bindmac.style.color = \"#545454\";
+		delacct.style.color = \"#545454\";
+	}
+}
+function showIp(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 650, 700);
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + name;
+        ShowWindow(url, \"\", 350, 380);
+}
+function editIppool(id) 
+{
+	var url = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+	ShowWindow(url, \"\", 680, 300);
+}
+function showAcct(mac)
+{
+	var url = \"/cgi-bin/Pppoe/pppoe_showacct?mac=\" + mac;
+	
+	ShowWindow(url, \"\", 500, 600);
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+                document.getElementById(\"mytbl2\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+                document.getElementById(\"mytbl2\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; 
+cgi_show_title "PPPOE认证->在线用户" 
+if [ "${CGI_action}" = "kickoff" ]; then
+	cmdargs=""
+	for mac in ${CGI_maclist}
+	do
+		cmdargs="${cmdargs} mac=${mac}"
+	done
+	errmsg=`${FLOWEYE} pppoesvr rmvclnt ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+elif [ "${CGI_action}" = "bindmac" ]; then
+	cmdargs=""
+	for name in ${CGI_namelist}
+	do
+		cmdargs="${cmdargs} bindmac=${name}"
+	done
+	errmsg=`${FLOWEYE} pppoeacct config ${cmdargs}`
+	[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+fi
+
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=1 cellpadding=1> 
+<form method=post action=\"${myself}\">
+<tr id=tblhdr height=22>
+	<td width=955 align=left>地址池
+	<select name=poolid value=\"${CGI_poolid}\" style=\"width:105;height:21\">
+	";
+		if [ "${CGI_poolid}" = "0" ]; then
+			echo "<option value=0 selected>所有账号</option>"
+		else
+			echo "<option value=0>所有账号</option>"
+		fi
+		${FLOWEYE} pppoeippool list | while read poolid name theothers
+		do
+			[ "${name}" = "NULL" ] && continue
+			if [ "${poolid}" = "${CGI_poolid}" ]; then
+				echo "<option value=${poolid} selected>${name}</option>"
+			else
+				echo "<option value=${poolid}>${name}</option>"
+			fi
+		done
+	
+echo -n "
+        </select>服务器
+	<select name=server value=\"${CGI_server}\" style=\"width:105;height:21\">
+	";
+		if [ "${CGI_server}" = "0" ]; then
+			echo "<option value=0 selected>任意服务器</option>"
+		else
+			echo "<option value=0>任意服务器</option>"
+		fi
+		${FLOWEYE} nat listproxy type=posvrif | while read type id name theothers
+		do
+			if [ "${CGI_server}" = "${name}" ]; then
+				echo "<option value=\"${name}\" selected>${name}</option>"
+			else
+				echo "<option value=\"${name}\">${name}</option>"
+			fi
+		done
+	
+echo -n "
+	</select>VLAN<input type=text style=\"width:80;height:21\" name=vlan value=\"${CGI_vlan}\" />
+		认证方式<select name=authType style=\"width:110px;\" value=\"${CGI_authType}\">
+			<option value=\"\">所有方式</option>
+			<option value=\"免认证\">免认证</option>
+			<option value=\"本地认证\">本地认证</option>
+			<option value=\"RADIUS\">RADIUS</option>
+		</select>
+		其他条件<input type=text style=\"width:250;height:21\" name=filter value=\"${CGI_filter}\" />
+		<input type=submit value=\"查询\" style=\"width:60;height:21\" />
+	</td>
+	<td width=* align=right>
+		<a id=bindmac style=\"color:#545454;font-size:13px\" href=\"javascript:bindAcct('bindmac')\">绑定MAC</a>&nbsp;&nbsp;
+		<a id=delacct style=\"color:#545454;font-size:13px\" href=\"javascript:deleteAcct()\">强制下线</a>&nbsp;
+	</td>
+</tr>
+</form>
+</table>
+<table id=mytbl2 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=20  align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='_NULL_' onclick=\"onSelectItem(this)\"/></td>
+	<td width=40  align=right>序号</td>
+	<td width=125 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mac&${sortargs}\">MAC地址</a></td>
+	<td width=100 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ip&${sortargs}\">IP地址</a></td>
+	<td width=140 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=account&${sortargs}\">账号</a></td>
+	<td width=50  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=vlan&${sortargs}\">VLAN</a></td>
+	<td width=50  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mtu&${sortargs}\">MTU</a></td>
+	<td width=90  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=auth&${sortargs}\">认证方式</a></td>
+	<td width=110 align=right>限速(上/下)</td>
+	<td width=100 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=pool&${sortargs}\">地址池</a></td>
+	<td width=100 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=server&${sortargs}\">服务器</a></td>
+	<td width=*   align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=birth&${sortargs}\">在线时间</a></td>
+	<td width=120 align=right>操作</td>
+</tr>
+";
+case "${CGI_sort}" in
+"pool")
+	sortargs="-k4"
+	;;
+"account")
+	sortargs="-k2"
+	;;
+"state")
+	sortargs="-k13"
+	;;
+"ip")
+	sortargs="-k10"
+	;;
+"mac")
+	sortargs="-k7"
+	;;
+"mtu")
+	sortargs="-k11"
+	;;
+"server")
+	sortargs="-k5"
+	;;
+"birth")
+	sortargs="-k14"
+	;;
+*)
+	sortargs="-k1"
+	;;
+esac
+cmdargs=""
+[ "${CGI_poolid}" != "0" ] && cmdargs="${cmdargs} poolid=${CGI_poolid}"
+[ "${CGI_vlan}" != "0" -a "${CGI_vlan}" != "" ] && cmdargs="${cmdargs} vlan=${CGI_vlan}"
+[ "${CGI_server}" != "0" -a "${CGI_server}" != "" ] && cmdargs="${cmdargs} server=${CGI_server}"
+idname="row1"
+count=0
+${FLOWEYE} pppoesvr listclnt ${cmdargs} | grep "${CGI_filter}" | sort  ${sortargs} | while read sid \
+name poolid poolname svrname pctime clntmac svrmac ipaddr uip mtu vlan state birth expired auth ratein rateout clntpxy theothers
+do
+	[ "${name}" = "" -o "${poolid}" = "" ] && continue
+	[ "${state}" != "CONNECTED" ] && continue
+	[ "${CGI_authType}" != "" -a "${CGI_authType}" != "${auth}" ] && continue
+	[ "${ipaddr}" = "0.0.0.0" ] && continue
+	[ "${clntpxy}" = "PXY" ] && continue
+	count=$((${count} + 1))
+	[ "${poolname}" = "NULL" ] && poolname=""
+	[ "${name}" = "NULL" ] && name=""
+	[ "${svrname}" = "NULL" ] && svrname=""
+	if [ "${expired}" = "1" ]; then
+		echo "<tr id=row3>"
+	else
+		echo "<tr id=${idname}>"
+	fi
+
+echo -n "
+	<td align=center><input type=checkbox name=accts style=\"color:#0000ff\" value='${clntmac}${name}' onclick=\"onSelectItem(this)\" /></td>
+	<td align=right>${count}&nbsp;</td>
+	<td align=right>${clntmac}&nbsp;</td>
+"; 	if [ "${ipaddr}" != "" ]; then 
+echo -n "
+		<td align=right><a href=\"javascript:showIp('${ipaddr}')\">${ipaddr}&nbsp;</a></td>
+";	else 
+echo -n "
+		<td align=right></td>
+";	fi 
+echo -n "
+"; if [ "${name}" != "" -a "${auth}" = "local" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyAcct('${name}')\">${name}</a>&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right>${name}&nbsp;</td>
+"; fi 
+echo -n "
+	<td align=right>${vlan}</td>
+	<td align=right>${mtu}</td>
+	<td align=right>${auth}</td>
+	<td align=right>${rateout}/${ratein}</td>
+"; if [ "${poolname}" != "" ]; then 
+echo -n "
+	<td align=right><a href=\"javascript:editIppool('${poolid}')\">${poolname}</a>&nbsp;</td>
+"; else 
+echo -n "
+	<td align=right></td>
+"; fi 
+echo -n "
+"; if [ "${svrname}" != "" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showServer('${svrname}')\">${svrname}</a></td>
+"; else 
+echo -n "
+	<td align=right></td>
+"; fi 
+echo -n "
+	<td align=right>${birth}</td>
+	<td align=right><a href=\"javascript:showAcct('${clntmac}')\">查看</a></td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

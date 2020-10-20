@@ -1,0 +1,105 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_statype}" = "" ] && CGI_statype="last"
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="statype=${CGI_statype}&bridge=${CGI_bridge}"
+afm_load_page 10 "${cgipath}?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height) 
+{
+ 	ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+function showUsrgrp(grpid) 
+{
+	var url = \"/cgi-bin/Monitor/grpview?bridge=${CGI_bridge}&group=\" + grpid;
+        ShowWindow(url, \"scrollbars=1,resizable=0\", 862, 920);
+}
+</script>
+<body>
+"; cgi_show_title "自定义协议组实时信息" 
+echo -n "
+<br>
+"; if [ ${JOS_RELEASE} -ne 2 ]; then 
+echo -n "
+<table width=\"500\" border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<form method=post action=\"${cgipath}\">
+<tr id=tblhdr height=22>
+        <td width=157 align=left>网桥&nbsp;
+        <select name=bridge value=\"${CGI_bridge}\" style=\"width:120\">";
+                for bdg in 0 `${FLOWEYE} bridge list`; do
+                        selected=""
+                        [ ${bdg} -eq ${CGI_bridge} ] && selected="selected"
+                        if [ ${bdg} -eq 0 ]; then
+                                echo "<option value=${bdg} ${selected}>整个系统</option>"
+                        else    
+                                echo "<option value=${bdg} ${selected}>网桥${bdg}</option>"
+                        fi
+                done 
+echo -n "
+        </select>
+        </td>   
+	<td width=* class=bgurl2 align=right>
+		<input type=submit value=\"刷  新\" style=\"width:70\"></input>&nbsp;&nbsp;
+	</td>
+</tr>
+</form>
+</table>
+"; fi 
+echo -n "
+"; urlpath="${cgipath}?bridge=${CGI_bridge}" 
+echo -n "
+<table width=500 border=0 cellspacing=1 cellpadding=2>
+<tr id=tblhdr height=22>
+	<td width=100 align=center>协议组名称</td>
+	<td width=50 align=center><a href=\"${urlpath}&statype=flow\">连接数</a></td>
+	<td width=72 align=center><a href=\"${urlpath}&statype=bpsup\">上行bps</a></td>
+	<td width=72 align=center><a href=\"${urlpath}&statype=bpsdn\">下行bps</a></td>
+	<td width=78 align=center><a href=\"${urlpath}&statype=natbpsup\">代理上行bps</a></td>
+	<td width=* align=center><a href=\"${urlpath}&statype=natbpsdown\">代理下行bps</a></td>
+</tr>
+";
+args="sort=${CGI_statype} bridge=${CGI_bridge}"
+idname="row1"
+${FLOWEYE} app stat app=usrgrp ${args} showsum | \
+while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall natbpsup natbpsdown theother
+do
+
+echo -n "
+	<tr id=${idname}>
+"; if [ "${appid}" != "total" ]; then 
+echo -n "
+	<td align=left>&nbsp;&nbsp;<a href=\"javascript:showUsrgrp('${appid}')\">${appname}</td>
+"; else 
+echo -n "
+	<td align=center><b>合计</b></td>
+"; fi 
+echo -n "
+	<td align=right>${flow}</td>
+	<td align=right>${rup}</td>
+	<td align=right>${rdown}</td>
+	<td align=right>${natbpsup}</td>
+	<td align=right>${natbpsdown}</td>
+	</tr>
+"; 
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

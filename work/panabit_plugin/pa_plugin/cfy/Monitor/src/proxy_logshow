@@ -1,0 +1,112 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_proxyname}->线路日志"
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+MOD_TAB_LIST="`cgi_show_pxytablist ${CGI_proxyname}`"
+
+echo -n "
+<body>
+"; cgi_print_mod_header "线路日志" 600 
+echo -n "
+<table width=600 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=60  align=left>序号</td>
+	<td width=160 align=left>时间</td>
+	<td width=*   align=left>内容</td>
+</tr>
+";
+count=1
+idname="row1"
+${FLOWEYE} natevent list | while read time name event theothers
+do
+	[ "${name}" != "${CGI_proxyname}" ] && continue
+	color="#000000"
+	case "${event}" in
+	"LINKDOWN")
+		event="线路中断"
+		color="#ff0000"
+		;;
+	"LINKUP")
+		event="线路激活"
+		color="#0000ff"
+		;;
+        "GATEWAYDOWN")
+                event="和网关连接断开"
+                color="#ff0000"
+                ;;
+        "GATEWAYUP")
+                event="成功和网关建立连接"
+                color="#0000ff"
+                ;;
+        "HBFAIL")
+                event="和心跳服务器失联,断开连接"
+                color="#ff0000"
+                ;;
+        "HBOK")
+                event="和心跳服务器连接成功"
+                color="#0000ff"
+                ;;
+	"ECHOTIMEOUT")
+		event="PPPOE线路心跳超时"
+		color="#ff0000"
+		;;
+	"LCPNOTACKED")
+		event="PPPOE LCP无应答"
+		color="#ff0000"
+		;;
+	"AUTHTIMEOUT")
+		event="PPPOE认证超时"
+		color="#ff0000"
+		;;
+	"IPCPTIMEOUT")
+		event="PPPOE IPCP超时"
+		color="#ff0000"
+		;;
+	"CHAPFAIL")
+		event="PPPOE CHAP认证失败"
+		color="#ff0000"
+		;;
+	"PEERLCPTERM")
+		event="收到LCP结束信号"
+		;;
+	"PEERTERM")
+		event="收到对端网关结束信号"
+		;;
+	"ENTERSTANDBY")
+		event="进入待机状态"
+		color="#00ff00"
+		;;
+	"EXITSTANDBY")
+		event="退出待机状态"
+		color="#0000ff"
+		;;
+	*)
+		event="unknown ${event}"
+		;;
+	esac
+
+echo -n "
+	<tr id=${idname}>
+	<td align=left>&nbsp;${count}</td>
+	<td align=left>${time}</td>
+	<td align=left><a style=\"color:${color}\">${event}</a></td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+	count=$((${count} + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

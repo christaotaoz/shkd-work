@@ -1,0 +1,51 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/cfy/Maintain/`basename $0`"
+
+if [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}"
+	# Get a clean directory
+	mkdir -p ${DATAPATH}/config
+	rm -rf ${DATAPATH}/config/*
+	# verify the file
+	endcfg=`cat ${CGI_cfgfile} | grep "ENDCONFIG"`
+	if [ "${endcfg}" = "" ]; then
+		afm_dialog_msg "文件内容有误，请使用正确的配置文件!"
+		rm -rf ${CGI_cfgfile}
+		afm_load_page 0 "${myself}"
+		exit 0
+	else
+		# Mv the file to the directory
+		mv ${CGI_cfgfile} ${DATAPATH}/config/panabit.conf
+		afm_dialog_msg "上传成功!"
+	fi
+fi
+if [ "${CGI_action}" = "import" ]; then
+	operator_check "${myself}"
+	# waiting for 15 seconds for scheduler.
+	echo "import_config yes" >> ${EVENTFILE}
+	echo "<br><p style=\"color:#0000ff\">正在导入配置,需要几秒钟，请稍候......</p>"
+	afm_load_page 15 "${myself}?action=afterimport"
+	exit 0
+fi
+if [ "${CGI_action}" = "afterimport" ]; then
+	if [ ! -e ${DATAPATH}/config/panabit.conf ]; then
+		afm_dialog_msg "导入配置成功!"
+	else
+		afm_dialog_msg "导入配置失败!"
+	fi
+fi
+if [ "${CGI_action}" = "" ]; then
+	if [ -e ${PGETC}/panabit.conf ]; then
+		cp -f ${PGETC}/panabit.conf ${TMPPATH}/current.conf
+	else
+		echo "ENDCONFIG" > ${TMPPATH}/current.conf
+	fi
+fi
+

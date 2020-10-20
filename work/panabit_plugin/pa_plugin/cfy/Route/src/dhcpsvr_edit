@@ -1,0 +1,172 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+MOD_TAB_LIST="`cgi_show_pxytablist ${CGI_id}`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var pool = document.getElementsByName(\"dhcp_pool\")[0];
+	var dns0 = document.getElementsByName(\"dns0\")[0];
+	var dns1 = document.getElementsByName(\"dns1\")[0];
+	var dns  = document.getElementsByName(\"dns\")[0];
+	var gateway = document.getElementsByName(\"dhcp_gateway\")[0];
+	var leasettl = document.getElementsByName(\"leasettl\")[0];
+	var dhcp_vlan = document.getElementsByName(\"dhcp_vlan\")[0];
+	var dhcpmask = document.getElementsByName(\"dhcp_mask\")[0];
+	var dhcpacaddr = document.getElementsByName(\"dhcp_acaddr\")[0];
+	name.value = TrimAll(name.value);
+	if (!IsName(name.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		ifname.select();
+		return false;
+	}
+	pool.value = TrimAll(pool.value);
+	if (pool.value == \"\") {
+		alert(\"请输入地址池!\");
+		pool.select();
+		return false;
+	}
+	gateway.value = TrimAll(gateway.value);
+	dns0.value = TrimAll(dns0.value);
+	if (dns0.value == \"\" || dns0.value == \"0.0.0.0\") {
+		alert(\"请输入第一DNS!\");
+		dns0.select();
+		return false;
+	}
+	dns1.value = TrimAll(dns1.value);
+	if (dns1.value == \"\" || dns1.value == \"0.0.0.0\") {
+		alert(\"请输入第二DNS!\");
+		dns.select();
+		return false;
+	}
+	leasettl.value = TrimAll(leasettl.value);
+	if (leasettl.value == \"\" || leasettl.value == \"0\") {
+		alert(\"请输入有效的租约!\");
+		leasettl.select();
+		return false;
+	}
+	dhcp_vlan.value = TrimAll(dhcp_vlan.value);
+	dhcp_mask.value = TrimAll(dhcp_mask.value);
+	dhcp_acaddr.value = TrimAll(dhcp_acaddr.value);
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cmdargs="name=${CGI_id} dhcp_pool=${CGI_dhcp_pool}" 
+	cmdargs="${cmdargs} dns0=${CGI_dns0} dns1=${CGI_dns1}"
+	cmdargs="${cmdargs} leasettl=${CGI_leasettl}"
+	cmdargs="${cmdargs} dhcp_enable=${CGI_dhcp_enable}"
+	if [ "${CGI_dhcp_gateway}" != "" -a "${CGI_dhcp_gateway}" != "0.0.0.0" ]; then
+		cmdargs="${cmdargs} dhcp_gateway=${CGI_dhcp_gateway}"
+	fi
+	if [ "${CGI_dhcp_vlan}" != "" ]; then
+		cmdargs="${cmdargs} dhcp_vlan=${CGI_dhcp_vlan}"
+	else
+		cmdargs="${cmdargs} dhcp_vlan=0"
+	fi
+	dhcpmask="${CGI_dhcp_mask}"
+	[ "${dhcpmask}" = "" ] && dhcpmask="0.0.0.0"
+	cmdargs="${cmdargs} dhcp_mask=${dhcpmask}"
+	[ "${CGI_dhcp_acaddr}" = "" ] && CGI_dhcp_acaddr="0.0.0.0"
+	cmdargs="${cmdargs} dhcp_acaddr=${CGI_dhcp_acaddr}"
+	errmsg=`${FLOWEYE} nat setrtif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} nat getproxy name=${CGI_id}`
+do
+	name=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	export CGI_${name}="${val}"
+done
+[ "${CGI_dhcp_vlan}" = "0-0" ] && CGI_dhcp_vlan=""
+[ "${CGI_dhcp_acaddr}" = "" ] && CGI_dhcp_acaddr="0.0.0.0"
+
+echo -n "
+<body>
+"; cgi_print_mod_header "DHCP服务" 600 
+echo -n "
+<br>
+<div style=\"position:absolute;padding:0px 5px 0px 5px;left:20;top:50;height:360px;width:580\">
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=100% border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=100 align=left>DHCP服务</td>
+	<td width=*  align=left>
+		<select style=\"width:120px\" name=dhcp_enable value=\"${CGI_dhcp_enable}\">
+		";	if [ "${CGI_dhcp_enable}" = "1" ]; then 
+echo -n "
+				<option value=1 selected>启用</option> 
+				<option value=0>关闭</option>
+		";	else 
+echo -n "
+				<option value=1>启用</option> 
+				<option value=0 selected>关闭</option>
+		";	fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>VLAN范围</td>
+        <td align=left><input type=text name=dhcp_vlan style=\"width:120px\" value=\"${CGI_dhcp_vlan}\" />&nbsp;(如100-200或100,不填或填0表示匹配不带VLAN的请求)</td>
+</tr>
+<tr id=row1>
+        <td align=left>可分配地址</td>
+        <td align=left><input type=text name=dhcp_pool style=\"width:200px\" value=\"${CGI_dhcp_pool}\" />&nbsp;(格式为x.x.x.x-y.y.y.y)</td>
+</tr>
+<tr id=row1>
+        <td align=left>默认网关</td>
+        <td align=left><input type=text name=dhcp_gateway style=\"width:120px\" value=\"${CGI_dhcp_gateway}\" />&nbsp;(如果为0.0.0.0或不填，则使用接口IP地址作为网关)</td>
+</tr>
+<tr id=row1>
+        <td align=left>网络掩码</td>
+        <td align=left><input type=text name=dhcp_mask style=\"width:120px\" value=\"${CGI_dhcp_mask}\" />&nbsp;(如果为0.0.0.0或不填，则使用接口的掩码)</td>
+</tr>
+<tr id=row1>
+        <td align=left>主DNS服务</td>
+        <td align=left><input type=text name=dns0 style=\"width:120px\" value=\"${CGI_dns0}\" />&nbsp;(x.x.x.x)</td>
+</tr>
+<tr id=row1>
+        <td align=left>次DNS服务</td>
+        <td align=left><input type=text name=dns1 style=\"width:120px\" value=\"${CGI_dns1}\" />&nbsp;(x.x.x.x)</td>
+</tr>
+<tr id=row1>
+        <td align=left>无线控制器</td>
+        <td align=left><input type=text name=dhcp_acaddr style=\"width:120px\" value=\"${CGI_dhcp_acaddr}\" />&nbsp;(OPT 138, 无线控制器IP地址x.x.x.x)</td>
+</tr>
+<tr id=row1>
+        <td align=left>租约时间</td>
+	<td width=*  align=left><input type=text name=leasettl style=\"width:120px\" value=\"${CGI_leasettl}\" />&nbsp;(秒)</td>
+</tr>
+</table>
+<table style=\"width:100%; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:100%\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=id value=\"${CGI_id}\" />
+		<input type=submit id=newbtn value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</div>
+</body>
+</html>
+";

@@ -1,0 +1,163 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`?pname=${CGI_pname}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function validate(frm)
+{
+	var prate = document.getElementsByName(\"prate\")[0];
+	var desc  = document.getElementsByName(\"desc\")[0];
+	desc.value = TrimAll(desc.value);
+	/* prate */
+	prate.value = TrimAll(prate.value);
+	if (!IsDigitIn(prate.value, 1, 10000000)) {
+		alert(\"通道速率必须介于1和10000000之间!\");
+		prate.select();
+		return false;
+	}
+	return true;
+}
+function onCancel()
+{
+	window.location.href = \"/cgi-bin/Setup/pipe_list\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy setbwo ${CGI_pname} ${CGI_gbw}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	args="name=${CGI_pname} pri=1 gbw=${CGI_gbw_1}"
+	[ "${CGI_desc_1}" != "" ] && args="${args} desc=${CGI_desc_1}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	
+	args="name=${CGI_pname} pri=2 gbw=${CGI_gbw_2}"
+	[ "${CGI_desc_2}" != "" ] && args="${args} desc=${CGI_desc_2}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	
+	args="name=${CGI_pname} pri=3 gbw=${CGI_gbw_3}"
+	[ "${CGI_desc_3}" != "" ] && args="${args} desc=${CGI_desc_3}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+		
+	args="name=${CGI_pname} pri=4 gbw=${CGI_gbw_4}"
+	[ "${CGI_desc_4}" != "" ] && args="${args} desc=${CGI_desc_4}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	args="name=${CGI_pname} pri=5 gbw=${CGI_gbw_5}"
+	[ "${CGI_desc_5}" != "" ] && args="${args} desc=${CGI_desc_5}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	args="name=${CGI_pname} pri=6 gbw=${CGI_gbw_6}"
+	[ "${CGI_desc_6}" != "" ] && args="${args} desc=${CGI_desc_6}"
+	errmsg=`${FLOWEYE} policy sethtb ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+for nameval in `${FLOWEYE} policy getbwo ${CGI_pname}`
+do
+	eval "${nameval}"
+done
+CGI_prate="${rate}"
+
+echo -n "
+<body>
+"; cgi_show_title "数据通道->${CGI_pname}" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return validate(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=400 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td align=left>通道带宽</td>
+        <td wdith=* align=left><input type=text name=gbw style=\"width:100\" value=\"${CGI_prate}\"></input>(kbps)</td> 
+</tr>
+</table>
+<br>
+<table style=\"width:400; border-bottom:1px #787882 solid; color:#000000\">
+<tr><td align=left style=\"font-size:11px\"><b>优先级设置</b></td></tr>
+</table>
+<table style=\"font:14px\" width=400 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=tblhdr>
+	<td width=15></td>
+        <td width=60 align=left>优先级</td>
+	<td width=100 align=center>保证带宽(kbps)</td>
+	<td width=* align=center>备注</td>
+</tr>
+";
+id="row2"
+${FLOWEYE} policy gethtb ${CGI_pname} | while read pri gbw bytes outbps dropbps desc theothers
+do 
+	[ "${pri}" = "pri" ] && continue
+
+echo -n "
+<tr id=${id}>
+	<td></td>
+        <td width=60 align=left>${pri}</td>
+        <td width=100 align=left><input type=text name=gbw_${pri} style=\"width:100\" value=\"${gbw}\"></input></td> 
+        <td align=*><input type=text name=desc_${pri} style=\"width:100%\" value=\"${desc}\"></input></td> 
+</tr>
+";
+	if [ "${id}" = "row1" ]; then
+		id="row2"
+	else
+		id="row1"
+	fi
+done
+
+echo -n "
+</table>
+<table style=\"width:400; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:400\">
+<tr>
+        <td align=left><b><a style=\"color:#ff0000\">注意:所有优先级保证带宽之和不能大于通道带宽!</a></b></td>
+        <td width=* align=right>
+                <input type=submit id=newbtn style=\"width:60\" value=\"提交\"></input>
+                <input type=button id=newbtn style=\"width:60\" value=\"取消\" onclick=\"onCancel()\"></input>
+                <input type=hidden name=pname value=\"${CGI_pname}\"></input></td>
+        </td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

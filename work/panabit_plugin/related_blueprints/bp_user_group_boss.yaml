@@ -1,0 +1,25 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+  user_group_name:
+    description: >
+      The name of the user group to be created
+    default: 
+  
+node_templates:
+  new_address_pool:
+    type: cloudify.pa.address_pool
+    properties:
+      user_group_name:
+        get_input: user_group_name
+      start_ip: 0
+      final_ip: 0
+      max_uplink_rate: 0
+      max_downlink_rate: 0
+      dns_server: 114.114.114.114,8.8.8.8
+      max_online_time: 0
+      allow_for_overdue_account: reject
+      dialing_interface: 'NULL'

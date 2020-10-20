@@ -1,0 +1,121 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Pppoe/`basename $0`"
+returl="/cgi-bin/Pppoe/pppoe_account"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"${returl}\";
+}
+</script>
+";
+analytical_memo_description_mini()
+{
+		# int arg like: 1. enabled;maxlogin;uplimit;downlimit;createtm;fullname;identitycard;telephone;address;remark
+		#				2. remark dbid:
+		# out like this: enabled= maxlogin= uplimit= downlimit= createtm= fullname= identitycard= telephone= address= remark=
+		echo "${1}" | \
+		awk -F';' 'BEGIN{ \
+			split("dbid;fullname;identitycard;telephone;remark",columns,";");\
+		}{ \
+			gsub(/ /,"+",$0); \
+			if($0 ~ /^[^;|.]*;[^;|.]*;[^;|.]*;[^;|.]*;[.]*/) { \
+				for(i=6;i<=NF;i++) \
+					$5=$5"\\;"$i;\
+			} else { \
+				$5=$0; \
+				for(i=1;i<5;i++) \
+					$i=""; \
+			} \
+			for(i=1;i<5;i++) \
+				printf columns[i]"="$i" "; \
+			print columns[i]"="$i; \
+		}'
+}
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	cmdargs="poolid=${CGI_poolid} name="
+	accounts="${CGI_accounts}"
+	if [ "${accounts}" != "" ]; then
+		floweye pppoeacct list | awk -v acc="${accounts}" 'BEGIN{c=split(acc,u," ");for(i=1;i<=c;i++)a[u[i]]=1;}{if(a[$3])print $0}' | \
+		while read gid poolname name passwd ipaddr mac start expire leftime disabled loginfail memo theothers
+		do
+			errmsg=`${FLOWEYE} pppoeacct set ${cmdargs}${name} passwd=${passwd} expire=${expire}`
+			if [ "$?" != "0" ]; then
+				echo "err:${errmsg} acct:${acct}"
+				haverr="yes"
+			fi
+		done
+		
+		if [ "${haverr}" = "" ]; then
+			afm_load_page 0 "${returl}"
+			exit 0
+		fi
+	else
+		afm_dialog_msg "没有需要转移地址池的帐号，请确认操作后重试!"
+	fi
+fi
+
+echo -n "
+<body>
+";
+cgi_show_title "PPPOE接入->改地址池" 
+
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table style=\"font:14px\" width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td align=left>新地址池</td>
+        <td align=left>
+		<select name=poolid value=\"${CGI_poolid}\" style=\"width:150;height:21\">
+";
+		${FLOWEYE} pppoeippool list | while read gid name theothers
+		do
+			[ "${name}" = "NULL" ] && name="${gid}"
+			if [ "${gid}" = "${CGI_poolid}" ]; then
+				echo "<option value=${gid} selected>${name}</option>"
+			else
+				echo "<option value=${gid}>${name}</option>"
+			fi
+		done
+		
+		acctcount=`echo ${CGI_accounts} | awk '{print NF;}'`
+
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=100 align=left>被转移的账号量</td>
+	<td width=* align=left>
+		<b>${acctcount}</b>
+	</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=accounts value=\"${CGI_accounts}\" /> 
+		<input type=submit style=\"width:80\" value=\"提交\" />
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,112 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Maintain/alarm_logger\";
+}
+</script>
+";
+createMyhtml()
+{
+	local curpps=$1
+	local dpps=$2
+	
+	if [ ${dpps} -gt 0 ]; then
+		if [ ${curpps} -ge ${dpps} ]; then
+			echo "<span style='color: #ff0000;'>${curpps} / ${dpps}</span>"
+		else
+			echo "<span style='color: #008000;'>${curpps} / ${dpps}</span>"
+		fi
+	else
+		echo "<span>${curpps} / ${dpps}</span>"
+	fi
+}
+[ "${CGI_logfile}" = "" ] && CGI_logfile="alarm_`date +%Y.%m.%d`.log"
+fhead="`echo ${CGI_logfile} | cut -d'_' -f1`"
+if [ "${fhead}" != "alarm" ]; then
+	afm_dialog_msg "无效的日志文件!"
+	afm_load_page 0 "/cgi-bin/Maintain/alarm_logger"
+	exit 0
+fi
+if [ "`echo ${CGI_logfile} | cut -d'.' -f4`" != "log" ]; then
+	afm_dialog_msg "无效的日志文件!"
+	afm_load_page 0 "/cgi-bin/Maintain/alarm_logger"
+	exit 0
+fi
+
+echo -n "
+<body>
+"; 
+if [ "${CGI_logfile}" = "" ]; then
+	cgi_show_title "攻击告警->今日日志" 
+else
+	cgi_show_title "攻击告警->历史日志显示"
+fi
+
+echo -n "
+<br>
+<table width=1100 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=120 align=center>告警时间</td>
+	<td width=120 align=center>外网SYN(pps)</td>
+	<td width=120 align=center>内网SYN(pps)</td>
+	<td width=120 align=center>外网ACK(pps)</td>
+	<td width=120 align=center>内网ACK(pps)</td>
+	<td width=120 align=center>外网ICMP(pps)</td>
+	<td width=120 align=center>内网ICMP(pps)</td>
+	<td width=120 align=center>外网碎片(pps)</td>
+	<td width=120 align=center>内网碎片(pps)</td>
+</tr>
+";
+if [ -f ${DATAPATH}/${CGI_logfile} ]; then
+	tblid="row1"
+	exec 0<${DATAPATH}/${CGI_logfile}
+	while read optime syn_out syn_out_max syn_in syn_in_max ack_out ack_out_max \
+	ack_in ack_in_max icmp_out icmp_out_max icmp_in icmp_in_max fragment_out \
+	fragment_out_max fragment_in fragment_in_max theothers;
+	do
+		[ "${fragment_in_max}" = "" ] && continue
+
+echo -n "
+		<tr id=${tblid}>
+		<td align=center>${optime}</td>
+		<td align=center>`createMyhtml ${syn_out} ${syn_out_max}`</td>
+		<td align=center>`createMyhtml ${syn_in} ${syn_in_max}`</td>
+		<td align=center>`createMyhtml ${ack_out} ${ack_out_max}`</td>
+		<td align=center>`createMyhtml ${ack_in} ${ack_in_max}`</td>
+		<td align=center>`createMyhtml ${icmp_out} ${icmp_out_max}`</td>
+		<td align=center>`createMyhtml ${icmp_in} ${icmp_in_max}`</td>
+		<td align=center>`createMyhtml ${fragment_out} ${fragment_out_max}`</td>
+		<td align=center>`createMyhtml ${fragment_in} ${fragment_in_max}`</td>
+		</tr>
+";
+	done
+	if [ "${tblid}" = "row1" ]; then
+		tblid="row2"
+	else
+		tblid="row1"
+	fi
+fi
+
+echo -n "
+</table>
+<table style=\"width:1100; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:1100\"> 
+<tr><td align=right><input type=\"button\" style=\"width:80\" value=\"返回\" onclick=\"onCancel();\"></input></td></tr>
+</table>
+</body>
+</html>
+";

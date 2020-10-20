@@ -1,0 +1,293 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`"
+returl="/cgi-bin/Route/plan_list"
+IPE_PPPOEPLAN=${PGPATH}/bin/ipe_pppoeplan
+
+echo -n "
+<style>
+select {width:60px; }
+</style>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script>
+function onCancel() 
+{
+	window.location.href = \"${returl}\";
+}
+function selectlink()
+{
+	var url;
+	var retval;
+	var data = document.getElementsByName(\"data\")[0];
+	url = \"/cgi-bin/Setup/plan_pppoelist\";
+	retval = ShowDialog(url, \"\", 980, 600);
+	data.value = retval; 
+}
+</script>
+";
+if [ "${CGI_act}" = "add" ]; then
+	act="添加"
+else
+	act="编辑"
+fi
+linkcount=`echo ${CGI_data} | awk '{print NF;}'`
+[ "${linkcount}" = "0" ] && afm_dialog_msg "找不到需要编辑的线路。"
+if [ "${REQUEST_METHOD}" = "POST" -a "${linkcount}" != "0" ]; then
+	operator_check "${myself}"
+	
+	errcount=0
+	allcount=0
+	
+	if [ "${CGI_act}" = "add" ]; then
+		for linkpppoe in ${CGI_data}
+		do
+			errmsg=`${IPE_PPPOEPLAN} -a ${linkpppoe} 0 ${CGI_year} ${CGI_month} ${CGI_day} ${CGI_week} ${CGI_hour} ${CGI_minute}`
+			if [ "$?" != "0" ]; then
+				errcount=$((${errcount}+1))
+				echo "err ${linkpppoe}: ${errmsg}<br>"
+			fi
+			allcount=$((${allcount}+1))
+		done
+		if [ "${errcount}" != "0" ]; then
+			afm_dialog_msg "总共${allcount}个，操作失败${errcount}个: 请稍后再试。"
+		else
+			afm_load_page 0 "${returl}"
+			exit 0
+		fi
+	else
+		for linkpppoe in ${CGI_data}
+		do
+			errmsg=`${IPE_PPPOEPLAN} -c ${linkpppoe} year=${CGI_year} month=${CGI_month} day=${CGI_day} week=${CGI_week} hour=${CGI_hour} minute=${CGI_minute}`
+			if [ "$?" != "0" ]; then
+				errcount=$((${errcount}+1))
+				echo "err ${linkpppoe}: ${errmsg}<br>"
+			fi
+			allcount=$((${allcount}+1))
+		done
+		if [ "${errcount}" != "0" ]; then
+			afm_dialog_msg "总共${allcount}个，操作失败${errcount}个: 请稍后再试。"
+		else
+			afm_load_page 0 "${returl}"
+			exit 0
+		fi
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "PPPOE重拔计划->${act}计划"
+[ "${linkcount}" = "1" ] && linkcount="${CGI_data}"
+[ "${CGI_year}" = "" ] && CGI_year="0000"
+[ "${CGI_month}" = "" ] && CGI_month="00"
+[ "${CGI_day}" = "" ] && CGI_day="00"
+[ "${CGI_week}" = "" ] && CGI_week="null"
+[ "${CGI_hour}" = "" ] && CGI_hour="24"
+[ "${CGI_minute}" = "" ] && CGI_minute="00"
+[ "${CGI_disbled}" = "" ] && CGI_disbled=0
+
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<input type=\"hidden\" name=\"act\" value=\"${CGI_act}\">
+<input type=\"hidden\" name=\"data\" value=\"${CGI_data}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:20\"></td>
+	<td align=left style=\"width:80\">计划线路</td>
+	<td align=left width=*>
+		<span style=\"width:240px\">${linkcount}</span>
+	</td>
+</tr>
+<tr id=row1>
+	<td style=\"width:20\"></td>
+        <td align=left style=\"width:80\">计划时间</td>
+        <td align=left width=*>
+      	<select name=year value=${CGI_year}> 
+"; 
+	if [ "${CGI_year}" = "0000" ]; then
+		echo "<option value=\"0000\" selected>每</option>"
+	else
+		echo "<option value=\"0000\">每</option>"
+	fi
+	year=2014
+	year_to=$((${year}+10))
+	while true
+	do
+		if [ "${CGI_year}" = "${year}" ]; then
+			echo "<option value=\"${year}\" selected>${year}</option>"
+		else
+			echo "<option value=\"${year}\">${year}</option>"
+		fi
+		year=$((${year}+1))
+		[ ${year} -gt ${year_to} ] && break 
+	done
+
+echo -n "
+      	</select> 年&nbsp;&nbsp;
+      	<select name=month value=${CGI_month}> 
+"; 
+	if [ "${CGI_month}" = "00" ]; then
+		echo "<option value=\"00\" selected>每</option>"
+	else
+		echo "<option value=\"00\">每</option>"
+	fi
+	month=1
+	while [ ${month} -le 12 ]; 
+	do
+		if [ ${month} -lt 10 ]; then
+			monthdesc="0${month}"
+		else
+			monthdesc="${month}"
+		fi
+		if [ "${CGI_month}" = "${month}" -o "${CGI_month}" = "${monthdesc}" ]; then
+			echo "<option value=\"${monthdesc}\" selected>${monthdesc}</option>"
+		else
+			echo "<option value=\"${monthdesc}\">${monthdesc}</option>"
+		fi
+		month=$((${month}+1))
+	done
+
+echo -n "
+      	</select> 月&nbsp;&nbsp;
+      	<select name=day value=${CGI_day}> 
+";
+	if [ "${CGI_day}" = "00" ]; then
+		echo "<option value=\"00\" selected>每</option>"
+	else
+		echo "<option value=\"00\">每</option>"
+	fi
+	day=1
+	while [ ${day} -le 31 ];
+	do
+		if [ ${day} -lt 10 ]; then
+			daydesc="0${day}"
+		else
+			daydesc="${day}"
+		fi
+		if [ "${CGI_day}" = "${day}" -o "${CGI_day}" = "${daydesc}" ]; then
+			echo "<option value=\"${daydesc}\" selected>${day}</option>"
+		else
+			echo "<option value=\"${day}\">${day}</option>"
+		fi
+		day=$((${day}+1))
+	done
+
+echo -n "
+      	</select> 日&nbsp;&nbsp;
+      	<select name=week value=${CGI_week}> 
+";
+	week_Mon=""
+	week_Tue=""
+	week_Wed=""
+	week_Thu=""
+	week_Fri=""
+	week_Sat=""
+	week_Sun=""
+	week_Null=""
+	
+	case ${CGI_week} in
+		"Mon")
+			week_Mon=selected
+		;;
+		"Tue")
+			week_Tue=selected
+		;;
+		"Wed")
+			week_Wed=selected
+		;;
+		"Thu")
+			week_Thu=selected
+		;;
+		"Fri")
+			week_Fri=selected
+		;;
+		"Sat")
+			week_Sat=selected
+		;;
+		"Sun")
+			week_Sun=selected
+		;;
+		*)
+			week_Null=selected
+		;;
+	esac
+
+echo -n "
+			<option value=\"null\" ${week_Null}>每周</option>
+			<option value=\"Mon\" ${week_Mon}>周一</option>
+			<option value=\"Tue\" ${week_Tue}>周二</option>
+			<option value=\"Wed\" ${week_Wed}>周三</option>
+			<option value=\"Thu\" ${week_Thu}>周四</option>
+			<option value=\"Fri\" ${week_Fri}>周五</option>
+			<option value=\"Sat\" ${week_Sat}>周六</option>
+			<option value=\"Sun\" ${week_Sun}>周日</option>
+      	</select> &nbsp;&nbsp;
+      	<select name=hour value=${CGI_hour}> 
+";
+	if [ "${CGI_hour}" = "24" ]; then
+		echo "<option value=\"24\" selected>每</option>"
+	else
+		echo "<option value=\"24\">每</option>"
+	fi
+	hour=0
+	while [ ${hour} -lt 24 ];
+	do
+		if [ ${hour} -lt 10 ]; then
+			hourdesc="0${hour}"
+		else
+			hourdesc="${hour}"
+		fi
+		if [ "${CGI_hour}" = "${hour}" -o "${CGI_hour}" = "${hourdesc}" ]; then
+			echo "<option value=\"${hourdesc}\" selected>${hourdesc}</option>"
+		else
+			echo "<option value=\"${hourdesc}\">${hourdesc}</option>"
+		fi
+		hour=$((${hour}+1))
+	done
+
+echo -n "
+      	</select> 时&nbsp;&nbsp;
+      	<select name=minute value=${CGI_minute}> 
+";
+	minute=0
+	while [ ${minute} -lt 60 ];
+	do
+		if [ ${minute} -lt 10 ]; then
+			minutedesc="0${minute}"
+		else
+			minutedesc="${minute}"
+		fi
+		if [ "${CGI_minute}" = "${minute}" -o "${CGI_minute}" = "${minutedesc}" ]; then
+			echo "<option value=\"${minutedesc}\" selected>${minutedesc}</option>"
+		else
+			echo "<option value=\"${minutedesc}\">${minutedesc}</option>"
+		fi
+		minute=$((${minute}+1))
+	done
+
+echo -n "
+      	</select> 分
+		</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

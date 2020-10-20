@@ -1,0 +1,91 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Maintain/history_log\";
+}
+</script>
+";
+[ "${CGI_logfile}" = "" ] && CGI_logfile="web_`date +%Y.%m.%d`.log"
+fhead="`echo ${CGI_logfile} | cut -d'_' -f1`"
+if [ "${fhead}" != "web" ]; then
+	afm_dialog_msg "无效的日志文件!"
+	afm_load_page 0 "/cgi-bin/Maintain/history_log"
+	exit 0
+fi
+if [ "`echo ${CGI_logfile} | cut -d'.' -f4`" != "log" ]; then
+	afm_dialog_msg "无效的日志文件!"
+	afm_load_page 0 "/cgi-bin/Maintain/history_log"
+	exit 0
+fi
+
+echo -n "
+<body>
+"; 
+if [ "${CGI_logfile}" = "" ]; then
+	cgi_show_title "管理日志->今日日志" 
+else
+	cgi_show_title "管理日志->历史日志显示"
+fi
+
+echo -n "
+<br>
+<table width=950 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=120 align=center>用户</td>
+	<td width=120 align=center>登录地址</td>
+	<td width=150 align=center>操作时间</td>
+	<td width=120 align=center>操作</td>
+	<td width=* align=center>参数</td>
+</tr>
+";
+if [ -e /usr/ramdisk/datalog/keepme ]; then
+	LOGPATH="/usr/ramdisk/datalog"
+else
+	LOGPATH="${DATAPATH}"
+fi
+if [ -f ${LOGPATH}/${CGI_logfile} ]; then
+	tblid="row1"
+	exec 0<${LOGPATH}/${CGI_logfile}
+	while read optime opaddr opuser oper opargs theothers;
+	do
+
+echo -n "
+		<tr id=${tblid}>
+		<td align=center>${opuser}</td>
+		<td align=center>${opaddr}</td>
+		<td align=center>${optime}</td>
+		<td align=center>${oper}</td>
+		<td align=center>${opargs}</td>
+		</tr>
+";
+	done
+	if [ "${tblid}" = "row1" ]; then
+		tblid="row2"
+	else
+		tblid="row1"
+	fi
+fi
+
+echo -n "
+</table>
+<table style=\"width:950; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:950\"> 
+<tr><td align=right><input type=submit style=\"width:80\" value=\"返回\" onclick=\"onCancel();\"></input></td></tr>
+</table>
+</body>
+</html>
+";

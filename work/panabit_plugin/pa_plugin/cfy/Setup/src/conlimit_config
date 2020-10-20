@@ -1,0 +1,81 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} conlimit config ignore_dns=${CGI_ignore_dns}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	errmsg=`${FLOWEYE} flow config dropflow_ttl=${CGI_dropflow_ttl}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	fi
+fi
+for nameval in `${FLOWEYE} conlimit stat`
+do
+	eval "CGI_${nameval}"
+done
+for nameval in `${FLOWEYE} flow stat`
+do
+	eval "CGI_${nameval}"
+done
+[ "${CGI_dropflow_ttl}" = "" ] && CGI_dropflow_ttl=0
+
+echo -n "
+<body>
+"; cgi_show_title "连接控制->参数设置" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=200 align=left>对DNS连接</td>
+	<td width=120 align=left>
+		<select name=ignore_dns value=${CGI_ignore_dns} style=\"width:100%\">
+		";
+			if [ ${CGI_ignore_dns} -eq 0 ]; then
+				echo "<option value=0 selected>控制</option>" 
+				echo "<option value=1>不控制</option>"
+			else 
+				echo "<option value=0>控制</option>"
+				echo "<option value=1 selected>不控制</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=20></td>
+	<td width=200 align=left>被拒绝的连接保持时间(秒)</td>
+	<td width=120 align=left><input type=text name=dropflow_ttl style=\"width:100%\" value=\"${CGI_dropflow_ttl}\" /></td>
+	<td width=*>(如果不为0,被拒绝的连接在指定时间内被释放)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\">
+<tr>
+        <td align=right>
+                <input type=submit style=\"width:80\" value=\"提交\"></input>
+        </td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

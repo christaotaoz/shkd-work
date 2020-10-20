@@ -1,0 +1,81 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+MOD_TAB_LIST="阀值配置#/cgi-bin/Maintain/alarm_config 历史日志#/cgi-bin/Maintain/alarm_logger"
+alarm_config_file="${PGETC}/alarm_config.conf"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showLog(logfile)
+{
+	window.location.href = \"/cgi-bin/Maintain/alarm_log?logfile=\" + logfile;
+}
+function deleteLog(logfile)
+{
+	if (confirm(\"确定要删除日志文件?\"))
+		window.location.href = \"${myself}?action=delete&logfile=\" + logfile;
+}
+function beforeCommit(frm)
+{
+	return true;
+}
+</script>
+<body>
+"; 
+if [ "${CGI_action}" = "delete" ]; then
+	rm -f ${DATAPATH}/${CGI_logfile}
+fi
+cgi_show_title "系统告警->攻击告警" 
+echo -n "
+<br>
+"; cgi_print_mod_header "历史日志" 700 
+echo -n "
+<br>
+<table width=700 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=250 align=center>文件名称</td>
+	<td width=120 align=center>记录数</td>
+	<td width=120 align=center>文件大小</td>
+	<td width=* align=center>操作</td>
+</tr>
+";
+todayfile="alarm_`date +%Y.%m.%d`.log"
+tblid="row1"
+cd ${DATAPATH}
+filelist=`ls alarm_*.log 2>/dev/null`
+if [ "$?" = "0" ]; then
+	for logfile in $filelist
+	do
+
+echo -n "
+		<tr id=${tblid}>
+		<td align=left>&nbsp;&nbsp;${logfile}</td>
+		<td align=center>`cat ${DATAPATH}/${logfile} | wc -l`</td>
+		<td align=center>`ls -l ${DATAPATH}/${logfile} | awk '{print $5}'`</td>
+		<td align=center>
+			<a style=\"color:#0000ff\" href=\"javascript:showLog('${logfile}')\">&nbsp;显示日志&nbsp;</a>
+                	<a style=\"color:#0000ff\" href=\"javascript:deleteLog('${logfile}')\">&nbsp;删除日志&nbsp;</a>
+		</td>
+		</tr>
+";
+		if [ "${tblid}" = "row1" ]; then
+			tblid="row2"
+		else
+			tblid="row1"
+		fi
+	done
+fi
+
+echo -n "
+</table>
+</form>
+</body>
+</html>
+";

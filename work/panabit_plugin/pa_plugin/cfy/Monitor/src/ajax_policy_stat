@@ -1,0 +1,32 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+FLOWEYE=${PGPATH}/bin/floweye
+[ "${CGI_link}" = "" ] && CGI_link=0
+firstelem=1
+printf "["
+${FLOWEYE} policy getgrp link="${CGI_link}" | \
+while read id bridge dir appid appname proto from intype inip inport to outtype outip outport action nextstep iprate prclevel \
+inbps outbps theothers
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{ 'id':'${id}','inbps':'${inbps}','outbps': '${outbps}'}"
+		firstelem=0
+	else
+		printf ",{ 'id':'${id}','inbps':'${inbps}','outbps':'${outbps}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

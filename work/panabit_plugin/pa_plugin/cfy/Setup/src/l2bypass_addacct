@@ -1,0 +1,245 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/cal.css\" />
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\" src=\"/img/jq.js\"></script>
+<script type=\"text/javascript\" src=\"/img/cal.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var account = document.getElementsByName(\"account\")[0];
+	var expire  = document.getElementsByName(\"expire\")[0];
+	var memo    = document.getElementsByName(\"memo\")[0];
+	account.value = TrimAll(account.value);
+	if (account.value == \"\") {
+		alert(\"请输入账号名称!\");
+		account.select();
+		return false;
+	}
+	if (!IsName(account.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		account.select();
+		return false;
+	}
+	expire.value = TrimAll(expire.value);
+	if (expire.value == \"\") {
+		alert(\"请输入有效期\");
+		expire.select();
+		return false;
+	}
+	memo.value = TrimAll(memo.value);
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_account\";
+}
+String.prototype.trim = function () {
+    var $ = /^\s+|\s+$/g;
+    return function () {
+        return this.replace($, \"\")
+    }
+}();
+(function($) {
+	jQuery.fn.Cal.formatOutput = function (dateObj) {
+		var y = dateObj.getFullYear(),m = (dateObj.getMonth() + 1),d = dateObj.getDate();
+		var H = dateObj.getHours(), M = dateObj.getMinutes(), S = dateObj.getSeconds();
+		m = m.toString();
+		if(m.length == 1){
+			m='0'+m;
+		}
+		d = d.toString();
+		if(d.length == 1){
+			d='0'+d;
+		}
+		H = H.toString();
+		if(H.length == 1){
+			H='0'+H;
+		}
+		M = M.toString();
+		if(M.length == 1){
+			M='0'+M;
+		}
+		S = S.toString();
+		if(S.length == 1){
+			S='0'+S;
+		}
+		return y+ '-' + m + '-' + d + '/' + H + ':' + M + ':' + S;	
+	};
+})(jQuery);
+jQuery(document).ready(function () {
+	\$('#expire').Cal({enddate:2100});
+	Date.prototype.Format = function(format){
+		var o = {
+		\"M+\" : this.getMonth()+1, //month
+		\"d+\" : this.getDate(),    //day
+		\"h+\" : this.getHours(),   //hour
+		\"m+\" : this.getMinutes(), //minute
+		\"s+\" : this.getSeconds(), //second
+		\"q+\" : Math.floor((this.getMonth()+3)/3),  //quarter
+		\"S\" : this.getMilliseconds() //millisecond
+		};
+		if(/(y+)/.test(format)){
+			format=format.replace(RegExp.\$1,(this.getFullYear()+\"\").substr(4 - RegExp.\$1.length));
+		}
+		for(var k in o){
+			if(new RegExp(\"(\"+ k +\")\").test(format)){
+				format = format.replace(RegExp.\$1,RegExp.\$1.length==1 ? o[k] :(\"00\"+ o[k]).substr((\"\"+ o[k]).length));
+			}
+		}
+		return format;
+	};
+	\$('#link_add_month').bind({
+		'mouseover':function(e){
+			\$('#box_choose_month').show();
+		},
+		'mouseout':function(e){
+			\$('#box_choose_month').hide();
+		}
+	});
+	
+	\$('span',\$('#box_choose_month')).bind({
+		'click':function(e){
+			var ctl = \$('#expire'),
+			d1 = ctl.val();
+			if(d1 == '') return;
+			
+			var addm = parseInt(\$(this).attr('m')),d2=0,nowTime = (new Date()).Format('yyyy-MM-dd');
+			d1 = d1.trim();
+			if(/^\d{4}-\d{1,2}-\d{1,2}\/(\d{2}:\d{1,2}:\d{1,2})?$/.test(d1)){
+				if(/1970-01-01/.test(d1)){
+					d1 = nowTime;
+				}
+			}else{
+				d1 = nowTime;
+			}
+			
+			var t,pos,y,m,om,d,od,pd,pt,md = [31,28,31,30,31,30,31,31,30,31,30,31];
+			if((pos = d1.indexOf('/')) !== -1){
+				pt = d1.substr(pos+1);
+				pd = d1.substr(0,pos);
+			}else{
+				pt = '00:00:00';
+				pd = d1;
+			}
+			pd = pd.split('-');
+			
+			y = parseInt(pd[0],10);
+			om = m = parseInt(pd[1],10);
+			od = d = parseInt(pd[2],10);
+				
+			if(addm + m > 12){
+				y++;
+				m = addm+m-12;
+			}else{
+				m = m + addm;
+			}
+			
+			if(y % 4 == 0)md[1] = 29;
+			if(md[om-1] == od){
+				d = md[m-1];
+			}
+			m = '0' + m;
+			d = '0' + d;
+			d2 = y+'-'+m.substr(m.length-2)+'-'+d.substr(d.length-2)+'/'+pt;
+			
+			ctl.val(d2);
+		}
+	});
+});
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}" pppoeman
+	cmdargs="account=${CGI_account} expire=${CGI_expire} gid=${CGI_gid}"
+	[ "${CGI_memo}" != "" ] && cmdargs="${cmdargs} memo=${CGI_memo}"
+	errmsg=`${FLOWEYE} l2route set ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/l2bypass_account"
+		exit 0
+	fi
+fi
+[ "${CGI_expire}" = "" ] && CGI_expire=`date +%Y-%m-%d/00:00:00`
+
+echo -n "
+<body>
+"; cgi_show_title "PPPOE旁路->添加账号" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>账号名称</td>
+	<td width=* align=left>
+		<input type=text name=account style=\"width:150px\" value=\"${CGI_account}\"></input>
+		&nbsp;(不超过30个英文字符或15个中文字符)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>服务组</td>
+        <td align=left>
+		<select name=gid value=\"${CGI_gid}\" style=\"width:150;height:21\">
+	";
+		${FLOWEYE} l2route list | while read gid name theothers
+		do
+			[ "${name}" = "NULL" ] && name="${gid}"
+			if [ "${gid}" = "${CGI_gid}" ]; then
+				echo "<option value=${gid} selected>${name}</option>"
+			else
+				echo "<option value=${gid}>${name}</option>"
+			fi
+		done
+	
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>截止日期</td>
+        <td align=left>
+			<input type=\"text\" size=\"6\" name=\"expire\" id=\"expire\" validate=\"Date\" filter=\"filterDate\" setfn=\"setfnDate\" style=\"width:150px\" value=\"${CGI_expire}\"/>
+			<span id=\"link_add_month\"> +加时间
+				<div id=\"box_choose_month\">
+					<span m=\"1\">加1个月</span>
+					<span m=\"3\">加3个月</span>
+					<span m=\"6\">加半年</span>
+					<span m=\"12\">加1年</span> 
+				</div>
+			</span>
+		&nbsp;(格式2014-05-01/12:00:00)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>备注信息</td>
+        <td align=left><input type=text class=text name=memo style=\"width:250\" value=\"${CGI_memo}\"></input>&nbsp;(不超过50个字符)
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,42 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  action: null
+  nat_route: null
+  number: null
+  pool_name: null
+  source_interface: null
+node_templates:
+  New_policy_route_1:
+    type: cloudify.pa.policy_route
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      action:
+        get_input: action
+      connection_config:
+        host: 192.168.4.39
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+      nat_route:
+        get_input: nat_route
+      number:
+        get_input: number
+      pool_name:
+        get_input: pool_name
+      source_interface:
+        get_input: source_interface

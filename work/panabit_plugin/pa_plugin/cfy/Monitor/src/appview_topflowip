@@ -1,0 +1,154 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=0
+[ "${CGI_topn}" = "" ] && CGI_topn="20"
+[ "${CGI_appid}" = "" ] && CGI_appid="http"
+[ "${CGI_type}" = "" ] && CGI_type="inner"
+[ "${CGI_statype}" = "" ] && CGI_statype="all"
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="refresh=${CGI_refresh}&statype=${CGI_statype}&appid=${CGI_appid}&topn=${CGI_topn}&appname=${CGI_appname}&bridge=${CGI_bridge}"
+cgiurl="${cgipath}?${cgiargs}"
+[ ${CGI_refresh} -ne 0 ] && afm_load_page  ${CGI_refresh} "${cgiurl}"
+[ "${width}" = "" ] && width=700
+MOD_TAB_LIST="协议配置#/cgi-bin/Protocol/sysapp_config?appid=${CGI_appid}&appname=${CGI_appname} \
+趋势图表#/cgi-bin/Monitor/appview_graph?${cgiargs} \
+在线用户#/cgi-bin/Monitor/appview_topip?${cgiargs} \
+连接排名#/cgi-bin/Monitor/appview_topflowip?${cgiargs} \
+有关策略#/cgi-bin/Monitor/appview_policy?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showip(ipaddr, online, ttl, outbyte, inbyte, outrate, inrate)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr +
+              \"&online=\" + online + \"&ttl=\" + ttl + \"&outbyte=\" + outbyte +
+              \"&inbyte=\" + inbyte + \"&outrate=\" + outrate + \"&inrate=\" + inrate;
+        ShowWindow(url, \"\", 650, 800);
+}
+function showOutip(ipaddr)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/outip_flow?ipaddr=\" + ipaddr; 
+        ShowWindow(url, \"\", 650, 800);
+}
+</script>
+<body>
+"; cgi_show_title "应用协议->`${FLOWEYE} app name ${CGI_appid}`档案" ${width} 
+echo -n "
+"; cgi_show_app_info ${CGI_appid} ${width} 
+echo -n "
+<br>
+"; cgi_print_mod_header "连接排名" ${width} 
+echo -n "
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<form method=post action=\"${cgipath}\">
+<tr id=tblhdr height=22>
+        <td width=163 align=left><b>用户类型&nbsp;</b>
+        <select name=type value=\"${CGI_type}\" style=\"width:100;height:21\">
+        ";
+                if [ "${CGI_type}" = "inner" ]; then
+                        echo "<option value=inner selected>内网用户</option>"
+                        echo "<option value=outer>外网用户</option>"
+                else
+                        echo "<option value=inner>内网用户</option>"
+                        echo "<option value=outer selected>外网用户</option>"
+                fi
+        
+echo -n "
+        </select></td>
+        <td width=183 align=left><b>&nbsp;显示前&nbsp;</b>
+        <select name=topn value=\"${CGI_topn}\" style=\"width:70;height:21\">
+        ";
+                for tm in 10 20 30 50 100 0; do
+                        if [  ${tm} -eq 0 ]; then
+                                tmdesc="所有"
+                        else
+                                tmdesc="${tm}"
+                        fi
+                        if [ "${CGI_topn}" = "${tm}" ]; then
+                                echo "<option selected value=${tm}>${tmdesc}</option>"
+                        else
+                                echo "<option value=${tm}>${tmdesc}</option>"
+                        fi
+                done
+        
+echo -n "
+        </select>&nbsp;项</td>
+        <td width=173 align=left><b>&nbsp;每隔&nbsp;</b>
+        <select name=refresh value=\"${CGI_refresh}\" style=\"width:76;height:21\">
+        ";
+                for tm in 15 30 45 60 0; do
+                        if [ ${tm} -eq 0 ]; then
+                                tmdesc="不刷新"
+                        else
+                                tmdesc="${tm}"
+                        fi
+                        if [ "${CGI_refresh}" = "${tm}" ]; then
+                                echo "<option selected value=${tm}>${tmdesc}</option>"
+                        else
+                                echo "<option value=${tm}>${tmdesc}</option>"
+                        fi
+                done
+        
+echo -n "
+        </select>&nbsp;秒刷新</td>
+        <td width=* class=bgurl2 align=right><input type=submit value=\"提  交\" style=\"width:70;height:21\"></input>
+        <input type=hidden name=appid value=\"${CGI_appid}\"></input></td>
+        <input type=hidden name=appname value=\"${CGI_appname}\"></input></td>
+</tr>
+</form>
+</table>
+"; wid=$((${width} / 2)) 
+echo -n "
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=${wid} align=center><b>IP地址</b></td>
+        <td width=* align=center><b>连接数</b></td>
+</tr>
+";
+idname="row1"
+args="app=${CGI_appid} type=${CGI_type}"
+[ ${CGI_topn} -ne 0 ] && args="${args} topn=${CGI_topn}"
+if [ "${CGI_type}" = "inner" ]; then
+	showip=1
+else
+	showip=0
+fi
+${FLOWEYE} flow ipsort ${args} | while read ip count theothers
+do 
+echo -n "
+        <tr id=${idname}>
+       	<td align=left>
+	"; if [ ${showip} -ne 0 ]; then 
+echo -n "
+		<a href=\"javascript:showip('${ip}', '${onlinesec}', '${ttl}', '${outbyte}', '${inbyte}', '${outrate}', '${inrate}')\">&nbsp;&nbsp;&nbsp;&nbsp;${ip}</a>
+	"; else 
+echo -n "
+		<a href=\"javascript:showOutip('${ip}')\">&nbsp;&nbsp;&nbsp;&nbsp;${ip}</a>
+	"; fi 
+echo -n "
+	</td>
+	
+        <td align=right>${count}</td>
+";
+        if [ "${idname}" = "row1" ]; then
+                idname="row2"
+        else
+                idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

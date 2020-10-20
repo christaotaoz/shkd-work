@@ -1,0 +1,219 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Monitor/`basename $0`"
+afm_load_page 30 ${myself}
+curpolinfo=`${FLOWEYE} urlfilter getcurgrp`
+curpolicy=`echo ${curpolinfo} | cut -d' ' -f1`
+curpolicyname=`echo ${curpolinfo} | cut -d' ' -f2`
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddRule(policy) 
+{
+	var url = \"/cgi-bin/Setup/urlfilter_addrule?policy=\" + policy;
+	ShowWindow(url, \"\", 640, 470);
+}
+function modifyRule(group, polno) 
+{
+	var url = \"/cgi-bin/Setup/urlfilter_setrule?policy=\" + group + \"&polno=\" + polno;
+	ShowWindow(url, \"\", 640, 560);
+}
+function deleteRule(group, rule)
+{
+	if (confirm(\"确定要删除该策略?\")) 
+		window.location.href = \"${myself}?action=rmvrule\" + 
+		                       \"&group=\" + group + \"&ruleid=\" + rule;
+}
+function openPolicyTime()
+{
+	var url = \"/cgi-bin/Setup/urlfilter_listime\";
+	ShowWindow(url, \"\", 840, 500);
+}
+function dnsEdit(grpname)
+{
+        var url = \"/cgi-bin/Protocol/urldnsgrp_edit?grpname=\" + grpname;
+        ShowWindow(url, \"\", 840, 560);
+}
+function showIPGrp(gname)
+{
+        var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+        ShowWindow(url, \"\", 860, 630);
+}
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 620, 700);
+}
+function enablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=enable&policy=\" + grp + \"&ruleid=\" + polno;
+        window.location.href = url;
+}
+function disablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=disable&policy=\" + grp + \"&ruleid=\" + polno;
+        window.location.href = url;
+}
+function onloaddoc()
+{
+        if (document.body.clientWidth > 1300) 
+                document.getElementById(\"tbl1\").style.width=\"100%\";
+        else 
+                document.getElementById(\"tbl1\").style.width=\"1300\";
+}
+</script>
+";
+if [ "${CGI_action}" = "rmvrule" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} urlfilter rmvrule ${CGI_group} ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter setrule group=${CGI_policy} id=${CGI_ruleid} disable=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter setrule group=${CGI_policy} id=${CGI_ruleid} disable=0`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body onload=\"onloaddoc()\">
+"; 
+cgi_show_title "当前策略->HTTP管控策略"
+if [ ${curpolicy} -eq 0 ]; then
+	echo "<br>"
+	echo "<table style=\"width:100%; color:#0000ff\">"
+	echo "<tr><td align=left>目前没有策略组被调度，<a style=\"color:#ff0000;font-bold:true;font-size:13px;\" href=\"javascript:openPolicyTime()\"><b>请点击此处做策略调度</b></a></td></tr>"
+	echo "</table>"
+	echo "<br>"
+	echo "</body>"
+	echo "</html>"
+	exit 0
+fi
+
+echo -n "
+<table style=\"width:1200; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>当前策略组:${curpolicyname}</b>&nbsp; <a style=\"color:#ff0000;font-bold:true;font-size:14px;\" href=\"javascript:openPolicyTime()\"><b>(点击此处修改策略调度)</b></a></td>
+</tr>   
+</table>
+<table id=tbl width=100% border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+        <td width=40  align=center>序号</td>
+        <td width=120 align=right>源地址</td>
+	<td width=70  align=right>访问方式</td>
+	<td width=120 align=right>网站域名</td>
+	<td width=70  align=right>文件类型</td>
+	<td width=70  align=right>共享用户</td>
+	<td width=70  align=right>移动终端</td>
+	<td width=70  align=right>QQ号码</td>
+	<td width=70  align=right>匹配一次</td>
+	<td width=60  align=right>动作</td>
+	<td width=80  align=right>输出线路</td>
+	<td width=*   align=right>动作参数</td>
+	<td width=70  align=right>匹配次数</td>
+        <td width=80  align=right><a style=\"color:#0000ff\" href=\"javascript:onAddRule('${curpolicy}')\">添加策略</a></td>
+</tr> 
+";
+idname="row1"
+${FLOWEYE} urlfilter getgrp ${curpolicy} | \
+while read polno intype inip method dnstype dns ext natip hasms qqcnt onlyfirst disabled action outpxy pkts actarg ifname others
+do
+	if [ ${disabled} -eq 1 ]; then
+		echo "<tr id=row4>"
+	else 
+		echo "<tr id=${idname}>"
+	fi
+	echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyRule('${curpolicy}', '${polno}')\">${polno}</a>&nbsp;</td>"
+        if [ "${intype}" = "table" ]; then
+                echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}</a></td>"
+        else
+                echo "<td align=right>${inip}</td>"
+        fi
+	if [ "${method}" = "get" ]; then
+		method="GET"
+	elif [ "${method}" = "post" ]; then
+		method="POST"
+	else
+		method="any"
+	fi	
+	echo "<td align=right>${method}</td>"
+	if [ "${dns}" != "any" ]; then
+		if [ "${dnstype}" = "sys" ]; then 
+			echo "<td align=right>*${dns}</td>"
+		else
+			echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:dnsEdit('${dns}')\">${dns}</a></td>"
+		fi
+	else
+		echo "<td align=right>any</td>"
+	fi
+	[ "${ext}" = "any" ] && ext="any"
+	echo "<td align=right>${ext}</td>"
+	[ "${natip}" = "0" ] && natip=""
+	[ "${hasms}" = "0" ] && hasms=""
+	[ "${qqcnt}" = "0" ] && qqcnt=""
+	echo "<td align=right>${natip}</td>"
+	echo "<td align=right>${hasms}</td>"
+	echo "<td align=right>${qqcnt}</td>"
+	if [ ${onlyfirst} -eq 0 ]; then
+		echo "<td align=right>no</td>"
+	else
+		echo "<td align=right>yes</td>"
+	fi
+	if [ "${action}" = "deny" ]; then
+		echo "<td align=right><img src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+	elif [ "${action}" = "accept" -o "${action}" = "permit" ]; then
+		echo "<td align=right><img src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+	elif [ "${action}" = "prompt" ]; then
+		echo "<td align=right>信息提示</td>"
+	elif [ "${action}" = "redirect" ]; then
+		echo "<td align=right>链接跳转</td>"
+	elif [ "${action}" = "reqfwd" ]; then
+		echo "<td align=right>报文镜像</td>"
+	else
+		echo "<td align=right>未知</td>"
+	fi
+	if [ "${outpxy}" = "NULL" ]; then
+		echo "<td align=right>原路返回</td>"
+	else
+		echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('${outpxy}')\">${outpxy}</a></td>"
+	fi
+	[ "${actarg}" = "null" ] && actarg=""
+	echo "<td align=right>${actarg}&nbsp;</td>"
+	echo "<td align=right style=\"color:#ff0000\">${pkts}</td>"
+       	echo "<td align=right>"
+	echo "<img style=\"margin-top:3px;\" src=\"/img/edit.png\" title=\"修改策略\" onclick=\"modifyRule('${curpolicy}', '${polno}')\" />&nbsp;"
+	echo "<img style=\"margin-top:3px;\" src=\"/img/delete.png\" title=\"删除策略\" onclick=\"deleteRule('${curpolicy}', '${polno}')\" />&nbsp;"
+	if [ ${disabled} -eq 0 ]; then 
+               	echo "<img style=\"margin-top:3px\" src=\"/img/disable.png\" title=\"禁用策略\" onclick=\"disablePolicy('${curpolicy}', '${polno}')\" />&nbsp;"
+	else 
+               	echo "<img style=\"margin-top:3px\" src=\"/img/enable.png\" title=\"启用策略\" onclick=\"enablePolicy('${curpolicy}', '${polno}')\" />&nbsp;"
+	fi
+	echo "</td></tr>"
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else    
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

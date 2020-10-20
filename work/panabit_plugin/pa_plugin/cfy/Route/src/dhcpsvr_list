@@ -1,0 +1,177 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function showServer(name)
+{
+	var url = \"/cgi-bin/Route/dhcpsvr_edit?id=\" + name;
+        ShowWindow(url, \"\", 620, 700);
+}
+function enableServer(id)
+{
+	window.location.href = \"${myself}?action=enable&id=\" + id;
+}
+function disableServer(id)
+{
+	window.location.href = \"${myself}?action=disable&id=\" + id;
+}
+</script>
+";
+if [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	cmdargs="name=${CGI_id} dhcp_enable=1"
+	errmsg=`${FLOWEYE} nat setrtif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	cmdargs="name=${CGI_id} dhcp_enable=0"
+	errmsg=`${FLOWEYE} nat setrtif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "optcfg" ]; then
+        cmdargs="enable=${CGI_enable} ipmac_enable=${CGI_ipmac_enable}"
+        errmsg=`${FLOWEYE} dhcpsvr config ${cmdargs}`
+        [ "$?" != "0" ] && afm_dialog_msg "操作失败:${errmsg}"
+fi
+for nameval in `${FLOWEYE} dhcpsvr stat`
+do
+        eval "CGI_${nameval}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "DHCP->服务设置" 
+echo -n "
+<br>
+<table style=\"width:900; border-bottom:1px #787882 solid; color:#CE6C04;font-size:14px;font-bold:true;\">
+<tr>
+	<td align=left><b>基本配置</b></td>
+	<td width=*></td>
+</tr>
+</table>
+<br>
+<form method=post action=\"${myself}\">
+<table width=900 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=120 align=left>DHCP服务</td>
+	<td width=600 align=left>
+		<select style=\"width:100px\" name=enable value=${CGI_enable}>
+		";
+			if [ ${CGI_enable} -eq 0 ]; then
+				echo "<option value=1>启用</option>"
+				echo "<option value=0 selected>关闭</option>" 
+			else 
+				echo "<option value=1 selected>启用</option>"
+				echo "<option value=0>关闭</option>" 
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>绑定IP与MAC</td>
+	<td align=left>
+		<select style=\"width:100px\" name=ipmac_enable value=${CGI_ipmac_enable}>
+		";
+			if [ "${CGI_ipmac_enable}" = "1" ]; then
+				echo "<option value=1 selected>启用</option>"
+				echo "<option value=0>关闭</option>" 
+			else 
+				echo "<option value=1>启用</option>"
+				echo "<option value=0 selected>关闭</option>" 
+			fi
+		
+echo -n "
+		</select>&nbsp;(当启用后，在给客户分配IP地址后，会自动将客户的IP和MAC绑定)&nbsp;&nbsp;
+	</td>
+	<td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\" />
+		<input type=hidden name=action value=\"optcfg\" />
+	</td>
+</tr>
+</table>
+</form>
+<br>
+<table style=\"width:900; color:#CE6C04;font-size:14px;font-bold:true;\">
+<tr>
+	<td align=left><b>服务列表</b></td>
+	<td width=*></td>
+</tr>
+</table>
+<table width=900 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=100 align=right>服务接口</td>
+        <td width=90  align=right>VLAN范围</td>
+	<td width=140 align=right>IP分配范围</td>
+	<td width=110 align=right>默认网关</td>
+	<td width=180 align=right>DNS</td>
+	<td width=90  align=right>租期(秒)</td>
+	<td width=90  align=right>租户数</td>
+	<td width=*   align=right>操作&nbsp;</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} dhcpsvr list | \
+while read id name ttl vlan enable pool dns0 dns1 gateway clntcnt theothers
+do
+	if [ "${enable}" = "0" ]; then
+		idname="row4"
+	fi
+
+echo -n "
+	<tr id=${idname}>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showServer('${name}')\">${name}&nbsp;</a></td>
+	"; [ "${vlan}" = "0-0" ] && vlan="" 
+echo -n "
+	<td align=right>${vlan}&nbsp;</td>
+	<td align=right>${pool}&nbsp;</td>
+	"; [ "${gateway}" = "0.0.0.0" ] && gateway="" 
+echo -n "
+	<td align=right>${gateway}&nbsp;</td>
+	<td align=right>${dns0},&nbsp;${dns1}&nbsp;</td>
+	<td align=right>${ttl}&nbsp;</td>
+	<td align=right>${clntcnt}&nbsp;</td>
+       	<td align=right>
+	"; if [ "${enable}" = "1" ]; then 
+echo -n "
+		<img src=\"/img/disable.png\" style=\"margin-top:3px\" title=\"禁用服务\" onclick=\"disableServer('${id}')\" />&nbsp;
+	"; else 
+echo -n "
+		<img src=\"/img/enable.png\" style=\"margin-top:3px\" title=\"启用服务\" onclick=\"enableServer('${id}')\" />&nbsp;
+	"; fi 
+echo -n "
+	</td>
+	</tr>
+	"; if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

@@ -1,0 +1,84 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+	function Validate(frm) {
+		var dbfile = document.getElementsByName(\"IPMAC_FILE\")[0];
+		if (dbfile.value == \"\") {
+			alert(\"ÇëÊäÈëÎÄ¼şÂ·¾¶!\");
+			return false;
+		}
+		return true;
+	}
+	function onCancel() {
+		window.location.href = \"/cgi-bin/Route/dhcpsvr_static\";
+	}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errcnt=0
+	okcnt=0
+	exec 0<${CGI_IPMAC_FILE}
+	while read mac ip desc theothers
+	do
+		cmdargs="mac=${mac} ip=${ip}"
+		[ "${desc}" != "" ] && cmdargs="${cmdargs} desc=${desc}"
+		errmsg=`${FLOWEYE} dhcpsta add ${cmdargs}`
+		if [ "$?" != "0" ]; then
+ 			errcng=$((${errcng} + 1))
+		else
+			okcnt=$((${okcnt} + 1))
+		fi
+	done
+	if [ ${errcnt} -gt 0 ]; then
+		afm_dialog_msg "³É¹¦¼ÓÔØ${okcnt}£¬ÓĞ${errcnt}Ìõ¼ÇÂ¼¼ÓÔØÊ§°Ü!"
+	else
+		afm_dialog_msg "²Ù×÷³É¹¦!"
+	fi
+	afm_load_page 0 "/cgi-bin/Route/dhcpsvr_static"
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "DHCP¾²Ì¬·ÖÅä-ñ->´ÓÎÄ¼ş¼ÓÔØ" 
+echo -n "
+<br>
+<table width=\"800\" border=0 cellspacing=1 cellpadding=3>
+<tr>
+	<td width=20></td>
+	<td style=\"font:13px bold\" width=*>(1)ÎÄ¼şÎªÎÄ±¾ÎÄ¼ş</td>
+</tr>
+<tr>
+	<td></td>
+	<td style=\"font:13px bold\" width=*>(2)ÎÄ¼şÖĞÃ¿ĞĞ¸ñÊ½Îª \"nn:nn:nn:nn:nn:nn(»ònn-nn-nn-nn-nn-nn) xxx.xxx.xxx.xxx ±¸×¢\"</td>
+</tr>
+</table>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr height=22>
+	<td width=20></td>
+	<td width=120 style=\"font:14px bold\" align=left>
+		<b>ÇëÊäÈëÎÄ¼şÂ·¾¶:</b>
+	</td>
+	<td width=400 class=cssTDArial align=left>
+		<input type=file name=\"IPMAC_FILE\" style=\"width:100%\">
+	</td>
+	<td width=* align=right>
+		<input type=submit name=\"SUBMIT\" style=\"width:90\" value=\"¼ÓÔØ\"/>&nbsp;
+		<input type=button style=\"width:80\" value=\"È¡Ïû\" onclick=\"onCancel()\"/>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

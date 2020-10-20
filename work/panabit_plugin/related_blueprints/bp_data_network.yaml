@@ -1,0 +1,42 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  host:
+    default:
+      get_secret: host
+    type: string
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  application_mode: null
+  interface: null
+  type: null
+node_templates:
+  nic1:
+    type: cloudify.pa.data_network
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      application_mode:
+        get_input: application_mode
+      interface:
+        get_input: interface
+      type:
+        get_input: type
+      connection_config:
+        host:
+          get_input: host
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+

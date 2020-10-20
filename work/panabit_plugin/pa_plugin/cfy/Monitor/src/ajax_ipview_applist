@@ -1,0 +1,23 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+firstelem=1
+printf "["
+/usr/ramdisk/bin/floweye ipobj listipa -ip ${CGI_ip} -s all | \
+while read ipaddr appname appcname inbps outbps allbps theothers
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{'name':'${appname}',cname:'${appcname}',inbps:'${inbps}',outbps:'${outbps}','allbps':'${allbps}'}"
+		firstelem=0
+	else
+		printf ",{'name':'${appname}',cname:'${appcname}',inbps:'${inbps}',outbps:'${outbps}','allbps':'${allbps}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

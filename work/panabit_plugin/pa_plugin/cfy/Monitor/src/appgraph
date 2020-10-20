@@ -1,0 +1,117 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+width=613
+[ "${CGI_refresh}" = "" ] && CGI_refresh=60
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+myself="/cgi-bin/Monitor/`basename $0`"
+if [ "${CGI_time}" = "mon" ]; then
+	CGI_title="历史趋势图"
+else
+	if [ "${CGI_type}" = "bpsout" ]; then
+		CGI_title="最近3日上行流量对比"
+	fi
+	if [ "${CGI_type}" = "bpsin" ]; then
+		CGI_title="最近3日下行流量对比"
+	fi
+	if [ "${CGI_type}" = "flow" ]; then
+		CGI_title="最近3日连接对比"
+	fi
+	if [ "${CGI_type}" = "bps" ]; then
+		CGI_title="最近3日流量对比"
+	fi
+fi
+if [ "${CGI_appid}" != "" ]; then
+	appname=`${FLOWEYE} app name ${CGI_appid}`
+	CGI_title="\"${appname}\"${CGI_title}"
+fi
+cgipath="${myself}?bridge=${CGI_bridge}&type=${CGI_type}&time=${CGI_time}&appid=${CGI_appid}"
+afm_load_page  ${CGI_refresh} "${cgipath}"
+
+echo -n "
+<body>
+"; 
+if [ ${CGI_bridge} -ne 0 ]; then
+	if [ "${CGI_vlinkname}" = "" ]; then
+		cgi_show_title "${CGI_title}(网桥${CGI_bridge})" ${width} 
+	else
+		cgi_show_title "${CGI_title}(${CGI_vlinkname})" ${width}
+	fi
+else
+	cgi_show_title "${CGI_title}" ${width}
+fi
+
+echo -n "
+<br>
+";
+floweyearg="bridge=${CGI_bridge}"
+[ "${CGI_type}" = "flow" ] && floweyearg="${floweyearg} yname=#flow"
+if [ "${CGI_appid}" = "" ]; then
+	datasrc=""
+	for appgrp in `${FLOWEYE} app stat -p appid | awk '{print $1}'`
+	do
+		datasrc="${datasrc} ${appgrp}.${CGI_type}"
+	done
+else
+	if [ "${CGI_type}" != "flow" ]; then
+		floweyearg="${floweyearg} tag=${CGI_appid}.bpsin tag=${CGI_appid}.bpsout"
+	else
+		floweyearg="${floweyearg} tag=${CGI_appid}.flow"
+	fi
+fi
+floweyearg="${floweyearg} width=660 height=260"
+if [ "${CGI_time}" = "3day" ]; then
+	png72=${CGI_bridge}_${CGI_appid}_grp72_${CGI_type}.png
+	png48=${CGI_bridge}_${CGI_appid}_grp48_${CGI_type}.png
+	png24=${CGI_bridge}_${CGI_appid}_grp24_${CGI_type}.png
+	endtm=`date +%s`
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png24} hours=24`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png48} tmend=${endtm} hours=24`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png72} tmend=${endtm} hours=24`
+	echo "<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近24小时趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png24}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>24小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png48}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>48小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png72}\"></img></td></tr></table>"
+fi
+if [ "${CGI_time}" = "mon" ]; then
+	daypng=${CGI_bridge}_grpday_${CGI_appid}.png
+	weekpng=${CGI_bridge}_grpweek_${CGI_appid}.png
+	monpng=${CGI_bridge}_grpmon_${CGI_appid}.png
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${daypng} hours=24`
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${weekpng} hours=168`
+	errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${monpng} hours=720`
+	echo "<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>"
+fi
+
+echo -n "
+</body>
+</html>
+";

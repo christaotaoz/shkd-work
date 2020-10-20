@@ -1,0 +1,51 @@
+blueprint.yaml:
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  host:
+    default:
+      get_secret: host
+    type: string
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  gateway: null
+  heart_server: null
+  interface: null
+  ip: null
+  route_name: null
+  route_type: null
+node_templates:
+  New_route_1:
+    type: cloudify.pa.route
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      connection_config:
+        host:
+          get_input: host
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+      gateway:
+        get_input: gateway
+      heart_server:
+        get_input: heart_server
+      interface:
+        get_input: interface
+      ip:
+        get_input: ip
+      route_name:
+        get_input: route_name
+      route_type:
+        get_input: route_type

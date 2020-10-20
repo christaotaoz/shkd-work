@@ -1,0 +1,239 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+[ "${CGI_iflanname}" = "" ] && CGI_iflanname="${CGI_newname}"
+CGI_browsertitle="${CGI_iflanname}->参数设置"
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+MOD_TAB_LIST="`cgi_show_pxytablist ${CGI_iflanname}`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var newname   = document.getElementsByName(\"newname\")[0];
+	var ifaddr    = document.getElementsByName(\"ifaddr\")[0];
+	var netmask   = document.getElementsByName(\"netmask\")[0];
+	var ifname    = document.getElementsByName(\"ifname\")[0];
+	var vlan      = document.getElementsByName(\"vlan\")[0];
+	var mtu       = document.getElementsByName(\"mtu\")[0];
+	newname.value = TrimAll(newname.value);
+	if (!IsName(newname.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		newname.select();
+		return false;
+	}
+	ifaddr.value = TrimAll(ifaddr.value);
+	if (!IsIPAddr(ifaddr.value)) {
+		alert(\"请输入接口的IP地址!\");
+		ifaddr.select();
+		return false;
+	}
+	netmask.value = TrimAll(netmask.value);
+	if (!IsIPAddr(netmask.value)) {
+		alert(\"请输入网络掩码!\");
+		netmask.select();
+		return false;
+	}
+	vlan.value = TrimAll(vlan.value);
+	if (!IsDigitIn(vlan.value, 0, 65535)) {
+		alert(\"VLAN TAG不对!\");
+		vlan.select();
+		return false;
+	}
+	mtu.value = TrimAll(mtu.value);
+	if (mtu.value != \"\" && !IsDigitIn(mtu.value, 1000, 1500)) {
+		alert(\"请输入正确的MTU!\");
+		mtu.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请选择网卡!\");
+		ifname.select();
+		return false;
+	}
+	return true;
+}
+function onModeChanged(obj)
+{
+	var standby = document.getElementsByName(\"standby\")[0];
+	if (obj.value == \"standby\")
+		standby.disabled = false;
+	else
+		standby.disabled = true;
+}
+function onload()
+{
+	var mode = document.getElementsByName(\"mode\")[0];
+	onModeChanged(mode);
+}
+</script>
+";
+reload=0
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_name}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg 0 "接口名称中包含非法字符!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+		
+	[ "${CGI_netmask}" = "" ] && CGI_netmask="255.255.255.0"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="1500"
+	[ "${CGI_clonemac}" = "" ] && CGI_clonemac="00:00:00:00:00:00"
+	cmdargs="name=${CGI_name} newname=${CGI_newname} ifname=${CGI_ifname}"
+	cmdargs="${cmdargs} addr=${CGI_addr} mask=${CGI_netmask} vlan=${CGI_vlan} mtu=${CGI_mtu} clonemac=${CGI_clonemac}"
+	if [ "${CGI_mode}" = "work" ]; then
+		cmdargs="${cmdargs} standby=NULL"
+	else
+		cmdargs="${cmdargs} standby=${CGI_standby}"
+	fi
+	errmsg=`${FLOWEYE} nat setrtif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		reload=1
+	fi
+else
+	reload=1
+fi
+if [ ${reload} -eq 1 ]; then
+	for nameval in `${FLOWEYE} nat getproxy name=${CGI_iflanname}`
+	do
+                name=`echo ${nameval} | cut -d'=' -f1`
+                val=`echo ${nameval} | cut -d'=' -f2-`
+                export CGI_${name}="${val}"
+	done
+	CGI_newname="${CGI_name}"
+fi
+
+echo -n "
+<body onload=\"onload()\">
+"; cgi_print_mod_header "参数设置" 600 
+echo -n "
+<div style=\"position:absolute;padding:0px 5px 0px 5px;left:20;top:50;height:360px;width:580\">
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=\"100%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=100 align=left>接口名称</td>
+	<td width=* align=left><input type=text name=newname style=\"width:130px\" value=\"${CGI_newname}\" />&nbsp;(不能包含&,|,>,\,-等特殊字符)</td>
+</tr>
+</table>
+<br>
+<table style=\"width:100%; font-bold:true; font-size:13px; color:#CE6C04;border-bottom:1px dotted #185a73\">
+<tr>
+<td align=left><b>基本信息</b></td>
+</tr>
+</table>
+<table style=\"font:14px\" width=\"100%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td align=left width=100>所在网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:130\" value=\"${CGI_ifname}\">
+		";
+		for ifname in `${FLOWEYE} if list | grep inside | awk '{print $1}'`; do
+			if [ "${ifname}" = "${CGI_ifname}" ]; then
+				echo "<option value=\"${ifname}\" selected>${ifname}</option>"
+			else
+				echo "<option value=\"${ifname}\">${ifname}</option>"
+			fi
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>IP地址</td>
+        <td align=left><input type=text name=addr style=\"width:130px\" value=\"${CGI_addr}\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+        <td align=left>网络掩码</td>
+        <td align=left><input type=text name=netmask style=\"width:130px\" value=\"${CGI_netmask}\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+        <td align=left>VLAN-Tag</td>
+        <td align=left>
+		<input type=text name=vlan style=\"width:130px\" value=\"${CGI_vlan}\" />&nbsp;(外出数据包的VLAN Tag, 0表示外出数据包不带Tag)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>MTU</td>
+        <td align=left><input type=text name=mtu style=\"width:130px\" value=\"${CGI_mtu}\" />&nbsp;(接口最大传输单元,缺省为1500)</td>
+</tr>
+<tr id=row1>
+        <td align=left>克隆MAC</td>
+        <td align=left><input type=text name=clonemac style=\"width:130px\" value=\"${CGI_clonemac}\" />&nbsp;(xx:xx:xx:xx:xx:xx或xx-xx-xx-xx-xx-xx)
+</tr>
+</table>
+<br>
+<table style=\"width:100%; font-bold:true; font-size:13px; color:#CE6C04;border-bottom:1px dotted #185a73\">
+<tr>
+<td align=left><b>待机设置</b></td>
+</tr>
+</table>
+<table style=\"font:14px\" width=\"100%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td align=left width=100>初始状态</td>
+        <td align=left>
+		"; if [ "${CGI_standby}" != "NULL" ]; then 
+echo -n "
+                	<select name=mode value=\"standby\" style=\"width:130\" onchange=\"onModeChanged(this)\">
+				<option value=work>工作状态</option>
+				<option value=standby selected>待机状态</option>
+			</select>
+		"; else 
+echo -n "
+                	<select name=mode value=\"work\" style=\"width:130\" onchange=\"onModeChanged(this)\">
+				<option value=work selected>工作状态</option>
+				<option value=standby>待机状态</option>
+			</select>
+		"; fi 
+echo -n "
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>唤醒线路</td>
+        <td align=left>
+                <select name=standby value=\"${CGI_standby}\" style=\"width:130\">
+		";
+		${FLOWEYE} nat listproxy type=proxy.pppoe | while read type id name theothers
+		do
+			[ "${name}" = "${CGI_proxyname}" ] && continue
+			[ "${id}" = "${CGI_proxyname}" ] && continue
+			if [ "${CGI_standby}" = "${name}" ]; then
+				echo "<option value=${name} selected>${name}</option>"
+			else
+				echo "<option value=${name}>${name}</option>"
+			fi
+		done
+                
+echo -n "
+                </select>&nbsp;(当此线路中断后,接口被唤醒从待机状态进入工作状态)
+        </td>
+</tr>
+</table>
+<table style=\"width:100%; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:100%\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn value=\"提交\"></input>
+		<input type=hidden name=name value=\"${CGI_name}\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</div>
+</body>
+</html>
+";

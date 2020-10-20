@@ -1,0 +1,260 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onQuery()
+{
+	var startip = document.getElementsByName(\"startip\")[0];
+	var endip   = document.getElementsByName(\"endip\")[0];
+	window.location.href = \"${myself}?startip=\" + startip.value + \"&endip=\" + endip.value;
+}
+function onFile()
+{
+	window.location.href = \"/cgi-bin/Setup/ipmac_loadfile\";
+}
+function bindIP(ip, mac)
+{
+	window.location.href = \"${myself}?action=set&ipmac=\" + mac + \"-\" + ip;
+}
+function onSelect(obj)
+{
+	var ipmacopts = document.getElementsByName(\"ipmacopt\");
+	for (var i = 0; i < ipmacopts.length; i++) 
+		ipmacopts[i].checked = obj.checked;
+	if (ipmacopts.length > 0) {
+		var btn1 = document.getElementsByName(\"btnBind\")[0];
+		var btn2 = document.getElementsByName(\"btnUnbind\")[0];
+		btn1.disabled = !obj.checked;
+		btn2.disabled = !obj.checked;
+	}
+}
+function onCheck(obj)
+{
+	var count = 0;
+	var ipmacopts = document.getElementsByName(\"ipmacopt\");
+	for (var i = 0; i < ipmacopts.length; i++) {
+		if (ipmacopts[i].checked) count++;
+	}
+	var btn1 = document.getElementsByName(\"btnBind\")[0];
+	var btn2 = document.getElementsByName(\"btnUnbind\")[0];
+	if (count > 0) {
+		btn1.disabled = false;
+		btn2.disabled = false;
+	}
+	else {
+		btn1.disabled = true;
+		btn2.disabled = true;
+	}
+}
+function beforeBindAll()
+{
+	var ipmacopts;
+	var ipaddrs;
+	var macaddrs;
+	var ipmaclist = \"\";
+	ipmacopts = document.getElementsByName(\"ipmacopt\");
+	ipaddrs   = document.getElementsByName(\"ipaddr\");
+	macaddrs  = document.getElementsByName(\"macaddr\");
+	for (var i = 0; i < ipmacopts.length; i++) {
+		if (ipmacopts[i].checked) {
+			if (ipmaclist == \"\")
+				ipmaclist = \"ipmac=\" + macaddrs[i].value + \"-\" + ipaddrs[i].value;
+			else
+				ipmaclist += \"|ipmac=\" + macaddrs[i].value + \"-\" + ipaddrs[i].value;
+		}
+	}
+	if (ipmaclist == \"\") {
+		alert(\"请选择要绑定的IP地址!\");
+		return false;
+	}
+	var bindlist = document.getElementsByName(\"ipmaclist_bind\")[0];
+	bindlist.value = ipmaclist;
+	return true;
+}
+function beforeUnbindAll()
+{
+	var ipmacopts;
+	var ipaddrs;
+	var macaddrs;
+	var ipmaclist = \"\";
+	if (!confirm(\"确信要解除选中IP的MAC绑定？\"))
+		return false;
+	ipmacopts = document.getElementsByName(\"ipmacopt\");
+	ipaddrs   = document.getElementsByName(\"ipaddr\");
+	macaddrs  = document.getElementsByName(\"macaddr\");
+	for (var i = 0; i < ipmacopts.length; i++) {
+		if (ipmacopts[i].checked) {
+			if (ipmaclist == \"\")
+				ipmaclist = \"ipmac=00:00:00:00:00:00-\" + ipaddrs[i].value;
+			else
+				ipmaclist += \"|ipmac=00:00:00:00:00:00-\" + ipaddrs[i].value;
+		}
+	}
+	if (ipmaclist == \"\") {
+		alert(\"请选择要绑定的IP地址!\");
+		return false;
+	}
+	var unbindlist = document.getElementsByName(\"ipmaclist_unbind\")[0];
+	unbindlist.value = ipmaclist;
+	return true;
+}
+function onManual()
+{
+	window.location.href = \"/cgi-bin/Setup/ipmac_add?returl=config\";
+}
+function setIpMac(ip, mac)
+{
+	window.location.href = \"/cgi-bin/Setup/ipmac_set?returl=config&ipaddr=\" + ip + \"&macaddr=\" + mac;
+}
+</script>
+<body>
+";
+if [ "${CGI_action}" = "bindall" ]; then
+	operator_check "${myself}"
+	ipmaclist=`echo ${CGI_ipmaclist_bind} | sed -e "s/|/ /g"`
+	errmsg=`${FLOWEYE} ipmac set ${ipmaclist}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "unbindall" ]; then
+	operator_check "${myself}"
+	ipmaclist=`echo ${CGI_ipmaclist_unbind} | sed -e "s/|/ /g"`
+	errmsg=`${FLOWEYE} ipmac set ${ipmaclist}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "set" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} ipmac set ipmac=${CGI_ipmac}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+
+echo -n "
+"; cgi_show_title "MAC管控->MAC绑定" 
+echo -n "
+<br>
+<table width=\"800\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+	<td width=370 align=center>IP范围
+		<input type=text style=\"width:105;height:21\" name=startip value=\"${CGI_startip}\"></input>-
+		<input type=text style=\"width:105;height:21\" name=endip value=\"${CGI_endip}\"></input>&nbsp;
+		<input type=button style=\"width:90;height:22\" value=\"查询\"    onclick=\"onQuery()\"></input>
+	</td>
+	<form method=post onsubmit=\"beforeBindAll()\" action=\"${myself}\">
+	<td width=100 align=center>
+		<input type=hidden name=action value=\"bindall\"></input>
+		<input type=hidden name=ipmaclist_bind value=\"\"></input>
+		<input type=submit style=\"width:90;height:22\" name=btnBind value=\"绑定选中\" disabled></input>
+	</td>
+	</form>
+	<form method=post onsubmit=\"beforeUnbindAll()\" action=\"${myself}\">
+	<td width=100 align=center>
+		<input type=hidden name=action value=\"unbindall\"></input>
+		<input type=hidden name=ipmaclist_unbind value=\"\"></input>
+		<input type=submit style=\"width:90;height:22\" name=btnUnbind value=\"解除选中\" disabled></input>
+	</td>
+	</form>
+	<td width=* align=center>
+		<input type=button style=\"width:90;height:22\" value=\"手工添加>>\" onclick=\"onManual()\"></input>
+		&nbsp;&nbsp;
+		<input type=button style=\"width:90;height:22\" value=\"从文件导入>>\" onclick=\"onFile()\"></input>
+	</td>
+</tr>
+</table>
+"; 
+url="${myself}?startip=${CGI_startip}&endip=${CGI_endip}" 
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=80  align=center><input type=checkbox onclick=\"onSelect(this)\"></input>&nbsp;</td>
+	<td width=150 align=center><a style=\"color:#0000ff\" href=\"${url}&sort=ip\">IP地址</a></td>
+	<td width=190 align=center><a style=\"color:#0000ff\" href=\"${url}&sort=mac\">绑定MAC</a></td>
+	<td width=190 align=center><a style=\"color:#0000ff\" href=\"${url}&sort=lastmac\">最近宣告MAC</a></td>
+	<td width=* align=center>操作</td>
+</tr>
+";
+idname="row1"
+args=""
+if [ "${CGI_startip}" = "" ]; then
+	if [ "${CGI_endip}" != "" ]; then
+		args="ip=${CGI_endip}"
+	fi
+else
+	args="ip=${CGI_startip}"
+	if [ "${CGI_endip}" != "" ]; then
+		args="${args}-${CGI_endip}"
+	fi
+fi
+if [ "${CGI_sort}" != "" ]; then
+	args="${args} sort=${CGI_sort}"
+fi
+${FLOWEYE} ipmac list ${args} | while read ipaddr mac lastmac droppkts droparps theothers
+do 
+echo -n "
+	<tr id=${idname} height=22>
+	<td align=center>
+	"; if [ "${mac}" = "00-00-00-00-00-00" ]; then 
+echo -n "
+		<input type=checkbox name=ipmacopt onclick=\"onCheck(this)\">&nbsp;</input>
+	"; else 
+echo -n "
+		<input type=checkbox name=ipmacopt onclick=\"onCheck(this)\"><a style=\"color:#ff0000\"><b>*</b></a></input>
+	"; fi 
+echo -n "
+		<input type=hidden name=ipaddr value=\"${ipaddr}\"></input>
+		<input type=hidden name=macaddr value=\"${lastmac}\"></input>
+	</td>
+	
+	<td align=left>&nbsp;&nbsp;${ipaddr}</td>
+	<td align=center>${mac}</td>
+	"; if [ "${mac}" != "00-00-00-00-00" -a "${lastmac}" != "${mac}" ]; then 
+echo -n "
+	<td align=center><a style=\"color:#ff0000\"><b>${lastmac}</b></a></td>
+	"; else 
+echo -n "
+	<td align=center>${lastmac}</td>
+	"; fi 
+echo -n "
+	
+	"; if [ "${mac}" = "00-00-00-00-00-00" ]; then 
+echo -n "
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:bindIP('${ipaddr}', '${lastmac}')\">绑定</a>
+	"; else 
+echo -n "
+	<td align=center><a style=\"color:#ff0000\" href=\"javascript:bindIP('${ipaddr}', '00:00:00:00:00:00')\">解除</a>
+	"; fi 
+echo -n "
+	&nbsp;&nbsp;&nbsp;<a style=\"color:#0000ff\" href=\"javascript:setIpMac('${ipaddr}', '${mac}')\">修改</a>
+	</td>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

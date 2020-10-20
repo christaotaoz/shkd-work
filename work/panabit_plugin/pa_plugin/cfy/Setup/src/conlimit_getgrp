@@ -1,0 +1,184 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+if [ "${CGI_policy}" = "" ]; then
+	for policy in `${FLOWEYE} conlimit listgrp | awk '{print $1}'`
+	do
+		CGI_policy="${policy}"
+		break
+	done
+fi
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddPolicy()
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_addgrp\";
+}
+function onClonePolicy(policy)
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_clonegrp?fromgrp=${CGI_policy}\";
+}
+function onAddRule(policy)
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_addrule?policy=\" + policy;
+}
+function modifyRule(group, polno)
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_setrule?policy=\" + group + \"&polno=\" + polno;
+}
+function onSelectPolicy(obj)
+{
+	window.location.href = \"/cgi-bin/Setup/conlimit_getgrp?policy=\" + obj.value; 
+}
+function deleteRule(group, rule)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"/cgi-bin/Setup/conlimit_getgrp?action=rmvrule\" +
+		                        \"&group=\" + group + \"&ruleid=\" + rule;
+	}
+}
+function onDeletePolicy(policy)
+{
+	if (confirm(\"确定要删除此策略组?\")) {
+		window.location.href = \"/cgi-bin/Setup/conlimit_getgrp?action=deletegroup\" +
+		                       \"&policy=\" + policy;
+	}
+}
+</script>
+";
+if [ "${CGI_action}" = "deletegroup" ]; then
+	operator_check "/cgi-bin/Setup/conlimit_getgrp?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} conlimit rmvgrp ${CGI_policy}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "/cgi-bin/Setup/conlimit_getgrp"
+		exit 0
+	fi
+fi
+if [ "${CGI_action}" = "rmvrule" ]; then
+	operator_check "/cgi-bin/Setup/conlimit_getgrp?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} conlimit rmvrule ${CGI_group} ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+policylist=`${FLOWEYE} conlimit listgrp`
+
+echo -n "
+<body>
+"; cgi_show_title "连接控制策略->策略组" 
+echo -n "
+<br>
+<table style=\"width:1000; border-bottom:1px #787882 solid; font-bold:true;font-size:15px; color:#0000ff\">
+<tr><td><b>说明：编辑完策略组后请做策略调度，这样策略组才会生效!</td></tr>
+</table>
+<br>
+<table width=1000 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=23>
+	<td width=74 align=center>选择策略组</td>
+	<td width=200>";
+	echo "<select name=policy value=\"${CGI_policy}\" style=\"width:100%;height:22\" onchange=\"onSelectPolicy(this)\">"
+	${FLOWEYE} conlimit listgrp | while read policy policyname
+	do
+		if [ "${CGI_policy}" = "${policy}" ]; then
+			echo "<option value=${policy} selected>${policyname}</option>"
+		else
+			echo "<option value=${policy}>${policyname}</option>"
+		fi
+	done 
+	if [ "${policylist}" = "" ]; then
+		echo "<option value=0>(没有定义任何策略组)</option>"
+	fi
+	echo "</select>" 
+echo -n "
+	</td>
+	<td width=* align=right>
+";
+	if [ "${CGI_policy}" != "" ]; then
+		echo "&nbsp;<input type=button style=\"width:100;height:23\" onclick=\"onDeletePolicy('${CGI_policy}')\" value=\"删除策略组\"></input>&nbsp;<input type=button style=\"width:100;height:23\" value=\"复制策略组>>\" onclick=\"onClonePolicy('${CGI_policy}')\"></input>"
+	fi
+
+echo -n "
+	&nbsp;<input type=button style=\"width:100;height:23\" value=\"创建策略组>>\" onclick=\"onAddPolicy()\"></input>
+	</td>
+</tr>
+</table>
+";
+if [ "${CGI_policy}" != "" ]; then
+	rowno=1 
+echo -n "
+	<table width=1000 border=0 cellspacing=1 cellpadding=1>
+	<tr id=tblhdr height=22>
+        <td width=50  align=center>序号</td>
+	<td width=100 align=center>数据线路</td>
+	<td width=150 align=center>内网</td>
+	<td width=150 align=center>外网</td>
+	<td width=120 align=center>应用协议</td>
+	<td width=240 align=center>单IP连接限制(TCP/UDP/TOTAL)</td>
+        <td width=*   align=right>
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddRule('${CGI_policy}')\">添加策略>></a>&nbsp;&nbsp;
+	</td
+	</tr>
+";
+	idname="row1"
+	${FLOWEYE} conlimit getgrp ${CGI_policy} | \
+	while read polno appid appname bridge intype inip inport outtype outip outport maxtflow maxuflow maxflow \
+tflowdenied uflowdenied flowpassed others 
+	do 
+echo -n "
+        	<tr id=${idname}>
+        	<td align=center>
+			<a style=\"color:#0000ff\" href=\"javascript:modifyRule('${CGI_policy}', '${polno}')\">${polno}</a>
+		</td>
+";		if [ "${bridge}" = "0" ]; then 
+echo -n "
+			<td align=center>any</td>
+";		else 
+echo -n "
+			<td align=center>网桥${bridge}</td>
+";		fi 
+echo -n "
+";		if [ "${inport}" = "any" ]; then 
+echo -n "
+			<td align=center>${inip}</td>
+";		else 
+echo -n "
+			<td align=center>${inip}:${inport}</td>
+";		fi 
+echo -n "
+";		if [ "${outport}" = "any" ]; then 
+echo -n "
+			<td align=center>${outip}</td>
+";		else 
+echo -n "
+			<td align=center>${outip}:${outport}</td>
+";		fi 
+echo -n "
+		<td align=center>${appname}</td>
+		<td align=center>${maxtflow}/${maxuflow}/${maxflow}</td>
+        	<td align=center><a style=\"color:#0000ff\" href=\"javascript:modifyRule('${CGI_policy}', '${polno}')\">&nbsp;&nbsp;编辑&nbsp;&nbsp;<a style=\"color:#0000ff\" href=\"javascript:deleteRule('${CGI_policy}', '${polno}')\">&nbsp;&nbsp;删除&nbsp;&nbsp;</a></td>
+        	</tr>
+";
+        	if [ "${idname}" = "row1" ]; then
+                	idname="row2"
+        	else
+                	idname="row1"
+        	fi
+	done
+fi
+
+echo -n "
+</body>
+</html>
+";

@@ -1,0 +1,164 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+afm_load_page 30 ${myself}
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddRule()
+{ 
+	window.location.href = \"/cgi-bin/Route/dns_addrule\";
+}
+function modifyRule(polno) 
+{
+	window.location.href = \"/cgi-bin/Route/dns_setrule?polno=\" + polno;
+}
+function deleteRule(rule)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"/cgi-bin/Route/dns_listrule?action=rmvrule\" +
+		                       \"&ruleid=\" + rule;
+	}
+}
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 400);
+}
+function dnsEdit(grpname)
+{
+        var url = \"/cgi-bin/Protocol/urldnsgrp_edit?grpname=\" + grpname;
+        ShowWindow(url, \"\", 840, 560);
+}
+function showIPGrp(gname)
+{
+        var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+        ShowWindow(url, \"\", 860, 630);
+}
+function enablePolicy(polno)
+{
+        window.location.href = \"${myself}?action=enable&id=\" + polno;
+}
+function disablePolicy(polno)
+{
+        window.location.href = \"${myself}?action=disable&id=\" + polno; 
+}
+</script>
+";
+if [ "${CGI_action}" = "rmvrule" ]; then
+        operator_check "${myself}"
+	errmsg=`${FLOWEYE} dns rmvrule ${CGI_ruleid}`
+	[ "$?" != "0" ] && afm_dialog_msg "出现错误:${errmsg}"
+elif [ "${CGI_action}" = "enable" ]; then
+        operator_check "${myself}"
+        errmsg=`${FLOWEYE} dns setrule id=${CGI_id} disable=0`
+        [ "$?" != "0" ] && afm_dialog_msg "出现错误:${errmsg}"
+elif [ "${CGI_action}" = "disable" ]; then
+        operator_check "${myself}"
+        errmsg=`${FLOWEYE} dns setrule id=${CGI_id} disable=1`
+        [ "$?" != "0" ] && afm_dialog_msg "出现错误:${errmsg}"
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "应用路由->策略->DNS管控" 
+echo -n "
+<br>
+<table width=1200 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+        <td width=40  align=center>序号</td>
+	<td width=100 align=right>路径</td>
+	<td width=80  align=right>源接口</td>
+	<td width=80  align=right>VLAN</td>
+	<td width=130 align=right>源地址</td>
+	<td width=130 align=right>目的DNS服务器</td>
+	<td width=130 align=right>访问域名</td>
+	<td width=250 align=right>执行动作</td>
+	<td width=100 align=right>匹配次数</td>
+        <td width=*   align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddRule()\">添加策略>>&nbsp;</a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} dns listrule | \
+while read polno inif vlan intype inip outtype outip dnstype dns bdg action actarg appname appcname pkts pxystate disabled others 
+do
+	if [ "${disabled}" = "0" ]; then
+		echo "<tr id=${idname} height=22>"
+	else
+		echo "<tr id=row4 height=22>"
+	fi
+	echo "<td align=center>${polno}</td>"
+	if [ $bdg -eq 0 ]; then
+		echo "<td align=right>any&nbsp;</td>"
+	else
+		echo "<td align=right>网桥$bdg&nbsp;</td>"
+	fi
+	echo "<td align=right>${inif}</td>"
+	[ "${vlan}" = "0" ] && vlan=""
+	echo "<td align=right>${vlan}</td>"
+        if [ "${intype}" = "table" ]; then
+                echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}&nbsp;</a></td>"
+        else
+                echo "<td align=right>${inip}&nbsp;</td>"
+        fi
+        if [ "${outtype}" = "table" ]; then
+                echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}&nbsp;</a></td>"
+        else
+                echo "<td align=right>${outip}&nbsp;</td>"
+        fi
+	if [ "${dns}" = "any" ]; then
+		echo "<td align=right>any&nbsp;</td>"
+	else
+		if [ "${dnstype}" = "usr" ]; then
+			echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:dnsEdit('${dns}')\">${dns}&nbsp;</a></td>"
+		else
+			echo "<td align=right>*${dns}&nbsp;</td>"
+		fi
+	fi
+	case "${action}" in
+	"pass")
+		echo "<td align=right>允许&nbsp;</td>"
+		;;
+	"rdr")
+		actarg="${actarg#_wg.}"
+		if [ "${pxystate}" = "1" ]; then
+			echo "<td align=right>牵引至-><a style=\"color:#0000ff\" href=\"javascript:showProxy('${actarg}')\"><b>${actarg}&nbsp;</b></a></td>"
+		else
+			echo "<td align=right>牵引至-><a style=\"color:#ff0000\" href=\"javascript:showProxy('${actarg}')\"><b>${actarg}&nbsp;</b></a></td>"
+		fi
+		;;
+	"reply")
+		echo "<td align=right>劫持至IP->${actarg}&nbsp;</td>"
+		;;
+	"deny")
+		echo "<td align=right>丢弃请求&nbsp;</td>"
+		;;
+	esac
+	echo "<td align=right>${pkts}&nbsp;</td>"
+       	echo "<td align=right>"
+	echo "<img style=\"margin-top:3px\" src=\"/img/edit.png\" title=\"修改策略\" onclick=\"modifyRule('${polno}')\" />&nbsp;"
+	echo "<img style=\"margin-top:3px\" src=\"/img/delete.png\" title=\"删除策略\" onclick=\"deleteRule('${polno}')\" />&nbsp;"
+        if [ ${disabled} -eq 0 ]; then 
+		echo "<img style=\"margin-top:3px\" src=\"/img/disable.png\" title=\"禁用策略\" onclick=\"disablePolicy('${polno}')\" />&nbsp;"
+	else
+		echo "<img style=\"margin-top:3px\" src=\"/img/enable.png\" title=\"启用策略\" onclick=\"enablePolicy('${polno}')\" />&nbsp;"
+	fi
+	echo "</td></tr>"
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

@@ -1,0 +1,1212 @@
+#!/bin/sh
+# 作用: 用于导入导出流控PPPOE客户端帐号配置的辅助工具
+# 日期: 2014-06-14
+#
+
+FLOWEYE="/usr/ramdisk/bin/floweye"
+SED="/usr/ramdisk/bin/sed"
+
+list_pool()
+{
+        ${FLOWEYE} pppoeippool list
+}
+
+
+dump_dbnatshell_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+# 帐号,密码,姓名,证件号码,手机号码,联系地址,帐户余额,IP地址,开始时间,结束时间,区域编号,区域名称,项目编号,项目名称,产品编号,产品名称,开户人员,用户备注
+				new_conf=`echo ${othe} | awk -F ',' 'BEGIN{ \
+					s=split("name;passwd;fullname;identitycard;telephone;poolname;enabled;start;expire;remark",cchead,";"); \
+					c=split("name passwd fullname identitycard telephone remark balance bindip start expire anumber aname projectnumber projectname productnumber productnname account remark",cc," "); \
+					for(i=1; i<=c; i++){ \
+						for(j=1; j<=s; j++){ \
+							if(cc[i]==cchead[j]) \
+								columns[i]=cchead[j]; \
+						} \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn="";\
+					havtm=0;\
+					for(i=1; i<=NF; i++) { \
+						if(columns[i]!=""){ \
+							key=columns[i]; \
+							value=$i; \
+							gsub(/^\x27/, "", value); \
+							if(key == "start") { \
+								if(value!="") { \
+									value = substr(value, 0, 10); \
+								} \
+							} else if(key == "expire") { \
+								if(value!=""){ \
+									value = substr(value, 0, 10); \
+									havtm = 1 ; \
+								} \
+							} else if(key == "enabled") { \
+								if(value == "true") \
+									value = 1; \
+								else \
+									value = 0; \
+							} else if (key == "remark") { \
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+								remark=remark"_"value; \
+								continue;\
+							} \
+							rtn=rtn key"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01"; \
+					} \
+					print rtn" remark="remark; \
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbnatshell_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		${SED} -nr 'H;${x;s/\\\n *//g;s/\\/\\\\/g;p;}' ${file} | grep -v "^#" | \
+		awk '/^.+,/' | \
+		dump_dbnatshell_acct_from_pip_mini
+}
+
+format_dbnatshell_acct_conf ()
+{
+		local poolid=1
+
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		dbid=2
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | grep -v "^#" |  \
+								awk '/^.+,/' | \
+								dump_dbnatshell_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbnatshell_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbbithighway_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+# 登录名,密码,类型,启用,过期时间,绑定IP,绑定MAC,MAC地址,登录用户数,上传限制,下载限制,姓名,电话,备注
+				new_conf=`echo ${othe} | awk -F ',' 'BEGIN{ \
+					s=split("name;passwd;poolname;enabled;expire;telephone;remark",cchead,";"); \
+					c=split("name passwd utype enabled expire bindip bindmac macaddr logincnt uplimit downlimit remark telephone remark",cc," "); \
+					for(i=1; i<=c; i++){ \
+						for(j=1; j<=s; j++){ \
+							if(cc[i]==cchead[j]) \
+								columns[i]=cchead[j]; \
+						} \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn="";\
+					havtm=0;\
+					for(i=1; i<=NF; i++) { \
+						if(columns[i]!=""){ \
+							key=columns[i]; \
+							value=$i; \
+							if(key == "expire") { \
+								if(value!="") havtm = 1 ; \
+							} else if(key == "enabled") { \
+								if(value == "true") \
+									value = 1; \
+								else \
+									value = 0; \
+							} else if (key == "remark") { \
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+								remark=remark"_"value; \
+								continue;\
+							} \
+							rtn=rtn key"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01"; \
+					} \
+					print rtn" remark="remark; \
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbbithighway_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		${SED} -nr 'H;${x;s/\\\n *//g;s/\\/\\\\/g;p;}' ${file} | grep -v "^#" | \
+		awk '/^.+,/' | \
+		dump_dbbithighway_acct_from_pip_mini
+}
+
+format_dbbithighway_acct_conf ()
+{
+		local poolid=1
+
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		dbid=2
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | grep -v "^#" |  \
+								awk '/^.+,/' | \
+								dump_dbbithighway_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbbithighway_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbikuai_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+# id=1 state=up comment= username=sz99 passwd=szsz date= \
+# ppptype=pppoe share=1 auto_mac=0 upload=50 download=512 ip_addr= mac= address= name= phone= 
+				new_conf=`echo ${othe} | awk 'BEGIN{ \
+					split("name;passwd;poolname;enabled;expire;telephone;fullname;remark",cchead,";"); \
+					c=split("username passwd profile state date phone name comment",cc," "); \
+					for(i=1; i<=c; i++){ \
+						columns[cc[i]]=cchead[i]; \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn="";\
+					havtm=0;\
+					for(i=1; i<=NF; i++) { \
+						post = index($i, "="); \
+						if(post > 0) { \
+							key=substr($i, 1, post - 1); \
+							value=substr($i, post + 1); \
+							if(key == "date") {\
+								if(value!="") havtm = 1 ; \
+							} else if(key == "state") {\
+								if(value == "up") \
+									value = 1; \
+								else \
+									value = 0; \
+							} else if (key == "comment") {\
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+							} \
+							if(columns[key] != "") \
+								rtn=rtn columns[key]"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01";\
+					} \
+					print rtn;\
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbikuai_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		${SED} -nr 'H;${x;s/\\\n *//g;s/\\/\\\\/g;p;}' ${file} | \
+		awk '/^id=.+[username=|passwd=|date=]/' | \
+		dump_dbikuai_acct_from_pip_mini
+}
+
+format_dbikuai_acct_conf ()
+{
+		local poolid=1
+
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		dbid=2
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | \
+								awk '/^id=.+[username=|passwd=|date=]/' | \
+								dump_dbikuai_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbikuai_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbros_acct_from_pip_mini()
+{
+		while read othe
+		do 
+				[ "${othe}" = "" ] && continue
+
+				# user bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc
+				othe=`echo ${othe} | grep -o "\\\\(\\\\\\[a-fA-F0-9][a-fA-F0-9]\\\\)\\\\{1,\\\\}" | \
+					awk -v d="${othe}" '{ \
+						src=$1; \
+						gsub(/\\\\/,"0x",$1); \
+						l=length($1); \
+						for(i=1;i<=l;i+=4) \
+							s=sprintf("%s%c", s, int(sprintf("%d", substr($1,i,4)))); \
+						gsub(/\\\\/, "", src); \
+						gsub(src, s, d); \
+						s=""; \
+						}END{print d;}'`
+
+				new_conf=`echo ${othe} | awk 'BEGIN{ \
+					split("name;passwd;remark;poolname;",cchead,";"); \
+					c=split("name password comment profile",cc," "); \
+					for(i=1; i<=c; i++) \
+						columns[cc[i]]=cchead[i]; \
+				}{ \
+					havtm=0;\
+					havpass=0;\
+					gsub(/[\r|\n]/, "", $0); \
+					rtn="";\
+					for(i=1; i<=NF; i++) { \
+						post = index($i, "="); \
+						if(post > 0) { \
+							key=substr($i, 1, post - 1); \
+							value=substr($i, post + 1); \
+							if(key == "comment") { \
+								if(match(value, "([0-9][0-9][0-9][0-9]-([0-9]|[0-9][0-9])-([0-9]|[0-9][0-9]))") > 0) { \
+									rtn=rtn" expire="substr(value, RSTART, RLENGTH)" ";\
+									havtm = 1;\
+								} else if(match(value, "([0-9][0-9][0-9][0-9]/([0-9]|[0-9][0-9])/([0-9]|[0-9][0-9]))") > 0) { \
+									dataend=substr(value, RSTART, RLENGTH); \
+									gsub(/\//, "-", dataend); \
+									rtn=rtn" expire="dataend" ";\
+									havtm = 1;\
+								} else if(match(value, "(20[0-9][0-9][0-9][0-9][0-9][0-9])") > 0) { \
+									rtn=rtn" expire="substr(value, RSTART, 4)"-"substr(value, RSTART + 4, 2)"-"substr(value, RSTART + 6, 2)" ";\
+									havtm = 1;\
+								} \
+								gsub(/"/, "", value); \
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+							} else if(key == "password") { \
+								if(value == "") \
+									value="123456";\
+								havpass=1; \
+							} \
+							if(columns[key] != "") \
+								rtn=rtn columns[key]"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01";\
+					} \
+					if(havpass == 0) { \
+						rtn=rtn" passwd=123456";\
+					} \
+					print rtn;\
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbros_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+# add comment="[20140728]23\B6\B0305\B7\BF" name=sz15914196638@.1688 password=\
+#    196638 profile=4M service=pppoe
+
+		# awk '/^add .+[name=|password=]/' ${file} | 
+		${SED} -nr 'H;${x;s/\\\n *//g;s/\\/\\\\/g;p;}' ${file} | \
+		awk '/^(add( *[^ ]+=)+|( *[^ ]+=)+( *\?)?)/' | \
+		dump_dbros_acct_from_pip_mini
+}
+
+format_dbros_acct_conf ()
+{
+		local poolid=1
+
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		dbid=2
+		case $1 in
+				"-")
+# like this's cat /tmp/MikroTikv6.5_20140701.rsc | tr -ds '\r' '' | ${SED} 's/\\/\\\\\\\\/g;s/\\$//g' | ./aide_pppoe_clientacct -f -db dbros -
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | \
+								awk '/^(add( *[^ ]+=)+|( *[^ ]+=)+( *\?)?)/' | \
+								dump_dbros_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbros_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbwayos_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+				# user bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc
+				
+				
+				new_conf=`echo ${othe} | awk -F',' 'BEGIN{ \
+					split("name;passwd;expire;remark",cchead,";"); \
+					c=split("n p d m",cc," "); \
+					for(i=1; i<=c; i++) \
+						columns[cc[i]]=cchead[i]; \
+				}{ \
+					gsub(/[\r|\n|{|}]/, "", $0); \
+					gsub(/ /, "_", $0); \
+					rtn="";\
+					havtm=0;\
+					for(i=1; i<=NF; i++) { \
+						post = index($i, ":"); \
+						if(post > 0) { \
+							key=substr($i, 1, post - 1); \
+							value=substr($i, post + 1); \
+							if(key == "m") {\
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+							} else if(key == "d") {\
+								value = substr(value, 1, index(value, "_") - 1);\
+								havtm=1;\
+							} \
+							if(columns[key] != "") \
+								rtn=rtn columns[key]"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01";\
+					} \
+					print rtn;\
+				}'`
+				cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}"
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbwayos_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+# n:用户名,p:密码,t:类型,s:状态,g:所属组ID,I:IP地址开始,E:IP地址结束,M:MAC地址,d:到期时间,m:备注,N:登录数,U:上行速度,D:下行速度,T:限制模式,w:允许修改密码,a:用户id,b:管理员,c:手机web
+		awk '/^{n:.+[p:|d:]/' ${file} | \
+		dump_dbwayos_acct_from_pip_mini
+}
+
+format_dbwayos_acct_conf()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1 
+		local poolid=1
+		
+		dbid=3
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | \
+								awk '/^{n:.+[p:|d:]/' | \
+								dump_dbwayos_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbwayos_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbbytevalue_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+				# user bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc
+
+				new_conf=`echo ${othe} | awk -F',' 'BEGIN{ \
+					split("name;poolname;passwd;expire;fullname;identitycard;telephone;remark",cchead,";"); \
+					c=split("u l i e x d t n",cc," "); \
+					for(i=1; i<=c; i++){ \
+						columns[cc[i]]=cchead[i]; \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn=""; \
+					for(i=1; i<=NF; i++) { \
+						post = index($i, ":"); \
+						if(post > 0) { \
+							key=substr($i, 1, post - 1); \
+							value=substr($i, post + 1); \
+							if(key == "n"){ \
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+							}\
+							else if(key == "e") { \
+								if(value == "无限制") \
+									value = "2030-01-01"; \
+								else \
+									value = substr(value, 1, index(value, " ") - 1);\
+							} \
+							if(columns[key] != "") {\
+								rtn=rtn columns[key]"="value" ";\
+							} \
+						} \
+					} \
+					print rtn;\
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbbytevalue_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+# #u:名称,g:部门,l:用户级别,w:用户类型,i:认证信息,c:创建时间,e:过期时间,m:MAC绑定类型:M:Mac地址,r:路由限制,x:姓名,d:身份证号,t:联系电话,a:地址,n:备注
+		awk '/^u:.+[i:|e:]/' ${file} | \
+		dump_dbbytevalue_acct_from_pip_mini
+}
+
+format_dbbytevalue_acct_conf ()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		local poolid=1
+
+		dbid=4
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+						while read line
+						do
+								echo ${line} | \
+								awk '/^u:.+[i:|e:]/' | \
+								dump_dbbytevalue_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbbytevalue_acct_from_file $*
+				;;
+		esac 
+}
+
+dump_dbhzz_acct_from_pip_full()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+				# user bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc
+
+				new_conf=`echo ${othe} | awk 'BEGIN{ \
+					split("name;poolname;;;uplimit;downlimit;maxlogin;enabled;;passwd;expire;",cchead,";"); \
+					c=split("user profile bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc",cc," "); \
+					for(i=1; i<=c; i++){ \
+						columns[cc[i]]=cchead[i]; \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn="";\
+					remark="remark=";\
+					for(i=1;i<=NF;i++) { \
+						post=index($i,"="); \
+						if(post>0) { \
+							key=substr($i,1,post-1); \
+							value=substr($i,post+1); \
+							if(columns[key] != "") \
+								rtn=rtn columns[key]"="value" ";\
+							else \
+								remark=remark key"="value";";\
+						} \
+					} \
+					len=length(remark);\
+					if(len>7) \
+						remark=substr(remark,1,len-1); \
+					print rtn" "remark;\
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbhzz_acct_from_pip_mini()
+{
+		while read othe
+		do
+				[ "${othe}" = "" ] && continue
+
+				# user bindlan cn uplimit downlimit maxlogin active modules passwd expire_since desc
+
+				new_conf=`echo ${othe} | awk 'BEGIN{ \
+					split("name;passwd;poolname;enabled;start;expire;fullname;telephone;remark",cchead,";"); \
+					c=split("user passwd profile active active_since expire_since cn tel desc",cc," "); \
+					for(i=1; i<=c; i++){ \
+						columns[cc[i]]=cchead[i]; \
+					} \
+				}{ \
+					gsub(/[\r|\n]/,"",$0); \
+					rtn="";\
+					havtm=0;\
+					for(i=1; i<=NF; i++) { \
+						post = index($i, "="); \
+						if(post > 0) { \
+							key=substr($i, 1, post - 1); \
+							value=substr($i, post + 1); \
+							if(key == "expire_since") { \
+								havtm = 1 ; \
+							} else if(key == "active") {\
+								if(tolower(value) == "yes") \
+									value = 0; \
+								else \
+									value = 1; \
+							} else if (key == "desc") {\
+								gsub(/ /, "_", value); \
+								gsub(/\</, "", value); \
+								gsub(/\>/, "", value); \
+							} \
+							if(columns[key] != "") \
+								rtn=rtn columns[key]"="value" ";\
+						} \
+					} \
+					if(havtm == 0) { \
+						rtn=rtn" expire=2030-01-01";\
+					} \
+					print rtn;\
+				}'`
+				errmsg=`echo ${new_conf} | grep "poolname="`
+				if [ "${errmsg}" = "" ]; then
+					cmdargs="acct poolid=${poolid} dbid=${dbid} ${new_conf}" 
+				else
+					cmdargs="acct poolid=0 dbid=${dbid} ${new_conf}" 
+				fi
+
+				echo ${cmdargs}
+		done
+}
+
+dump_dbhzz_acct_from_file()
+{
+		local file="$1"
+		local poolid=$2
+
+		[ "${poolid}" = "" ] && poolid=1
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		awk '/^user=.+[passwd=|expire_since=]/' ${file} | \
+		dump_dbhzz_acct_from_pip_mini
+}
+
+format_dbhzz_acct_conf()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		local poolid=1
+		
+		dbid=1
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+
+						while read line
+						do
+								echo ${line} | \
+								awk '/^user=.+[passwd=|expire_since=]/' | \
+								dump_dbhzz_acct_from_pip_mini
+						done
+				;;
+				*)
+						dump_dbhzz_acct_from_file $*
+				;;
+		esac 
+}
+
+structure_arg_description_full()
+{
+		local poolid=""
+		local name=""
+		local passwd=""
+		local expire=""
+		local memo=""
+		local start=""
+		local birth=""
+		local bindip=""
+
+		while read type othe
+		do
+				[ "${othe}" = "" ] && continue
+
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/){\
+							for(i=3;i<=NF;i++) \
+								$2=$2"="$i; \
+							gsub(/;/,"\\\\;",$2); gsub(/"/,"\\\\\\"",$2); print $1"=\""$2"\"";}}'`
+						if [ "${key}" != "" ]; then
+								eval ${key}
+						fi
+				done
+
+				if [ "${poolid}" = "" -o "${name}" = "" -o "${passwd}" = "" -o \
+					 "${expire}" = "" ]; then
+						#echo "err: ${type} ${othe}"
+						continue
+				fi
+				[ "${start}" != "" ] && start="start=${start}"
+				[ "${birth}" != "" ] && birth="birth=${birth}"
+				[ "${bindip}" != "" ] && bindip="bindip=${bindip}"
+
+				echo "${type} poolid=${poolid} name=${name} passwd=${passwd} ${birth} ${start} ${bindip} expire=${expire} memo=${enabled}\;${maxlogin}\;${uplimit}\;${downlimit}\;${createtm}\;${fullname}\;${identitycard}\;${telephone}\;${address}\;${remark}"
+
+				poolid=""
+				name=""
+				passwd=""
+				expire=""
+				memo=""
+				start=""
+				birth=""
+				bindip=""
+		done
+}
+
+structure_arg_description_mini()
+{
+		local poolid=""
+		local name=""
+		local passwd=""
+		local expire=""
+		local memo=""
+		local disable=0
+		local poolist=""
+		local newpoolid=""
+		local poolipnub=1
+		local start=""
+		local birth=""
+		local bindmac=""
+		local bindip=""
+		
+		while read type othe
+		do
+				[ "${othe}" = "" ] && continue
+				
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/){\
+							for(i=3;i<=NF;i++) \
+								$2=$2"="$i; \
+							gsub(/;/,"\\\\;",$2); gsub(/"/,"\\\\\\"",$2); print $1"=\""$2"\"";}}'`
+						if [ "${key}" != "" ]; then
+								eval "${key}"
+						fi
+				done
+				
+				if [ "${poolid}" = "" -o "${name}" = "" -o "${passwd}" = "" -o \
+					 "${expire}" = "" ]; then
+						#echo "err: ${type} ${othe}"
+						continue
+				fi
+
+				# auto create pppoe ip pool
+				
+				if [ "${poolid}" = "0" -a "${poolname}" != "" ]; then
+					newpoolid="`${FLOWEYE} pppoeippool list | awk -v n="${poolname}" '{if($2 == n){ printf $1;exit;}}'`"
+					if [ "${newpoolid}" = "" ]; then
+						newpoolid="`${FLOWEYE} pppoeippool list | awk '{if($3 == "0.0.0.0"){ printf $1;exit;}}'`"
+						if [ "${newpoolid}" = "" ]; then
+							echo "err 没有多余的地址池可供分配"
+						else
+							newpoolid=$((${newpoolid}+0))
+							[ ${newpoolid} -le 255 ] && poolipnub=${newpoolid}
+							poolipnub="id=${newpoolid} name=${poolname} start=10.${poolipnub}.0.1 end=10.${poolipnub}.0.255"
+							errmsg=`${FLOWEYE} pppoeippool set ${poolipnub}`
+							if [ "$?" != "0" ]; then
+								echo "err (${errmsg}) pppoeippool set ${poolipnub}"
+							else
+								poolid=${newpoolid}
+							fi
+						fi
+					else
+						poolid=${newpoolid}
+					fi
+				fi
+				
+				[ "${bindmac}" != "" ] && bindmac="bindmac=${bindmac}"
+				[ "${birth}" != "" ] && birth="birth=${birth}"
+				[ "${start}" != "" ] && start="start=${start}"
+				[ "${bindip}" != "" ] && bindip="bindip=${bindip}"
+
+				echo "${type} poolid=${poolid} name=${name} passwd=${passwd} ${birth} ${start} ${bindip} ${bindmac} expire=${expire} disable=${disable} memo=${dbid};${fullname};${identitycard};${telephone};${remark}"
+
+				poolid=""
+				name=""
+				passwd=""
+				expire=""
+				memo=""
+				start=""
+				birth=""
+				bindmac=""
+				bindip=""
+				
+				disable=0
+				poolipnub=1
+		done
+}
+
+import_pppoe_client_from_pipe_full()
+{
+		local poolid=""
+		local name=""
+		local passwd=""
+		local expire=""
+		local memo=""
+		local disable=0
+		local start=""
+		local birth=""
+		local bindip=""
+
+		while read type othe
+		do
+				[ "${othe}" = "" ] && continue
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/){ \
+							for(i=3;i<=NF;i++) \
+								$2=$2"="$i; \
+							gsub(/;/,"\\\\;",$2); gsub(/"/,"\\\\\\"",$2); print $1"=\""$2"\"";}}'`
+						if [ "${key}" != "" ]; then
+								eval ${key}
+						fi
+				done 
+
+				if [ "${poolid}" = "" -o "${name}" = "" -o "${passwd}" = "" -o \
+					 "${expire}" = "" ]; then
+						#echo "err: ${type} ${othe}"
+						continue
+				fi
+				
+				[ "${birth}" != "" ] && birth="birth=${birth}"
+				[ "${start}" != "" ] && start="start=${start}"
+				[ "${bindip}" != "" ] && bindip="bindip=${bindip}"
+
+				cmdargs="poolid=${poolid} name=${name} passwd=${passwd} ${birth} ${start} ${bindip} expire=${expire} disable=${disable} memo=${enabled}\;${maxlogin}\;${uplimit}\;${downlimit}\;${createtm}\;${fullname}\;${identitycard}\;${telephone}\;${address}\;${remark}"
+				errmsg=`${FLOWEYE} pppoeacct add ${cmdargs}`
+				if [ "$?" != "0" ]; then
+						echo "err:${errmsg}"
+						exit 1
+				fi
+
+				poolid=""
+				name=""
+				passwd=""
+				expire=""
+				memo=""
+				start=""
+				birth=""
+				bindip=""
+				disable=0
+		done
+}
+
+
+import_pppoe_client_from_pipe_mini()
+{
+		local cmdargs=""
+		
+		structure_arg_description_mini | \
+		while read type cmdargs
+		do
+				[ "${cmdargs}" = "" ] && continue
+
+				#cmdargs="`echo ${args} | ${SED} 's/;/\\\\;/g'`"
+				errmsg=`${FLOWEYE} pppoeacct add ${cmdargs}`
+				if [ "$?" != "0" ]; then
+						if [ "${errmsg}" = "EXIST" -a "${override}" = "yes" ]; then
+								errmsg=`${FLOWEYE} pppoeacct set ${cmdargs}`
+								[ "$?" = "0" ] && continue
+						fi
+						echo "err :${errmsg}"
+						echo "line:${cmdargs}"
+						exit 1
+				fi
+		done
+}
+
+import_pppoe_client_from_pipe_mini_dbug()
+{
+		local cmdargs=""
+		
+		structure_arg_description_mini | \
+		while read type cmdargs
+		do
+				[ "${cmdargs}" = "" ] && continue
+
+				#cmdargs="`echo ${args} | ${SED} 's/;/\\\\;/g'`" 
+				errmsg=`${FLOWEYE} pppoeacct add ${cmdargs}`
+				if [ "$?" != "0" ]; then
+						if [ "${override}" = "yes" ]; then
+								if [ "${errmsg}" = "EXIST" -o "${errmsg}" = "IP_CONFLICT" ]; then
+										errmsg=`${FLOWEYE} pppoeacct set ${cmdargs}`
+										if [ "$?" = "0" ]; then
+												echo "ok ${cmdargs}"
+												continue
+										fi
+								fi
+						fi
+						echo "err (${errmsg}) ${cmdargs}"
+				else
+						echo "ok ${cmdargs}"
+				fi
+		done
+}
+
+analytical_memo_description_full()
+{
+		# int arg like: 1. enabled;maxlogin;uplimit;downlimit;createtm;fullname;identitycard;telephone;address;remark
+		#				2. remark
+		# out like this: enabled= maxlogin= uplimit= downlimit= createtm= fullname= identitycard= telephone= address= remark=
+
+		echo "${1}" | \
+		awk -F';' 'BEGIN{ \
+			split("dbid;enabled;maxlogin;uplimit;downlimit;createtm;fullname;identitycard;telephone;address;remark",columns,";");\
+		}{ \
+			gsub(/ /,"+",$0); \
+			if($0 ~ /^[0-9]*;[0-9]*;[0-9]*;[0-9]*;[0-9]*;[^;|.]*;[0-9]*;[0-9]*;[^;|.]*;[.]*/) { \
+				for(i=11;i<=NF;i++) \
+					$10=$10";"$i;\
+			} else { \
+				$10=$0; \
+				$1=1; \
+				for(i=2;i<6;i++) \
+					$i=0; \
+				for(i=6;i<10;i++) \
+					$i=""; \
+			} \
+			for(i=1;i<10;i++) \
+				printf columns[i]"="$i" "; \
+			print columns[i]"="$i; \
+		}'
+}
+
+analytical_memo_description_mini()
+{
+		# int arg like: 1. enabled;maxlogin;uplimit;downlimit;createtm;fullname;identitycard;telephone;address;remark
+		#				2. remark dbid:
+		# out like this: enabled= maxlogin= uplimit= downlimit= createtm= fullname= identitycard= telephone= address= remark=
+
+		echo "${1}" | \
+		awk -F';' 'BEGIN{ \
+			split("dbid;fullname;identitycard;telephone;remark",columns,";");\
+		}{ \
+			gsub(/ /,"+",$0); \
+			if($0 ~ /^[^;|.]*;[^;|.]*;[^;|.]*;[^;|.]*;[.]*/) { \
+				for(i=6;i<=NF;i++) \
+					$5=$5";"$i;\
+			} else { \
+				$5=$0; \
+				for(i=1;i<5;i++) \
+					$i=""; \
+			} \
+			for(i=1;i<5;i++) \
+				printf columns[i]"="$i" "; \
+			print columns[i]"="$i; \
+		}'
+}
+
+dump_defualt_acct_from_pip()
+{
+		# in defualt conf
+		# acct poolid=1 name=aa passwd=a expire=2014-09-01 disable=0 memo=fdfdf
+		# out defualt extension conf
+
+		local poolid=""
+		local name=""
+		local passwd=""
+		local expire=""
+		local memo=""
+		local disable=0
+		local bindmac=""
+		local start=""
+		local birth=""
+		local bindip=""
+
+		local notetag=""
+
+		while read type othe
+		do
+				[ "${type}" = "" -o "${othe}" = "" ] && continue
+				notetag=`echo "${type}" | grep "^#"`
+				[ "${notetag}" = "#" ] && continue
+
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/){\
+							for(i=3;i<=NF;i++) \
+								$2=$2"="$i; \
+							gsub(/;/,"\\;",$2); gsub(/"/,"\\\\\\"",$2); print $1"=\""$2"\"";}}'`
+						if [ "${key}" != "" ]; then
+								eval "${key}"
+						fi
+				done
+
+				if [ "${poolid}" = "" -o "${name}" = "" -o "${passwd}" = "" -o \
+					 "${expire}" = "" ]; then
+						#echo "err: ${type} ${othe}"
+						continue
+				fi
+
+				last_conf=`analytical_memo_description_mini ${memo}`
+
+				[ "${poolid}" = 0 -a "${poolname}" != "" ] && poolname="poolname=${poolname}"
+				[ "${bindmac}" != "" ] && bindmac="bindmac=${bindmac}"
+				[ "${birth}" != "" ] && birth="birth=${birth}"
+				[ "${start}" != "" ] && start="start=${start}"
+				[ "${bindip}" != "" ] && bindip="bindip=${bindip}"
+
+				echo "${type} poolid=${poolid} name=${name} passwd=${passwd} ${poolname} ${birth} ${start} disable=${disable} ${bindip} ${bindmac} expire=${expire} ${last_conf}"
+
+				poolid=""
+				name=""
+				passwd=""
+				expire=""
+				memo=""
+				bindmac=""
+				poolname=""
+				start=""
+				birth=""
+				bindip=""
+				
+				disable=0
+		done
+}
+
+dump_defualt_acct_from_file()
+{
+		local file="$1"
+
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		awk '/^acct +(poolid=|name=|passwd=|expire=|memo=)+/' ${file} | \
+		dump_defualt_acct_from_pip
+}
+ 
+format_defualt_acct_conf()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1
+		
+		dbid=0
+		case $1 in
+				"-")
+						shift
+						[ "$1" != "" ] && poolid=$1
+
+						while read line
+						do
+								echo ${line} | \
+								awk '/^acct +(poolid=|name=|passwd=|expire=|memo=)+/' | \
+								dump_defualt_acct_from_pip
+						done
+				;;
+				*)
+						dump_defualt_acct_from_file $*
+				;;
+		esac
+}
+
+format_pppoe_client_conf()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1
+ 
+		case $1 in
+				"-db")
+					shift
+					case $1 in
+							"dbhzz")
+									shift 
+									format_dbhzz_acct_conf $*
+							;;
+							"dbros")
+									shift 
+									format_dbros_acct_conf $*
+							;;
+							"dbwayos")
+									shift
+									format_dbwayos_acct_conf $*
+							;;
+							"dbbytevalue")
+									shift 
+									format_dbbytevalue_acct_conf $*
+							;;
+							"dbikuai")
+									shift 
+									format_dbikuai_acct_conf $*
+							;;
+							"dbbithighway")
+									shift 
+									format_dbbithighway_acct_conf $*
+							;;
+							"dbnatshell")
+									shift
+									format_dbnatshell_acct_conf $*
+							;;
+							*)
+									shift 
+									format_defualt_acct_conf $*
+							;;
+					esac
+				;;
+				*) 
+						format_defualt_acct_conf $*
+				;; 
+		esac
+}
+
+help()
+{
+        printf "usage:\t -l|list_pool\n"
+        printf "      \t -fm|format_meno [-db dbhzz|dbros|wayos|bytevalue|dbikuai|dbbithighway|dbnatshell|defualt] - poolid : 格式化PPPOE客户端帐号配置成可直接导入流控的配置\n"
+        printf "      \t -f|format_out [-db dbhzz|dbros|wayos|bytevalue|dbikuai|dbbithighway|dbnatshell|defualt] - poolid : 格式化PPPOE客户端帐号配置输出\n"
+        printf "      \t -f|format_out [-db dbhzz|dbros|wayos|bytevalue|dbikuai|dbbithighway|dbnatshell|defualt] file poolid : 同上\n"
+        printf "      \t -i|import [-on|-off] [-debug] -: 导入格式化成本地配置过后的PPPOE客户端帐号配置\n"
+        printf "      \t -i|import [-override] [-debug] file [on|off]: 同上, 其中 [on|off] 表示是否覆盖相同的帐号\n"
+}
+
+
+case $1 in
+        "-l"|"list_pool")
+				shift
+                list_pool $*
+        ;;
+        "-f"|"format_out")
+				shift
+				format_pppoe_client_conf $*
+        ;;
+		"-fm"|"format_meno")
+				shift
+				format_pppoe_client_conf $* | structure_arg_description_mini
+		;;
+        "-i"|"import")
+				shift
+				if [ "$1" = "-override" ]; then
+					shift
+					override="yes"
+				fi
+				
+				if [ "$1" = "-debug" ]; then
+						shift
+						format_pppoe_client_conf $* | import_pppoe_client_from_pipe_mini_dbug
+				else
+						format_pppoe_client_conf $* | import_pppoe_client_from_pipe_mini
+				fi
+        ;;
+        *)
+                help
+        ;;
+esac

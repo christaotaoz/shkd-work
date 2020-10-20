@@ -1,0 +1,10 @@
+host: 192.168.4.108
+ip: 192.168.4.112
+lan: 192.168.10.1
+login_name: admin
+login_password: panabit
+new_login_password: panabit
+gateway: 192.168.4.1
+netmask: 255.255.255.0
+inside_nic_number: 1
+outside_nic_number: 1

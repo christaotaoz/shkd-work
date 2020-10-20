@@ -1,0 +1,52 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showIP(ipaddr)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/ipview_mobile?ipaddr=\" + ipaddr;
+        ShowWindow(url, \"\", 650, 800);
+}
+</script>
+<body>
+"; cgi_show_title "移动终端->${CGI_devname}->在线IP" ${width} 
+echo -n "
+<table width=600 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50  align=center>编号</td>
+        <td width=120 align=right><a href=\"${urlpath}&sort=ip\">IP地址</a></td>
+        <td width=180 align=right>终端类型</b></td>
+	<td width=*   align=right>最近访问</a></td>
+</tr>
+";
+idname="row1"
+rowno=1
+${FLOWEYE} mobile list devid=${CGI_devid} | while read ipaddr ltime devname
+do 
+echo -n "
+        <tr id=${idname}>
+	<td align=center>${rowno}</td>
+        <td align=right><a style=\"color:#0000ff\" href=\"javascript:showIP('${ipaddr}')\">&nbsp;&nbsp;&nbsp;${ipaddr}</a></td>
+	<td align=right>${devname}</td>
+	<td align=right>${ltime}</td>
+";
+        if [ "${idname}" = "row1" ]; then
+                idname="row2"
+        else
+                idname="row1"
+        fi
+	rowno=$((${rowno} + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

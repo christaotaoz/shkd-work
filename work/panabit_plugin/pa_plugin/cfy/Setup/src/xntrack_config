@@ -1,0 +1,57 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} dpi config xntrack_enable=${CGI_xntrack_enable}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} dpi stat`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "参数设置->智能P2P识别" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=500 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>智能P2P识别引擎</td>
+	<td width=120 align=left>
+		<select name=xntrack_enable value=${CGI_xntrack_enable} style=\"width:100%\">
+		";
+			if [ ${CGI_xntrack_enable} -eq 0 ]; then
+				echo "<option value=1>启用</option>"
+				echo "<option value=0 selected>不启用</option>" 
+			else 
+				echo "<option value=1 selected>启用</option>"
+				echo "<option value=0>不启用</option>" 
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=right><input type=submit style=\"width:100\" value=\"提交\"></input>&nbsp;&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

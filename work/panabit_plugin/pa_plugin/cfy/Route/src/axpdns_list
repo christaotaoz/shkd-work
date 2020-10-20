@@ -1,0 +1,92 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function modifyTime(id)
+{
+	window.location.href = \"/cgi-bin/Route/rtptime_set?id=\" + id;
+}
+function onAddTime()
+{
+	window.location.href = \"/cgi-bin/Route/rtptime_add\";
+}
+function deleteTime(tid)
+{
+	if (confirm(\"确定要删除该时段?\")) 
+		window.location.href = \"${myself}?action=delete&id=\" + tid;
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} rtptime remove id=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "策略->域名关联" 
+echo -n "
+<table width=1080 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=23>
+	<td width=100 align=center>编号</td>
+	<td width=300 align=right>域名</td>
+	<td width=120 align=right>应用</td>
+	<td width=100 align=right>跟踪IP</td>
+	<td width=100 align=right>跟踪80</td>
+	<td width=100 align=right>跟踪443</td>
+	<td width=* align=center><a style=\"color:#0000ff\" href=\"javascript:onAddTime()\">添加域名>></a></td>
+</tr>
+";
+count=1
+idname="row1"
+${FLOWEYE} axpdns list | while read type name cname dns track80 track443 trackip others
+do 
+	[ "${type}" = "sys" ] && continue;
+	echo "<tr id=${idname}>"
+	count=$((${count} + 1))
+	echo "<td align=center>${count}</td>"
+	echo "<td align=right>${dns}</td>"
+	echo "<td align=right>${cname}</td>"
+	if [ "${track80}" = "1" ]; then
+		echo "<td align=right>YES</td>"
+	else
+		echo "<td align=right>NO</td>"
+	fi
+	if [ "${track443}" = "1" ]; then
+		echo "<td align=right>YES</td>"
+	else
+		echo "<td align=right>NO</td>"
+	fi
+	if [ "${trackip}" = "1" ]; then
+		echo "<td align=right>YES</td>"
+	else
+		echo "<td align=right>NO</td>"
+	fi
+	echo "<td align=center>"
+	echo "<a href=\"javascript:modifyTime('${id}')\">编辑&nbsp;</a>"
+	echo "<a href=\"javascript:deleteTime('${id}')\">&nbsp;&nbsp;删除&nbsp;&nbsp;</a></td>"
+	echo "</tr>"
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

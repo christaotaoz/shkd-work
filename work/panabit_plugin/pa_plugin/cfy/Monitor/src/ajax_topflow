@@ -1,0 +1,23 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+firstelem=1
+printf "["
+/usr/ramdisk/bin/floweye ipobj list -n 10 -s flowcnt |
+while read ip tmstr ttl flowcnt mac inbyte outbyte inrate outrate accounts iecookies chromecookies natips mstcnt maxinrate maxoutrate account theothers
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{'ip':'${ip}',mac:'${mac}',flowcnt:'${flowcnt}'}"
+		firstelem=0
+	else
+		printf ",{'ip':'${ip}',mac:'${mac}',flowcnt:'${flowcnt}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

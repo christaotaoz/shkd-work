@@ -1,0 +1,485 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+";
+TMP_DIR=/usr/ramdisk/tmp
+SYSINFO_TMP=${TMP_DIR}/sysinfo.tmp
+DIFFTXT=${TMP_DIR}/diff.txt
+EMPTY_LINETXT=${TMP_DIR}/empty_line.txt
+ERROR_TMP=${TMP_DIR}/autosync_error.tmp
+SYNC_DIR=${DATAPATH}/cfgsync
+RECV_CONF=${SYNC_DIR}/recv.conf
+RECV_BKUP_CONF=${SYNC_DIR}/recv_bkup.conf
+LOCAL_BKUP_CONF=${SYNC_DIR}/local_bkup.conf
+CFG_DIFF=/cgi-bin/Maintain/cfg_diff
+CFG_SHOW=/cgi-bin/Maintain/cfg_show
+CUR_CONF=${PGETC}/panabit.conf
+CFG_GET=${PGPATH}/bin/cfg_get
+DIFF=${PGPATH}/bin/diff
+STAT=${PGPATH}/bin/stat
+AUTOSYNC_BKUP_CONF=${PGETC}/autosync_bkup.conf
+AUTOSYNC_CONF=${TMP_DIR}/autosync.conf
+[ ! -d ${SYNC_DIR} ] && mkdir -p ${SYNC_DIR}
+[ ! -d ${TMP_DIR} ] && mkdir -p ${TMP_DIR}
+[ ! -e ${SYSINFO_TMP} ] && touch ${SYSINFO_TMP}
+[ ! -e ${DIFFTXT} ] && touch ${DIFFTXT}
+[ ! -e ${EMPTY_LINETXT} ] && touch ${EMPTY_LINETXT}
+[ ! -e ${ERROR_TMP} ] && touch ${ERROR_TMP}
+[ ! -e ${LOCAL_BKUP_CONF} -a -s ${CUR_CONF} ] && cp -f ${CUR_CONF} ${LOCAL_BKUP_CONF}
+[ ! -e ${RECV_BKUP_CONF} ] && touch ${RECV_BKUP_CONF}
+[ ! -e ${AUTOSYNC_CONF} ] && touch ${AUTOSYNC_CONF}
+[ ! -e ${AUTOSYNC_BKUP_CONF} ] && touch ${AUTOSYNC_BKUP_CONF}
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\">
+var temp_inter = 0;
+function load_sync_error(url)
+{
+	var xmlhttp = null;
+	if (window.XMLHttpRequest) {
+		xmlhttp = new XMLHttpRequest();
+	}
+	else
+	if (window.ActiveXObject) {
+		xmlhttp = new ActiveObject(\"Microsoft.XMLHTTP\");
+	}
+	if (xmlhttp != null) {
+		xmlhttp.onreadystatechange = function(){
+			if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				document.getElementById(\"sync_state\").innerHTML=xmlhttp.responseText;
+			}
+		}
+		xmlhttp.open(\"GET\", url, true);
+		xmlhttp.send();
+	}
+	else {
+		alert(\"your browser does not support XMLHTTP\");
+	}
+}
+function onActionChanged(obj)
+{
+	var inter = document.getElementsByName(\"sync_inter\")[0];
+	if(obj.value == \"close\") {
+		temp_inter = inter.value;
+		inter.value = \"\";
+		inter.style.background = \"#cccccc\";
+		inter.disabled = true;
+	}
+	else{ 
+		if(temp_inter != 0) {
+			inter.value = temp_inter;
+		}
+		inter.disabled = false;
+		inter.style.background = \"#ffffff\";
+	}
+}
+function onLoad()
+{
+	var sync_act = document.getElementsByName(\"sync_switch\")[0];
+	onActionChanged(sync_act);
+}
+function onCancel()
+{
+	window.location.href = \"${myself}\";
+}
+function check_ipaddr(str)
+{
+	var exp = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
+	var reg = str.match(exp);
+	if(reg == null){
+		return false;
+	}else if(str == \"0.0.0.0\" || str == \"127.0.0.1\") {
+		return false;
+	}
+	return true;
+}
+function Validate_pwd(str)
+{
+	var i;
+	for (i = 0; i < str.length; i ++){
+		if(str.charAt(i) == ' ' ||
+			str.charAt(i) == '&') {
+			return false;
+		}
+	}
+	return true;
+}
+function check_para()
+{
+	var dev_ip = document.getElementsByName(\"pridev_ip\")[0];
+	var dev_admin = document.getElementsByName(\"pridev_admin\")[0];
+	var dev_pwd = document.getElementsByName(\"pridev_pwd\")[0];
+	if(dev_ip.value == null || dev_ip.value ==\"\") {
+		alert(\"请输入主设备IP地址\");
+		dev_ip.value = \"\";
+		dev_ip.focus();
+		return false;
+	}
+	else
+	if(!check_ipaddr(dev_ip.value)) {
+		alert(\"无效的IP\");
+		dev_ip.value = \"\";
+		dev_ip.focus();
+		return false;
+	}
+	if(dev_admin.value == null || dev_admin.value ==\"\") { 
+		alert(\"请输入主设备管理员名称\");
+		dev_admin.value = \"\";
+		dev_admin.focus();
+		return false;
+	}
+	else
+	if(!Validate_pwd(dev_admin.value)) {
+		alert(\"名称不能包含空格或字符&!\");
+		dev_admin.value = \"\";
+		dev_admin.focus();
+		return false;
+	}
+	if(dev_pwd.value == null || dev_pwd.value ==\"\") { 
+		alert(\"请输入主设备密码\");
+		dev_pwd.value = \"\";
+		dev_pwd.focus();
+		return false;
+	}
+	else
+	if(!Validate_pwd(dev_pwd.value)) {
+		alert(\"密码不能包含空格或字符&!\");
+		dev_pwd.value = \"\";
+		dev_pwd.focus();
+		return false;
+	}
+	return true;
+}
+function validate_form(frm)
+{
+	var inter = document.getElementsByName(\"sync_inter\")[0];
+	
+	if(!check_para())
+		return false;
+	if(inter.disabled == false) {
+		if(inter.value == null || inter.value == \"\"){ 
+			alert(\"请输入间隔时间\");
+			inter.focus();
+			return false;
+		}
+		else 
+		if(!IsDigit(inter.value)) {
+			alert(\"请输入数值\");
+			inter.value = \"\";
+			inter.focus();
+			return false;
+		}
+		else 
+		if(inter.value < 5) {
+			alert(\"间隔时间必须大于或等于5\");
+			inter.value = \"\";
+			inter.focus();
+			return false;
+		}
+	}
+	return true;
+}
+function restore()
+{
+	if(confirm(\"你确定恢复到同步前配置吗?恢复配置会关闭自动同步!\"))
+	window.location.href = \"/cgi-bin/Maintain/cfg_sync?action=restore\";
+}
+</script>
+";
+if [ ! -e ${AUTOSYNC_CONF} ]; then
+	if [ ! -e ${AUTOSYNC_BKUP_CONF} ]; then
+		afm_dialog_msg "主设备配置文件和备份配置文件都不存在,请通知系统管理员!";
+		afm_load_page 0 "${myself}";
+		exit 0
+	else
+		cp -f ${AUTOSYNC_BKUP_CONF} ${AUTOSYNC_CONF}
+	fi
+fi
+. ${AUTOSYNC_CONF}
+if [ "${CGI_action}" = "restore" ]; then
+	operator_check "${myself}"
+	if [ "${pridev_ip}" = "" -o "${pridev_admin}" = "" \
+		-o "${pridev_pwd}" = "" -o "${sync_switch}" = "" ]; then
+		afm_dialog_msg "主设备配置文件出错,请通知系统管理员";
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	#stop autosync
+	if [ "${sync_switch}" = "open" ]; then
+		#replace 'open' to 'close'
+		sed -ig 's/sync_switch=open/sync_switch=close/g' ${AUTOSYNC_CONF}
+		#backup autosync.conf to /usr/panaetc/
+		cp -f ${AUTOSYNC_CONF} ${AUTOSYNC_BKUP_CONF}
+	fi
+	#save local_bkup_conf and import config
+	cp -f ${LOCAL_BKUP_CONF} ${DATAPATH}/config/panabit.conf
+	#import conf
+	echo "import_config yes" >> ${EVENTFILE}
+	for loop in 1 2 3 4 5 6 7 8 9 10;
+	do
+		sleep ${loop}
+		if [ ! -e ${DATAPATH}/config/panabit.conf ]; then
+			afm_dialog_msg "恢复配置成功!";
+			break;
+		fi
+	done
+	if [ "${loop}" -eq "10" ]; then
+			afm_dialog_msg "恢复配置失败!";
+	fi
+	afm_load_page 0 "${myself}"
+	exit 0
+fi
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	if [ "${CGI_pridev_ip}" != "${pridev_ip}" -o \
+	 	"${CGI_pridev_admin}" != "${pridev_admin}" -o \
+   	 	"${CGI_pridev_pwd}" != "${pridev_pwd}" -o \
+	 	"${CGI_sync_switch}" != "${sync_switch}" -o \
+		"${CGI_sync_inter}" != "${sync_inter}" ]; then
+		#write primary device information into autosync.conf
+		if [ "${CGI_sync_switch}" = "open" -a "${CGI_sync_inter}" != "" ]; then
+			echo "pridev_ip=${CGI_pridev_ip}" > ${AUTOSYNC_CONF};
+			echo "pridev_admin=${CGI_pridev_admin}" >> ${AUTOSYNC_CONF};
+			echo "pridev_pwd=${CGI_pridev_pwd}" >> ${AUTOSYNC_CONF};
+			echo "sync_switch=${CGI_sync_switch}" >> ${AUTOSYNC_CONF};
+			echo "sync_inter=${CGI_sync_inter}" >> ${AUTOSYNC_CONF};
+			sync
+			#backup autosync.conf to /usr/panaetc/
+			cp -f ${AUTOSYNC_CONF} ${AUTOSYNC_BKUP_CONF}
+			sync
+			#start autosync
+			exist=`ps ax | grep cfg_autosync`
+			if [ "${exist}" = "" ]; then
+				echo "start_autosync yes" >> ${EVENTFILE}
+				sleep 2
+				while true;
+				do
+					exist=`ps ax | grep cfg_autosync`
+					[ "${exist}" != "" ] && break;
+					echo "start_autosync yes" >> ${EVENTFILE}
+					sleep 1
+				done
+			fi
+			afm_dialog_msg "自动同步已打开!";
+			afm_load_page 0 "${myself}"
+			exit 0
+		else
+			echo "pridev_ip=${CGI_pridev_ip}" > ${AUTOSYNC_CONF};
+			echo "pridev_admin=${CGI_pridev_admin}" >> ${AUTOSYNC_CONF};
+			echo "pridev_pwd=${CGI_pridev_pwd}" >> ${AUTOSYNC_CONF};
+			echo "sync_switch=${CGI_sync_switch}" >> ${AUTOSYNC_CONF};
+			sync
+			#backup autosync.conf to /usr/panaetc/
+			cp -f ${AUTOSYNC_CONF} ${AUTOSYNC_BKUP_CONF}
+			sync
+			afm_dialog_msg "自动同步已关闭!";
+			afm_load_page 0 "${myself}"
+			exit 0
+		fi
+	fi
+fi
+
+echo -n "
+<body onload=\"onLoad()\">
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlpinter\" style=\"display:none\">时间间隔必须为大于或等于5的整数(单位：秒)</span>
+";
+if [ "${TOPSEC}" = "" ]; then
+	cgi_show_title "配置管理->配置同步"
+else
+	cgi_show_title "配置管理->统一下发"
+fi
+
+echo -n "
+<table style=\"width:620;border-bottom:1px #787882 solid;color:#000000\">
+	<tr>
+		<td align=left style=\"font-size:14px\">
+			<b>同步日志</b>
+		</td>
+	</tr>
+</table>
+";
+if [ "${sync_switch}" = "open" ]; then
+
+echo -n "
+<table width=620 border=0 cellspacing=1 cellpadding=3 style=\"bgcolor=#ffffff;margin-left:0px;text-align:center;font-size:11px\" >
+<tr id=tblhdr>
+	<td width=120 align=\"center\">同步消息</td>
+	<td id=\"sync_state\" width=* align=\"center\" colspan=3></td>
+</tr>
+</table>
+";
+fi
+if [ -e ${RECV_CONF} ]; then
+
+echo -n "
+<table width=620 border=0 cellspacing=1 cellpadding=3 style=\"bgcolor=#ffffff;margin-left:0px;text-align:center;font-size:11px\" >
+<tr id=tblhdr>
+	<td width=120 align=\"center\">最后一次同步时间</td>
+	<td width=120 align=\"center\">同步前配置</td>
+	<td width=130 align=\"center\">同步后配置</td>
+	<td width=* align=\"center\">操作</td>
+</tr>
+<tr id=row1>
+";
+	stat_recv=`${STAT} -f %Sm -t %Y.%m.%d' '%H:%M:%S ${RECV_CONF}`
+	echo -n "
+	<td width=120 align=\"center\">${stat_recv}</td>
+	";
+	if [ -s ${LOCAL_BKUP_CONF} ]; then
+		stat_local_bkup=`${STAT} -f %Sm -t %Y.%m.%d' '%H:%M:%S ${LOCAL_BKUP_CONF}`
+		echo -n "
+		<td width=120 align=\"center\">
+			<a style=\"color:#0000ff\" href=\"${CFG_SHOW}?action=show_beforesync\" target=\"_blank\">${stat_local_bkup}</a>
+		</td>
+		";
+	else
+		echo -n "
+		<td width=120 align=\"center\">&nbsp;</td>
+		";
+	fi
+	if [ -s ${RECV_BKUP_CONF} ]; then
+		stat_recv_bkup=`${STAT} -f %Sm -t %Y.%m.%d' '%H:%M:%S ${RECV_BKUP_CONF}`
+		echo -n "
+		<td width=130 align=\"center\">
+			<a style=\"color:#0000ff\" href=\"${CFG_SHOW}\" target=\"_blank\">${stat_recv_bkup}</a>
+		</td>
+		";
+	else
+		echo -n "
+		<td width=130 align=\"center\">&nbsp;</td>
+		";
+	fi
+	if [ -s ${CUR_CONF} -a -s ${LOCAL_BKUP_CONF} ]; then 
+		different=`${DIFF} ${CUR_CONF} ${LOCAL_BKUP_CONF}`
+		if [ "${different}" != "" ]; then
+			echo -n "
+				<td width=* align=\"center\">
+				<a style=\"color:#0000ff\" href=\"javascript:restore()\">&nbsp;恢复&nbsp;</a>
+			";
+		else
+			echo -n "
+				<td width=* align=\"center\">
+				<a style=\"color:#0000ff\" href=\"javascript:alert('与当前配置相同,无需恢复')\">&nbsp;恢复&nbsp;</a>
+			";
+		fi
+	else
+		echo -n "
+				<td width=* align=\"center\">&nbsp;
+		";
+	fi
+	
+	if [ -s ${LOCAL_BKUP_CONF} -a -s ${RECV_BKUP_CONF} ]; then
+		${DIFF} -y -W 300 ${LOCAL_BKUP_CONF} ${RECV_BKUP_CONF} | grep -n '[<>|]' > ${DIFFTXT}
+		echo -n "
+           	<a style=\"color:#0000ff\" href=\"${CFG_DIFF}\" target=\"_blank\">&nbsp;配置对比&nbsp;</a>
+		";
+	else
+		echo -n "
+			&nbsp;
+		";
+	fi
+	echo -n "
+			</td>
+	</tr>
+	</table>
+	";
+fi
+
+echo -n "
+<form method=\"POST\" name=\"sync_form\" onsubmit=\"return validate_form(this)\" action=\"${myself}\">
+&nbsp;&nbsp;
+<table border=0 style=\"width:620;border-bottom:1px #787882 solid;color:#000000\">
+	<tr>
+		<td align=left style=\"font-size:14px\">
+			<b>参数配置</b>
+		</td>
+	</tr>
+</table>
+<table width=600 border=0 cellspacing=0 cellpadding=3 style=\"bgcolor=#ffffff;margin-left:10px;text-align:center\" >
+&nbsp;&nbsp;
+<tr id=row1>
+	<td width=100></td>
+	<td width=120 align=\"left\">主设备IP</td>
+	<td width=130>
+		<input type=\"text\" name=\"pridev_ip\" value=\"${pridev_ip}\" style=\"width:120px\" />
+	</td>
+	<td width=* align=\"left\"></td>
+</tr>
+<tr id=row1>
+	<td width=100></td>
+	<td width=120 align=\"left\">主设备管理员</td>
+	<td width=130>
+		<input type=\"text\" name=\"pridev_admin\" value=\"${pridev_admin}\" style=\"width:120px\" maxlength=50 />
+	</td>
+	<td width=* align=\"left\"></td>
+</tr>
+<tr id=row1>
+	<td width=100></td>
+	<td width=120 align=\"left\">主设备密码</td>
+	<td width=130>
+		<input type=\"password\" name=\"pridev_pwd\" value=\"${pridev_pwd}\" style=\"width:120px\" maxlength=50 />
+	</td>
+	<td width=* align=\"left\"></td>
+</tr>
+<tr id=row1>
+	<td width=100></td>
+	<td width=120 align=\"left\">自动同步</td>
+	<td width=130>
+		<select name=\"sync_switch\" value=\"${CGI_sync_switch}\" style=\"width:120px;\" onchange=\"onActionChanged(this)\">
+";
+	if [ "${sync_switch}" != "open" ]; then
+		echo -n "
+			<option value=\"open\">打开</option>
+			<option value=\"close\" selected=\"selected\">关闭</option>
+		"; 
+	else
+		echo -n "
+			<option value=\"open\" selected=\"selected\">打开</option>
+			<option value=\"close\">关闭</option>
+			<script type=\"text/javascript\">
+				var inter_id = self.setInterval(\"load_sync_error('/cgi-bin/Maintain/cfg_sync_err')\", 1000);
+			</script>
+		"; 
+	fi
+
+echo -n "
+		</select>
+	</td>
+	<td width=* align=\"left\"></td>
+</tr>
+<tr id=row1>
+	<td width=100></td>
+	<td width=120 align=\"left\">间隔时间</td>
+	<td width=130>
+		<input type=\"text\" name=\"sync_inter\" value=\"${sync_inter}\" style=\"width:120px\" maxlength=50 />
+	</td>
+	<td width=* align=\"left\">
+		<a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpinter')\" onmouseout=\"UnTip()\">秒</a>
+	</td>
+</tr>
+</table>
+<table border=0 style=\"width:620;border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right></td></tr>
+</table>
+<table style=\"width:620\">
+<tr>
+	<td align=right>
+		<input type=\"submit\" style=\"width:80\" value=\"提交\" />
+		<input type=\"button\" style=\"width:80\" value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

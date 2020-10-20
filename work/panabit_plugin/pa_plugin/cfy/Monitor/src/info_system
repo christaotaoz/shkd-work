@@ -1,0 +1,570 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Monitor/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/jq.js\"></script>
+<script type=\"text/javascript\" src=\"/img/highcharts.js\"></script>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height)
+{
+        ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+function onloaddoc()
+{
+	Highcharts.setOptions({ global: { useUTC: false } });
+	var options_flow = ({
+		chart: {
+			renderTo:'flowrate_charts',
+			type: 'area'
+		},
+        title: {
+		enabled: false,
+		text:'',
+		x: -20
+        },
+        xAxis: {
+			type: 'datetime',
+			tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			}
+        },
+        yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+			title: {
+				text: \"连接/秒\"
+			},
+			plotLines: [{
+				value: 0,
+				width: 1,
+				color: \"#808080\"
+				}]
+			},plotOptions:{
+				area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+				spline:{
+					marker:{
+						radius:0,
+						lineWidth:0.5
+					},
+					lineWidth:1
+				}
+		},
+        tooltip: {
+            formatter:function(){
+					var dd = new Date(this.x);
+					var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+					return str+'<br>'+this.series.name+' '+ (this.y);
+				}
+        },
+        legend: {
+			enabled:false,
+            layout: \"vertical\",
+            align: \"right\",
+            verticalAlign: \"middle\",
+            borderWidth: 0
+        },
+		credits:{enabled: false},
+        series: [{name:\"新建连接\", color:'#8085E9', data: []}]
+    });
+	
+	$.ajax({
+		url: 'ajax_info_system',
+		type:'post',
+		dataType:'json',
+		data: {type: 'flowrate_chart'},
+		success:function(json){
+			options_flow.series[0].data = json.rows;
+			var chart = new Highcharts.Chart(options_flow);
+		}
+    });
+	
+	var options_ip = ({
+		chart: {
+			type: 'area',
+			renderTo:'iptrend_charts'
+		},
+		title: {
+			enabled: false,
+			text:'',
+			x: -20
+		},
+		xAxis: {
+			type: 'datetime',
+                	tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial',
+					fontSize:'10px'
+				}
+			}
+        	},
+        	yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+            		title: {
+                		text: \"用户数\"
+            		},
+           	 	plotLines: [{ value: 0, width: 1, color: \"#808080\" }]
+        	},
+		plotOptions:{
+			area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+			spline:{
+				marker:{
+					radius:0,
+					lineWidth:1
+				},
+				lineWidth:1
+			}
+		},
+		tooltip: {
+			formatter:function(){
+				var dd = new Date(this.x);
+				var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+				return str+'<br>'+this.series.name+' '+ (this.y);
+			}
+        	},
+		legend: {
+			enabled:false,
+			layout: \"vertical\",
+			align: \"right\",
+			verticalAlign: \"middle\",
+			borderWidth: 0
+		},
+		credits:{enabled: false},
+		series: [{name:\"在线用户趋势\", type: 'spline', color:'#9CC6F0', data: []
+		},{name:\"共享用户\", color:'#4EB133', data: []
+		}]
+    });
+	
+	$.ajax({
+		url: 'ajax_info_system',
+		type:'post',
+		dataType:'json',
+		data: {type: 'iptrend_charts'},
+		success:function(json){
+			options_ip.series[0].data = json.rows1;
+			options_ip.series[1].data = json.rows2;
+			var chart = new Highcharts.Chart(options_ip);
+		}
+    });
+	var options_pps = ({
+		chart: {
+			type: 'area',
+			renderTo:'pps_charts'
+		},
+		title: {
+			enabled: false,
+			text:'',
+			x: -20
+		},
+		xAxis: {
+			type: 'datetime',
+                	tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial',
+					fontSize:'10px'
+				}
+			}
+        	},
+        	yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+            		title: {
+                		text: \"系统PPS\"
+            		},
+           	 	plotLines: [{ value: 0, width: 1, color: \"#808080\" }]
+        	},
+		plotOptions:{
+			area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+			spline:{
+				marker:{
+					radius:0,
+					lineWidth:1
+				},
+				lineWidth:1
+			}
+		},
+		tooltip: {
+			formatter:function(){
+				var dd = new Date(this.x);
+				var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+				return str+'<br>'+this.series.name+' '+ (this.y);
+			}
+        	},
+		legend: {
+			enabled:false,
+			layout: \"vertical\",
+			align: \"right\",
+			verticalAlign: \"middle\",
+			borderWidth: 0
+		},
+		credits:{enabled: false},
+		series: [{name:\"系统PPS趋势\", type: 'spline', color:'#9CC6F0', data: []}]
+    });
+	
+	$.ajax({
+		url: 'ajax_info_system',
+		type:'post',
+		dataType:'json',
+		data: {type: 'pps_charts'},
+		success:function(json){
+			options_pps.series[0].data = json.rows;
+			var chart = new Highcharts.Chart(options_pps);
+		}
+    });
+	
+	var options_temp = ({
+		chart: {
+			type: 'area',
+			renderTo:'temp_charts'
+		},
+		title: {
+			enabled: false,
+			text:'',
+			x: -20
+		},
+		xAxis: {
+			type: 'datetime',
+                	tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial',
+					fontSize:'10px'
+				}
+			}
+        	},
+        	yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+            		title: {
+                		text: \"CPU温度\"
+            		},
+           	 	plotLines: [{ value: 0, width: 1, color: \"#808080\" }]
+        	},
+		plotOptions:{
+			area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+			spline:{
+				marker:{
+					radius:0,
+					lineWidth:1
+				},
+				lineWidth:1
+			}
+		},
+		tooltip: {
+			formatter:function(){
+				var dd = new Date(this.x);
+				var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+				return str+'<br>'+this.series.name+' '+ (this.y);
+			}
+        	},
+		legend: {
+			enabled:false,
+			layout: \"vertical\",
+			align: \"right\",
+			verticalAlign: \"middle\",
+			borderWidth: 0
+		},
+		credits:{enabled: false},
+		series: [{name:\"CPU温度趋势\", type: 'spline', color:'#ff0000', data: []}]
+    });
+	
+	$.ajax({
+		url: 'ajax_info_system',
+		type:'post',
+		dataType:'json',
+		data: {type: 'temp_charts'},
+		success:function(json){
+			options_temp.series[0].data = json.rows;
+			var chart = new Highcharts.Chart(options_temp);
+		}
+    });
+	var options_cpu = ({
+		chart: {
+			renderTo:'cpu_charts',
+            		type: 'area'
+        },
+        title: {
+		enabled: false,
+		text:'',
+            	x: -20
+        },
+        xAxis: {
+			type: 'datetime',
+            		tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial',
+					fontSize:'10px'
+				}
+			}
+        },
+        yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+            title: {
+                text: \"CPU百分比\"
+            },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: \"#808080\"
+            }]
+        },plotOptions:{
+				area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+				spline:{
+					marker:{
+						radius:0,
+						lineWidth:0.5
+					},
+					lineWidth:1
+				}
+		},
+        tooltip: {
+            formatter:function(){
+					var dd = new Date(this.x);
+					var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+					return str+'<br>'+this.series.name+' '+ (this.y);
+				}
+        },
+        legend: {
+		enabled:false,
+		layout: \"vertical\",
+		align: \"right\",
+		verticalAlign: \"middle\",
+		borderWidth: 0
+        },
+		credits:{enabled: false},
+        	series: [{name:\"CPU使用率\", color:'#90ED7D', data: []}]
+    });
+	
+	$.ajax({
+		url: 'ajax_info_system',
+		type:'post',
+		dataType:'json',
+		data: {type: 'cpu_charts'},
+		success:function(json){
+			options_cpu.series[0].data = json.rows;
+			var chart = new Highcharts.Chart(options_cpu);
+		}
+    });
+}
+</script>
+<style type=\"text/css\">
+<!--
+	background-color:#ffffff;
+	color:#000000;
+	font-size:12px;
+	border-bottom: 1px dashed #ccc
+}
+-->
+</style>
+<body onload=\"onloaddoc()\">
+"; [ "${CGI_browsertitle}" = "" ] && cgi_show_title "系统概况->系统信息" 
+echo -n "
+<br>
+";
+for nameval in `${FLOWEYE} cpu stat`
+do
+	eval "${nameval}"
+done
+osver="${sigdb_version}"
+phymem="${physmemM}"
+imgfile=${TMPPATH}/cpu_stat.png
+wid=$((${memrate} * 400 / 100)) 
+floweyearg="width=800 height=200 tag=cpu.busy yname=cpu%"
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/cpu_day.png hours=24`
+freebsdver=`uname -r | cut -d'-' -f1`
+
+echo -n "
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td style=\"font-size:14px\"><b>系统信息</b></td>
+</table>
+<table width=800 border=0 cellspacing=1 cesspadding=1> 
+<tr id=row1>
+"; if [ "${TOPSEC}" = "" ]; then 
+echo -n "
+	<td width=120 align=left>&nbsp;&nbsp;版本信息</td>
+	<td width=* align=left>${BUILDREL}，特征库${osver}&nbsp;[<a style=\"color:#ff0000\">BSD${freebsdver}</a>]</td>
+"; else 
+echo -n "
+";	relver=`echo "${TOPSEC}" | cut -d'-' -f2` 
+echo -n "
+	<td width=120 align=left>&nbsp;&nbsp;产品型号</td>
+	<td width=* align=left>TF-${relver}&nbsp;[Built at ${BUILDDATE}]</td>
+"; fi 
+echo -n "
+</tr>
+"; if [ ${JOS_RELEASE} -ne 0 ]; then 
+	for nameval in `${FLOWEYE} key info`; do
+		eval "${nameval}"
+	done
+	startm=${start}
+	endtm=${end}
+	skipdays=$(((${endtm} - ${startm}) / 86400))
+	if [ ${startm} -ne 0 ]; then
+        	startm=`date -r ${startm} "+%Y-%m-%d %H:%M:%S"`
+	fi
+	if [ ${endtm} -ne 0 ]; then
+        	endtm=`date -r ${endtm} "+%Y-%m-%d %H:%M:%S"`
+	fi
+	if [ ${freeend} -ne 0 ]; then
+        	freeend=`date -r ${freeend} "+%Y-%m-%d %H:%M:%S"`
+	fi 
+	[ "${TOPSEC}" != "" ] && flowcnt=$((${flowcnt} + ${flowcnt}))
+
+echo -n "
+	<tr id=row1>
+	<td align=left>&nbsp;&nbsp;软件参数</td>
+	<td align=left>并发连接数${flowcnt}，并发IP数${ipcnt}[<a style=\"color:#ff0000\">${oem}</a>]</td>
+	</tr>
+	<tr id=row1>
+	<td align=left><a style=\"color:#ff0000\">&nbsp;&nbsp;使用时间</a></td>
+"; if [ ${skipdays} -ge 8000 ]; then 
+echo -n "
+	<td align=left><a style=\"color:#ff0000\"><b>可永久使用LICENSE</b></a></td>
+"; else 
+echo -n "
+	<td align=left><a style=\"color:#ff0000\"><b>${startm}</b>-<b>${endtm}</b></a></td>
+"; fi 
+echo -n "
+	</tr>
+"; if [ ${JOS_RELEASE} -eq 1 ]; then 
+echo -n "
+	<tr id=row1>
+	<td align=left>&nbsp;&nbsp;免费升级期</td> 
+	<td align=left>${startm}-${freeend}</td>
+	</tr>
+"; fi 
+echo -n "
+"; else 
+echo -n "
+<tr id=row1>
+	<td align=left>&nbsp;&nbsp;软件许可</td>
+	<td align=left>这是标准版，支持256用户，完全免费，无任何时间限制</td>
+</tr>
+"; fi 
+echo -n "
+<tr id=row1>
+	<td align=left>&nbsp;&nbsp;内存使用</td>
+	<td align=left><img src=\"/img/data_bar.gif\" width=${wid} height=10 alt=\"${memrate}%\" border=0>&nbsp;${memrate}%内存已被使用,还剩内存${freememM}M</td>
+</tr>
+</table>
+";
+newrate=""
+delrate=""
+for rate in `${FLOWEYE} flow stat | grep rate | cut -d '=' -f2 | cut -d'/' -f1`
+do
+        if [ "${newrate}" = "" ]; then
+                newrate="${rate}"
+        else
+                delrate="${rate}"
+        fi
+        [ "${newrate}" != "" -a "${delrate}" != "" ] && break
+done
+floweyearg="width=800 height=200 tag=flow.newrate tag=flow.delrate yname=flows/s"
+endtm=`date +%s`
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/flowrate_day.png hours=24`
+floweyearg="width=800 height=200 tag=appobj.natipcnt tag=ip yname=ip-count"
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/iptrend_day.png hours=24`
+ipcount=`${FLOWEYE} ipobj stat | grep "ip_count" | cut -d'=' -f2`
+natipcnt=`${FLOWEYE} appobj stat | grep "natipcnt" | cut -d'=' -f2`
+
+echo -n "
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+	<td style=\"font:14px\"><b>连接新建</b></td>
+	<td width=* style=\"font:14px\" align=right>
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/flow_rate?time=3day', 800, 800)\"><b>三日对比</b></a>&nbsp;&nbsp;
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/flow_rate?time=mon', 800, 800)\"><b>历史图表</b></a>
+	</td>
+</tr>
+</table>
+<table width=\"800\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#ffffff\">
+<tr>
+<td id=\"flowrate_charts\" style=\"border:1px dotted #000;height:250px;\"></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+	<td style=\"font:14px\"><b>在线用户趋势</b>&nbsp;&nbsp;&nbsp;[当前在线${ipobj_count}]</td>
+	<td align=right width=* style=\"font:14px\" align=right>
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/iptrend_graph?time=3day', 800, 800)\"><b>三日对比</b></a>&nbsp;&nbsp;
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/iptrend_graph?time=mon', 800, 800)\"><b>历史图表</b></a>
+	</td>
+</tr>
+</table>
+<table width=\"800\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#ffffff\">
+<tr>
+<td id=\"iptrend_charts\" style=\"border:1px dotted #000;height:250px;\"></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td style=\"font:14px\"><b>网络PPS趋势</b></td></tr>
+</table>
+<table width=\"800\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#ffffff\">
+<tr>
+<td id=\"pps_charts\" style=\"border:1px dotted #000;height:250px;\"></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td style=\"font:14px\"><b>CPU使用率</b>&nbsp;&nbsp;&nbsp;[当前使用率${cpurate}%]</td></tr>
+</table>
+<table width=\"800\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#ffffff\">
+<tr>
+<td id=\"cpu_charts\" style=\"border:1px dotted #000;height:250px;\"></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td style=\"font:14px\"><b>CPU温度</b>&nbsp;&nbsp;&nbsp;[当前温度${temperature}°C]</td></tr>
+</table>
+<table width=\"800\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\" bgcolor=\"#ffffff\">
+<tr>
+<td id=\"temp_charts\" style=\"border:1px dotted #000;height:250px;\"></td>
+</tr>
+</table>
+</body>
+</html>
+";

@@ -1,0 +1,132 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+";
+. /etc/PG.conf
+TMP_DIR=/usr/ramdisk/tmp
+SYNC_DIR=${DATAPATH}/cfgsync
+EMPTY_LINE_TXT=${TMP_DIR}/empty_line.txt
+RECV_BKUP_CONF=${SYNC_DIR}/recv_bkup.conf
+LOCAL_BKUP_CONF=${SYNC_DIR}/local_bkup.conf
+
+echo -n "
+<style type=\"text/css\">
+html, body {
+	color: #000000;
+	background-color: #ffffff;
+	font-family: 微软雅黑,Arial;
+}
+table {
+	width:100%;
+	margin:0;
+}
+tr,td,th { vertical-align: top;
+	background-color:#ffffff;
+	color:#000000;
+	font-size:15px;
+}
+th { white-space: nowrap;}
+</style>
+<body>
+	<table border=0 cellspacing=\"0\" cellpadding=\"0\">
+		<tbody>
+			<tr>
+				<th style=\"width:4%\"></th>
+";
+line_num=1;
+if [ "${CGI_action}" = "indirect_show" ]; then
+
+echo -n "
+				<th style=\"width:96%;veritcal-align:top;font-size:13px\">
+					同步后配置文件
+				</th>
+			</tr>
+";
+	#print empty line from result of diff
+	count=`cat ${EMPTY_LINE_TXT} | wc -l`
+	while read line
+	do
+		if [ "${count}" -gt "0" ]; then
+			while read empty_num
+			do
+				if [ "${empty_num}" -eq "${line_num}" ]; then
+
+echo -n "
+					<tr>
+						<td><div id=\"${line_num}\">${line_num}</div></td>
+						<td>&nbsp;</td>
+					</tr>
+";
+					count=`expr ${count} - 1`
+					line_num=`expr ${line_num} + 1`
+					continue
+				fi
+			done < ${EMPTY_LINE_TXT}
+		fi
+
+echo -n "
+			<tr>
+				<td><div id=\"${line_num}\">${line_num}</div></td>
+				<td>${line}</td>
+			</tr>
+";
+		line_num=`expr ${line_num} + 1`
+	done < ${RECV_BKUP_CONF}
+
+echo -n "
+";
+elif [ "${CGI_action}" = "show_beforesync" ]; then
+	if [ ! -s ${LOCAL_BKUP_CONF} ]; then
+		echo "<script type=\"text/javascript\">alert(\"同步前配置文件为空或不存在!\")</script>";
+		exit 0
+	fi
+	#show beforesync direct
+	echo -n "
+					<th style=\"width:96%;veritcal-align:top;font-size:13px\">
+						同步前配置文件
+					</th>
+				</tr>
+	";
+	while read line
+	do
+		echo " <tr>
+					<td><div id=\"${line_num}\">${line_num}</div></td>
+					<td>${line}</td>
+				</tr>
+		";
+		line_num=`expr ${line_num} + 1`
+	done < ${LOCAL_BKUP_CONF}
+else
+	if [ ! -s ${RECV_BKUP_CONF} ]; then
+		echo "<script type=\"text/javascript\">alert(\"同步后配置文件为空或不存在!\")</script>";
+		exit 0
+	fi
+	#show aftersync direct
+	echo -n "
+					<th style=\"width:96%;veritcal-align:top;font-size:13px\">
+						同步后配置文件
+					</th>
+				</tr>
+	";
+	while read line
+	do
+		echo " <tr>
+					<td><div id=\"${line_num}\">${line_num}</div></td>
+					<td>${line}</td>
+				</tr>
+		";
+		line_num=`expr ${line_num} + 1`
+	done < ${RECV_BKUP_CONF}
+fi
+
+echo -n "
+ 		  </tbody>
+		</table>
+	</body>
+</html>
+";

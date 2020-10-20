@@ -1,0 +1,24 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+FLOWEYE=/usr/ramdisk/bin/floweye
+printf "["
+printf "{id:'0',name:'NULL',ifname:'NULL',disabled:'no',standby:'no',linkup:'no',addr:'0.0.0.0',inbps:'0',outbps:'0'}"
+${FLOWEYE} nat listproxy type=routerif onlystat=1 | while read type id name ifname \
+linkup disable standby dnsreqs dnsfail flowcnt inbps outbps addr theothers
+do
+	printf ",{id:'${id}',name:'${name}',ifname:'${ifname}',disabled:'${disable}',standby:'${standby}',linkup:'${linkup}',addr:'${addr}',inbps:'${inbps}',outbps:'${outbps}'}"
+done
+${FLOWEYE} nat listproxy type=proxy.pppoe onlystat=1 | while read type id name ifname \
+linkup disable standby dnsreqs dnsfail flowcnt inbps outbps addr theothers
+do
+	printf ",{id:'${id}',name:'${name}',ifname:'${ifname}',disabled:'${disable}',standby:'${standby}',linkup:'${linkup}',addr:'${addr}',inbps:'${inbps}',outbps:'${outbps}'}"
+done
+echo "]"
+
+echo -n "
+";

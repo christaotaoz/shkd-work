@@ -1,0 +1,57 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+IPE_DDNS=${PGPATH}/app/ddns/ipe_ddns
+DIR_DDNSLOG=${PGPATH}/ddns_log/
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onDeleteDDNSLog(name)
+{
+        window.location.href = \"${myself}?act=delete&hostname=\" + name;
+}
+</script>
+<body>
+"; cgi_show_title "网络配置->DDNS管理->DDNS日志" 
+echo -n "
+<br>
+<table width=600 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=* align=left>日志</td>
+        <td width=64 align=center>操作</td>
+</tr>
+";
+natcount=0
+idname="row1"
+if [ "${CGI_hostname}" != "" -a "${CGI_act}" = "delete" ]; then
+	[ -f ${DIR_DDNSLOG}/${CGI_hostname}.log ] && rm -f ${DIR_DDNSLOG}/${CGI_hostname}.log
+elif [ "${CGI_hostname}" != "" -a -f ${DIR_DDNSLOG}/${CGI_hostname}.log ]; then
+        operator_check "${myself}"
+		logger="`cat ${DIR_DDNSLOG}/${CGI_hostname}.log`"
+
+echo -n "
+    <tr id=${idname}>
+		<td align=left>${logger}&nbsp;</td>
+		<td align=center>
+		<a style=\"color:#0000ff\" href=\"javascript:onDeleteDDNSLog('${hostname}')\">删除</a>&nbsp;</td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi 
+fi
+
+echo -n "
+</table>
+</body>
+</html>
+";

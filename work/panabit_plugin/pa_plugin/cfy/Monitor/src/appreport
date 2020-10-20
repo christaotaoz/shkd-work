@@ -1,0 +1,57 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=60
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/`basename $0`?datasrc=${CGI_datasrc}&title=${CGI_title}"
+afm_load_page  ${CGI_refresh} "${cgipath}"
+
+echo -n "
+<body>
+";
+if [ "${CGI_bridge}" != "0" ]; then
+	if [ "${CGI_vlinkname}" = "" ]; then
+		cgi_show_title "${CGI_title}(网桥${CGI_bridge})" 633
+	else
+		cgi_show_title "${CGI_title}(${CGI_vlinkname})" 633
+	fi
+else
+	cgi_show_title "${CGI_title}" 633
+fi
+comargs="bridge=${CGI_bridge} width=${width} height=300"
+for tag in `echo "${CGI_datasrc}" | sed -e "s/,/ /g"`
+do
+	comargs="${comargs} tag=${tag}"
+done
+daypng=rptday.png
+weekpng=rptweek.png
+monpng=rptmon.png
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${daypng} hours=24`
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${weekpng} hours=168`
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${monpng} hours=720`
+
+echo -n "
+<br>
+<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>
+	
+<br>
+<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>
+<br>
+<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>
+</body>
+</html>
+";

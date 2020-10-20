@@ -1,0 +1,347 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var isenable = document.getElementsByName(\"enable\")[0];
+	var holdtime = document.getElementsByName(\"holdtime\")[0];
+	var speedup  = document.getElementsByName(\"speedup\")[0];
+	var speeddown= document.getElementsByName(\"speeddown\")[0];
+	var lowwater = document.getElementsByName(\"lowwater\")[0];
+	var highwater= document.getElementsByName(\"highwater\")[0];
+	var bandwidth= document.getElementsByName(\"bandwidth\")[0];
+	bandwidth.value = TrimAll(bandwidth.value);
+	if (!IsDigitIn(bandwidth.value, 0, 1000000)) {
+		alert(\"请输入0~1000000之间的数字!\");
+		bandwidth.select();
+		return false;
+	}	
+	holdtime.value = TrimAll(holdtime.value);
+	if (!IsDigitIn(holdtime.value, 2, 16)) {
+		alert(\"规则序号必须是介于0和16之间的一个值\");
+		holdtime.select();
+		return false;
+	}
+	speedup.value = TrimAll(speedup.value);
+	if (!IsDigitIn(speedup.value, 0, 99)) {
+		alert(\"请输入0~99之间的一个数字!\");
+		speedup.select();
+		return false;
+	}
+	speeddown.value = TrimAll(speeddown.value);
+	if (!IsDigitIn(speeddown.value, 0, 99)) {
+		alert(\"请输入0~99之间的一个数字!\");
+		speeddown.select();
+		return false;
+	}
+	lowwater.value = TrimAll(lowwater.value);
+	if (!IsDigitIn(lowwater.value, 0, 99)) {
+		alert(\"请输入0~99之间的一个数字!\");
+		lowwater.select();
+		return false;
+	}
+	highwater.value = TrimAll(highwater.value);
+	if (!IsDigitIn(highwater.value, 0, 99)) {
+		alert(\"请输入0~99之间的一个数字!\");
+		highwater.select();
+		return false;
+	}
+	if (isenable.value != \"0\") {
+		if (bandwidth.value == \"0\") {
+			alert(\"带宽不能为0!\");
+			bandwidth.select();
+			return false;
+		}
+		if (lowwater.value == \"0\") {
+			alert(\"加档下限不能为0!\");
+			lowwater.select();
+			return false;
+		}
+		if (speedup.value == \"0\") {
+			alert(\"加速比不能为0!\");
+			speedup.select();
+			return false;
+		}
+		if (highwater.value == \"0\") {
+			alert(\"减档上限不能为0!\");
+			highwater.select();
+			return false;
+		}
+		if (speeddown.value == \"0\") {
+			alert(\"减速比不能为0!\");
+			speeddown.select();
+			return false;
+		}
+	}
+	return true;
+}
+function onDynrateEnabled(obj)
+{
+	var bandwidth= document.getElementsByName(\"bandwidth\")[0];
+	var holdtime = document.getElementsByName(\"holdtime\")[0];
+	var speedup  = document.getElementsByName(\"speedup\")[0];
+	var speeddown= document.getElementsByName(\"speeddown\")[0];
+	var lowwater = document.getElementsByName(\"lowwater\")[0];
+	var highwater= document.getElementsByName(\"highwater\")[0];
+	var value = obj.value == \"1\" ? true : false;
+	EnableIt(holdtime, value);
+	EnableIt(speedup, value);
+	EnableIt(speeddown, value);
+	EnableIt(lowwater, value);
+	EnableIt(highwater, value);
+	EnableIt(bandwidth, value);
+}
+function onCancel()
+{
+	window.location.href = \"/cgi-bin/Setup/policy_listlink\";
+}
+function onLoad()
+{
+	var dynrate = document.getElementsByName(\"enable\")[0];
+	onDynrateEnabled(dynrate);	
+}
+</script>
+";
+if [ "${CGI_action}" = "setlinksch" ]; then
+	operator_check "/cgi-bin/Setup/policy_listlink"
+	linkargs="link=${CGI_link} day=${CGI_day}"
+	linkargs="${linkargs} time=${CGI_timeseg} bandwidth=${CGI_bandwidth}"
+	errmsg=`${FLOWEYE} policy setlinksch ${linkargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/policy_listlink"
+	fi
+fi
+if [ "${CGI_action}" = "setlink" ]; then
+	operator_check "/cgi-bin/Setup/policy_listlink"
+	linkargs="link=${CGI_link} name="${CGI_name}" bandwidth=${CGI_bandwidth}"
+	linkargs="${linkargs} enable=${CGI_enable} holdtime=${CGI_holdtime}"
+	linkargs="${linkargs} lowwater=${CGI_lowwater} speedup=${CGI_speedup}"
+	linkargs="${linkargs} highwater=${CGI_highwater} speeddown=${CGI_speeddown}"
+	errmsg=`${FLOWEYE} policy setlink ${linkargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/policy_listlink"
+	fi
+fi
+
+echo -n "
+<body onload=\"onLoad()\">
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlpholdtime\"  style=\"display:none\">档位停留时间，在这个时间内，不会改变速度</span>
+<span id=\"hlplowwater\"  style=\"display:none\">当线路带宽使用率低于这个值时，进行加速操作</span>
+<span id=\"hlpspeedup\"   style=\"display:none\">每次加速时，新速度=当前值+(最大值-最小值)*加速比</span>
+<span id=\"hlphighwater\" style=\"display:none\">当线路带宽使用率超过这个值时，进行减速操作</span>
+<span id=\"hlpspeeddown\" style=\"display:none\">每次减速时，新速度=当前值*减速比</span>
+";
+attributes=`${FLOWEYE} policy getlink link=${CGI_link}`
+if [ "$?" = "0" ]; then
+	for nameval in ${attributes}; do
+		eval "${nameval}"
+	done
+	CGI_name="${name}"
+	CGI_bandwidth="${bandwidth}"
+	CGI_currentbw="${currentbw}"
+	CGI_enable="${enable}"
+	CGI_holdtime="${holdtime}"
+	CGI_lowwater="${lowwater}"
+	CGI_speedup="${speedup}"
+	CGI_highwater="${highwater}"
+	CGI_speeddown="${speeddown}"
+fi
+[ "${CGI_browsertitle}" = "" ] && cgi_show_title "参数设置->线路设置->${CGI_name}" 
+
+echo -n "
+<br>
+"; if [ ${JOS_RELEASE} -eq 0 ]; then 
+echo -n "
+<table style=\"width:480; font:bold 黑体 13px; color:#ff0000\">
+<tr>
+        <td style=\"width:100%;font:14\"><b>标准版不支持动态IP限速</b></td>
+</tr>
+</table>
+"; fi 
+echo -n "
+"; if [ ${JOS_RELEASE} -eq 2 -o ${JOS_RELEASE} -eq 3 ]; then 
+echo -n "
+<table style=\"width:480; border-bottom:1px #787882 solid; font-size:13px;font-bold:true;\">
+<tr><td align=left><b>基本参数</b></td></tr>
+</table>
+"; fi 
+echo -n "
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=480 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=90 align=left>线路名称</td>
+	<td width=120 align=left>
+		<input type=text name=\"name\" style=\"width:120\" value=\"${CGI_name}\"></input>
+	</td>
+	<td width=* align=left></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>动态IP限速</td>
+	<td align=left>
+		<select name=\"enable\" style=\"width:120\" value=\"${CGI_enable}\" onchange=\"onDynrateEnabled(this)\"> 
+		"; if [ ${CGI_enable} -eq 0 ]; then 
+echo -n "
+			<option value=1>启用</option>
+			<option value=0 selected>不启用</option>
+		"; else 
+echo -n "
+			<option value=1 selected>启用</option>
+			<option value=0>不启用</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>线路默认带宽</td>
+	<td align=left>
+		<input type=text name=\"bandwidth\" style=\"width:120\" value=\"${CGI_bandwidth}\"></input>
+	</td>
+	<td width=* align=left>(kbps, 0~1000000)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>速度维持时间</td>
+	<td align=left><input type=text name=holdtime style=\"width:120\" value=\"${CGI_holdtime}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpholdtime')\" onmouseout=\"UnTip()\">(2~16秒)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>带宽使用下限</td>
+	<td align=left><input type=text name=lowwater style=\"width:120\" value=\"${CGI_lowwater}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlplowwater')\" onmouseout=\"UnTip()\">(0~99%)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>加速比</td>
+	<td align=left><input type=text name=speedup style=\"width:120\" value=\"${CGI_speedup}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpspeedup')\" onmouseout=\"UnTip()\">(0~99%)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>带宽使用上限</td>
+	<td align=left><input type=text name=highwater style=\"width:120\" value=\"${CGI_highwater}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlphighwater')\" onmouseout=\"UnTip()\">(0~99%)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>减速比</td>
+	<td align=left><input type=text name=speeddown style=\"width:120\" value=\"${CGI_speeddown}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpspeeddown')\" onmouseout=\"UnTip()\">(0~99%)</a>
+	"; if [ ${JOS_RELEASE} -eq 2 -o ${JOS_RELEASE} -eq 3 ]; then 
+echo -n "
+		<input type=submit style=\"width:70\" value=\"提交\"></input>
+		<input type=button style=\"width:70\" value=\"返回\" onclick=\"onCancel()\"></input>
+	"; fi 
+echo -n "
+		<input type=hidden name=\"link\"  value=\"${CGI_link}\"></input>
+		<input type=hidden name=\"action\" value=\"setlink\"></input>
+	</td>
+</tr>
+</table>
+"; if [ ${JOS_RELEASE} -ne 2 -a ${JOS_RELEASE} -ne 3 ]; then 
+echo -n "
+<table width=480 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"返回\" onclick=\"onCancel()\"></input>
+        </td>
+</tr>
+</table>
+</form>
+"; else 
+echo -n "
+</form>
+"; fi 
+echo -n "
+"; if [ ${JOS_RELEASE} -eq 2 -o ${JOS_RELEASE} -eq 3 ]; then 
+echo -n "
+<table style=\"width:480; border-bottom:1px #787882 solid; font-size:13px;font-bold:true;\">
+<tr><td align=left><b>时段带宽</b></td></tr>
+</table>
+<table width=480 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=90 align=left>日期</td>
+	<td width=180 align=left>时段(HH:MM:SS-HH:MM:SS)</td>
+	<td width=90 align=left>带宽(kbps)</td>
+	<td width=* align=center></td>
+</tr>
+";
+id="row2"
+${FLOWEYE} policy getlinksch link=${CGI_link} | while read day timeseg bandwidth theothers
+do 
+echo -n "
+<form method=post onsubmit=\"return validate(this)\" action=\"${myself}\">
+<tr id=${id}>
+	<td></td>
+";
+	case "${day}" in
+	"1")
+		echo "<td align=left>星期一</td>"
+		;;
+	"2")
+		echo "<td align=left>星期二</td>"
+		;;
+	"3")
+		echo "<td align=left>星期三</td>"
+		;;
+	"4")
+		echo "<td align=left>星期四</td>"
+		;;
+	"5")
+		echo "<td align=left>星期五</td>"
+		;;
+	"6")
+		echo "<td align=left>星期六</td>"
+		;;
+	"7")
+		echo "<td align=left>星期日</td>"
+		;;
+	esac
+
+echo -n "
+	<td align=center><input type=text name=timeseg style=\"width:180\" value=\"${timeseg}\"></input></td>
+	<td align=left><input type=text name=bandwidth style=\"width:90\" value=\"${bandwidth}\"></input></td>
+	<td align=center><input type=submit style=\"width:70\" value=\"设置\"></input>
+                <input type=hidden name=link value=\"${CGI_link}\"></input>
+		<input type=hidden name=day value=\"${day}\"></input>
+		<input type=hidden name=action value=\"setlinksch\"></input>
+        </td>
+</tr>
+</form>
+";
+        if [ "${id}" = "row1" ]; then
+                id="row2"
+        else
+                id="row1"
+        fi
+done
+
+echo -n "
+</table>
+"; fi 
+echo -n "
+</body>
+</html>
+";

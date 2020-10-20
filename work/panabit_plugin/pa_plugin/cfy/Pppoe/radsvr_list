@@ -1,0 +1,289 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+rootpath="/cgi-bin/Pppoe"
+MOD_TAB_LIST="基本配置#/cgi-bin/Pppoe/radsvr_config 服务列表#/cgi-bin/Pppoe/radsvr_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddServer()
+{
+	window.location.href = \"${rootpath}/radsvr_add\";
+}
+function onDeleteServer(id)
+{
+	if (confirm(\"确认要删除RADIUS服务?\"))
+		window.location.href = \"${myself}?action=delete&id=\" + id; 
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + name;
+	ShowWindow(url, \"\", 350, 380);
+}
+function editServer(id)
+{
+	window.location.href = \"${rootpath}/radsvr_set?radid=\" + id;
+}
+function showIf(ifname)
+{
+	var url = \"/cgi-bin/Monitor/if_show?name=\" + ifname + \"&title=网络接口->\" + ifname;
+	ShowWindow(url, \"\", 720, 700);
+}
+function showProxy(proxyname)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+	ShowWindow(url, \"\", 380, 490);
+}
+function getstatus()
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i;
+	
+	for(i = 1; i < table.length; i++)
+		items.push(table[i].getAttribute(\"name\"));
+	if(items.length <= 0)
+		return;
+	AJXS({type: 'POST', 
+				 url: '/cgi-bin/common/plan_action?action=remark&items=' + items.join(' '), 
+				 error: function(status){setTimeout(getstatus, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			setTimeout(getstatus, 1000);
+			return;
+		}
+		if(table.length == d.data.length) {
+			for(i=1; i < d.data.length; i++) {
+				table[i].cells[12].childNodes[0].innerHTML = d.data[i].remark;
+			}
+		}
+		else
+			setTimeout(getstatus, 2000);
+	}});
+}
+function onresize()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+        }
+}
+function onloaddoc()
+{
+	getstatus();
+}
+function editIppool(id) 
+{
+	var url = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+	ShowWindow(url, \"\", 680, 300);
+}
+function radsvrDump(id, name) 
+{
+	var url = \"/cgi-bin/Pppoe/radsvr_dump?id=\" + id + \"&name=\" + name;
+	ShowWindow(url, \"\", 400, 520);
+}
+function beforeCommit(frm)
+{
+	var rad_ip = document.getElementsByName(\"rad_ip\")[0];
+	var rad_authport = document.getElementsByName(\"rad_authport\")[0];
+	var rad_acctport = document.getElementsByName(\"rad_acctport\")[0];
+	var rad_secret = document.getElementsByName(\"rad_secret\")[0];
+	var rad_acctinternal = document.getElementsByName(\"rad_acctinternal\")[0];
+	var rad_ttl = document.getElementsByName(\"rad_ttl\")[0];
+	var rad_nasidentifier = document.getElementsByName(\"rad_nasidentifier\")[0];
+	rad_ip.value = TrimAll(rad_ip.value);
+	rad_authport.value = TrimAll(rad_authport.value);
+	rad_acctport.value = TrimAll(rad_acctport.value);
+	rad_nasidentifier.value = TrimAll(rad_nasidentifier.value);
+	rad_secret.value = TrimAll(rad_secret.value);
+	if (rad_secret.value == \"\") {
+		alert(\"共享密钥不能为空!\");
+		rad_secret.select();
+	}
+	rad_acctinternal.value = TrimAll(rad_acctinternal.value);
+	if (rad_acctinternal.value == \"\") {
+		alert(\"请设置正确的计费间隔时间!\");
+		rad_acctinternal.select();
+	}
+	rad_ttl.value = TrimAll(rad_ttl.value);
+	if (rad_ttl.value == \"\") {
+		alert(\"请输入响应等待时间!\");
+		rad_ttl.select();
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	[ "${CGI_rad_acctinternal}" = "" ] && CGI_rad_acctinternal=300
+	[ "${CGI_rad_ttl}" = "" ] && CGI_rad_ttl=30
+	[ "${CGI_rad_nasidentifier}" = "" ] && CGI_rad_nasidentifier="Panabit"
+	cmdargs="enable=${CGI_rad_enable}"
+	cmdargs="${cmdargs} acctinternal=${CGI_rad_acctinternal}"
+	cmdargs="${cmdargs} ttl=${CGI_rad_ttl}"
+	cmdargs="${cmdargs} nasidentifier=${CGI_rad_nasidentifier}"
+	errmsg=`${FLOWEYE} radius config ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+else
+	for nameval in `${FLOWEYE} radius stat`
+	do
+		eval "CGI_rad_${nameval}"
+	done
+fi
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} radsvr remove id=${CGI_id}`
+	[ "$?" != "0" ] && afm_dialog_msg "操作失败:${errmsg}"
+fi
+
+echo -n "
+<body onload=\"onloaddoc();\">
+"; cgi_show_title "基本对象->RADIUS" 
+echo -n "
+<br>
+<table style=\"width:1000; border-bottom:1px #787882 solid; color:#CE6C04;font-size:14px;font-bold:true;\">
+<tr>
+        <td align=left><b>基本参数</b></td>
+        <td width=*></td>
+</tr>
+</table>
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=1000 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=10></td>
+	<td width=120 align=left>RADIUS服务</td>
+	<td width=600 align=left>
+		<select name=rad_enable style=\"width:120px\" value=${CGI_rad_enable}>
+		";
+			if [ ${CGI_rad_enable} -eq 0 ]; then
+				echo "<option value=1>启用</option>"
+				echo "<option value=0 selected>不启用</option>" 
+			else 
+				echo "<option value=1 selected>启用</option>"
+				echo "<option value=0>不启用</option>" 
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=right></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>NAS标识</td>
+	<td align=left><input type=text name=rad_nasidentifier style=\"width:120\" value=${CGI_rad_nasidentifier}></input></td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>计费发送间隔</td>
+	<td align=left><input type=text name=rad_acctinternal style=\"width:120\" value=${CGI_rad_acctinternal}></input>&nbsp;(秒)</td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>响应等待时间</td>
+	<td align=left><input type=text name=rad_ttl style=\"width:120\" value=${CGI_rad_ttl}></input>&nbsp;(秒，超过此时间的RADIUS应答将被丢弃)</td>
+	<td width=* align=right><input type=submit style=\"width:80\" value=\"提交\" /></td>
+</tr>
+</table>
+<br>
+<table style=\"width:1000; color:#CE6C04;font-size:14px;font-bold:true;\">
+<tr>
+        <td align=left><b>服务列表</b></td>
+        <td width=*></td>
+</tr>
+</table>
+<table id=mytbl1 width=\"1000\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=90  align=right>名称</td>
+	<td width=100 align=right>IP地址</td>
+	<td width=40  align=right>状态</td>
+	<td width=60  align=right>认证端口</td>
+	<td width=60  align=right>计费端口</td>
+	<td width=70  align=right>共享密钥</td>
+	<td width=80  align=right>主路由线路</td>
+	<td width=80  align=right>备份线路</td>
+	<td width=140 align=right>认证(请求/超时/拒绝)</td>
+	<td width=100 align=right>计费(请求/超时)</td>
+	<td width=50  align=right>踢线</td>
+	<td width=* align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddServer()\">添加>>&nbsp;</a></td>
+</tr>
+";
+natcount=0
+idname="row1"
+${FLOWEYE} radsvr list | while read id ip name authport acctport secret pxyid0 active0 pxyname0 rteid0 \
+pxyid1 active1 pxyname1 rteid1 authreq authack authrej authtimeout acctreq acctack accttimeout disconnect theothers 
+do 
+echo -n "
+    <tr id=${idname} name=\"${name}\">
+    <td align=right><a style=\"color:#0000ff\" href=\"javascript:radsvrDump('${id}', '${name}')\">&nbsp;${name}</a></td>
+    <td align=right>${ip}</td>
+    "; if [ "${active0}" = "1" -o "${active1}" = "1" ]; then 
+echo -n "
+    <td align=right><img id=state_${name} src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+    "; else 
+echo -n "
+    <td align=right><img id=state_${name} src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+    "; fi 
+echo -n "
+    <td align=right>${authport}</td>
+    <td align=right>${acctport}</td>
+    <td align=right>${secret}</td>
+"; if [ "${pxyname0}" != "NULL" ]; then 
+echo -n "
+    	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxyname0}')\">${pxyname0}</a></td>
+"; else 
+echo -n "
+    <td align=right></td>
+"; fi 
+echo -n "
+"; if [ "${pxyname1}" != "NULL" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxyname1}')\">${pxyname1}</a></td>
+"; else 
+echo -n "
+    <td align=right></td>
+"; fi 
+echo -n "
+    <td align=right>${authreq}/${authtimeout}/${authrej}</td>
+    <td align=right>${acctreq}/${accttimeout}</td>
+    <td align=right>${disconnect}</td>
+    <td align=right>
+";	if [ "${id}" != "0" ]; then 
+echo -n "
+	<img style=\"margin-top:3px\" src=\"/img/delete.png\" title=\"删除服务器\" onclick=\"onDeleteServer('${id}')\" />&nbsp;
+";	fi 
+echo -n "
+	<img style=\"margin-top:3px\" src=\"/img/edit.png\" title=\"修改参数\" onclick=\"editServer('${id}')\" />&nbsp;
+    </td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done 
+
+echo -n "
+</table>
+</body>
+</html>
+";

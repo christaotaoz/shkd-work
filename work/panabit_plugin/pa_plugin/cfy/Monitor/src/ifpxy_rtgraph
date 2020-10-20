@@ -1,0 +1,132 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_name}->实时流量"
+. ../common/common.sh
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/jq.js\"></script>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\" src=\"/img/highcharts.js\"></script>
+<script language=\"javascript\">
+function numberformat(num)
+{
+        if (num >= 1000 * 1000 * 1000)
+                return ((num / (1000 * 1000 * 1000))).toFixed(2) + 'Gbps';
+        else
+        if (num >= 1000 * 1000)
+                return ((num / (1000 * 1000))).toFixed(2) + 'Mbps';
+        else
+        if (num >= 1000)
+                return ((num / 1000)).toFixed(2) + 'Kbps';
+        else
+                return num + 'bps';
+}
+Highcharts.setOptions({ global: { useUTC: false } });
+function creategraph(render, datatype, titletext) {
+	var options = ({
+		chart: {
+			type: 'spline',
+			renderTo:render
+		},
+		title: {
+			
+                        style: {
+                        	font: 'bold 12px Arial'
+			},
+			enabled: false,
+			text:titletext,
+			x: -20
+		},
+		xAxis: {
+			type: 'datetime',
+			tickPixelInterval: 50,
+ 			labels: {
+                                style: {
+                                        font: 'normal 9px Arial',
+                                        fontSize:'10px'
+                                }
+                        }
+		},
+		yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			title: {
+				text: \"bps\"
+			},
+ 			labels: {
+                                style: {
+                                        font: 'normal 9px Arial'
+                                }
+                        },
+			plotLines: [{
+				value: 0,
+				width: 1,
+				color: \"#808080\"
+			}]
+		},
+		plotOptions:{
+				area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+				spline:{
+					marker:{
+						radius:0,
+						lineWidth:1
+					},
+					lineWidth:1
+				}
+		},
+		tooltip: {
+			formatter:function(){
+					var dd = new Date(this.x);
+					var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+					return str+'<br>'+this.series.name+' '+ numberformat(this.y);
+				}
+		},
+		legend: {
+			enabled:false,
+			layout: \"vertical\",
+			align: \"right\",
+			verticalAlign: \"middle\",
+			borderWidth: 0
+		},
+		credits:{enabled: false},
+		series: [{name:titletext, color:'#9CC6F0', data: []}]
+	});
+	
+	$.ajax({
+		url: 'ajax_ifpxy_rtgraph?datatype='+datatype+'&name=${CGI_name}',
+		type:'post',
+		dataType:'json',
+		success:function(json){
+			
+			if (datatype == \"in\")
+				options.series[0].data = json.inbps;
+			else 
+				options.series[0].data = json.outbps;
+			var chart = new Highcharts.Chart(options);
+		}
+	});
+}
+creategraph('mygraph_in', 'in', '${CGI_name}流入速率');
+creategraph('mygraph_out', 'out', '${CGI_name}流出速率');
+setInterval(function() {
+creategraph('mygraph_in', 'in', '${CGI_name}流入速率');
+creategraph('mygraph_out', 'out', '${CGI_name}流出速率');
+}, 10000);
+</script>
+<body>
+";
+MOD_TAB_LIST="`cgi_show_iftablist ${CGI_name}`"
+cgi_print_mod_header "实时流量"  680
+
+echo -n "
+<br>
+<div id=\"mygraph_in\" style=\"width:700px;height:310px;\"></div>
+<div id=\"mygraph_out\" style=\"width:700px;height:310px;\"></div>
+</body>
+</html>
+";

@@ -1,0 +1,65 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`" 
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<body>
+"; cgi_show_title "PPPOE认证->下线日志" 
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=50  align=center>序号</td>
+	<td width=150 align=left>时间</td>
+	<td width=150 align=left>账号</td>
+	<td width=*   align=left>下线原因</td>
+</tr>
+";
+count=1
+idname="row1"
+${FLOWEYE} syslog list | grep "^POSVR " | while read type time name event cause theothers
+do
+	if [ "${cause}" = "clnt_LCP_term" ]; then
+		cause="客户主动关闭下线"
+	elif [ "${cause}" = "clnt_PADT" ]; then
+		cause="客户主动强制下线"
+	elif [ "${cause}" = "posvr_LCP_term" ]; then
+		cause="服务器主动关闭下线" 
+	elif [ "${cause}" = "radius_expired" ]; then
+		cause="RADIUS账号过期"
+	elif [ "${cause}" = "kickoff" ]; then
+		cause="被管理踢下线"
+	elif [ "${cause}" = "idle_long" ]; then
+		cause="客户机空闲超时"
+	elif [ "${cause}" = "force_remove" ]; then
+		cause="因为同名同密码被后续用户强行踢下线"
+	elif [ "${cause}" = "maxonlinetime" ]; then
+		cause="单次在线时间达到上限，系统主动踢下线"
+	fi
+
+echo -n "
+	<tr id=${idname}>
+	<td align=left>${count}</td>
+	<td align=left>${time}</td>
+	<td align=left>${name}</td>
+	<td align=left>${cause}</td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+	count=$((${count} + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

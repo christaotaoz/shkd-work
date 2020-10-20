@@ -1,0 +1,373 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+if [ "${CGI_policy}" = "" ]; then
+	for policy in `${FLOWEYE} policy listgrp | awk '{print $1}'`
+	do
+		CGI_policy="${policy}"
+		break
+	done
+fi
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddPolicy()
+{
+	window.location.href = \"/cgi-bin/Setup/policy_addgrp\";
+}
+function onClonePolicy(policy)
+{
+	window.location.href = \"/cgi-bin/Setup/policy_clonegrp?fromgrp=\" + policy;
+}
+function onAddRule(policy)
+{
+	window.location.href = \"/cgi-bin/Setup/policy_addrule?policy=\" + policy;
+}
+function onDynaRate()
+{
+	var url = \"/cgi-bin/Setup/policy_listlink\";
+	ShowWindow(url, \"\", 780, 620);
+}
+function modifyRule(group, polno)
+{
+	var url;
+	url = \"/cgi-bin/Setup/policy_setrule?group=\" + group + \"&polno=\" + polno;
+	window.location.href = url;
+}
+function onSelectPolicy(obj)
+{
+	window.location.href = \"${myself}?policy=\" + obj.value; 
+}
+function onDSCPChanged(obj)
+{
+	var url;
+	url = \"${myself}?action=tos&tos=\" + obj.value;
+	window.location.href = url;
+}
+function deleteRule(group, rule)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"${myself}?action=rmvrule\" +
+		                       \"&policy=\" + group + \"&ruleid=\" + rule;
+	}
+}
+function onDeletePolicy(policy)
+{
+	if (confirm(\"确定要删除此策略组?\")) 
+		window.location.href = \"${myself}?action=deletegroup\" + \"&policy=\" + policy;
+}
+function enablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=enable&link=${CGI_link}\" + \"&group=\" + grp + \"&policyid=\" + polno;
+        window.location.href = url;
+}
+function disablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=disable&link=${CGI_link}\" + \"&group=\" + grp + \"&policyid=\" + polno;
+        window.location.href = url;
+}
+function onloaddoc()
+{
+        if (document.body.clientWidth > 1300) {
+                document.getElementById(\"tbl1\").style.width=\"100%\";
+                document.getElementById(\"tbl2\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"tbl1\").style.width=\"1300\";
+                document.getElementById(\"tbl2\").style.width=\"1300\";
+        }
+}
+</script>
+";
+if [ "${CGI_action}" = "deletegroup" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} policy rmvgrp ${CGI_policy}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		WEB_LOGGER "删除流量管理策略组" "group=${CGI_policy}"
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+if [ "${CGI_action}" = "rmvrule" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} policy rmvrule ${CGI_policy} ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		WEB_LOGGER "删除流量管理策略" "group=${CGI_policy},id=${CGI_ruleid}"
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy disable group=${CGI_group} id=${CGI_policyid} disable=0`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy disable group=${CGI_group} id=${CGI_policyid} disable=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "tos" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy config force_tos=${CGI_tos}`
+        if [ "$?" != "0" ]; then
+                afm_dialog_msg "出现错误: ${errmsg}"
+        fi
+fi
+policylist=`${FLOWEYE} policy listgrp`
+for nameval in `${FLOWEYE} policy stat`
+do
+	tag=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	export ${tag}=${val}
+done
+CGI_tos="${force_tos}"
+
+echo -n "
+<body onload=\"onloaddoc()\">
+"; cgi_show_title "流量控制->策略组" 
+echo -n "
+<table id=tbl1 style=\"width:100%;font-bold:true;font-size:14px;\">
+<tr>
+	<td align=left>&nbsp;策略组&nbsp;
+	<select name=policy value=\"${CGI_policy}\" style=\"width:120;height:19\" onchange=\"onSelectPolicy(this)\">
+	";
+	${FLOWEYE} policy listgrp | while read policy policyname
+	do
+		if [ "${CGI_policy}" = "${policy}" ]; then
+			echo "<option value=${policy} selected>${policyname}</option>"
+		else
+			echo "<option value=${policy}>${policyname}</option>"
+		fi
+	done 
+	if [ "${policylist}" = "" ]; then
+		echo "<option value=0>(没有定义任何策略组)</option>"
+	fi 
+echo -n "
+	</select></td>
+	<td width=* align=right>DSCP标记&nbsp;
+		<select name=tos value=${CGI_tos} style=\"width:80\" onchange=\"onDSCPChanged(this)\">
+                ";
+                        if [ ${CGI_tos} -eq 0 ]; then
+                                echo "<option value=1>单线模式</option>"
+                                echo "<option value=0 selected>多线模式</option>"
+                        else
+                                echo "<option value=1 selected>单线模式</option>"
+                                echo "<option value=0>多线模式</option>"
+                        fi
+                
+echo -n "
+                </select>&nbsp;&nbsp;
+	<a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onDynaRate()\"><b>动态限速设置...</b></a>&nbsp;&nbsp;
+"; if [ "${CGI_policy}" != "" ]; then 
+echo -n "
+	<a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onDeletePolicy('${CGI_policy}')\"><b>删除策略组</b></a>&nbsp;&nbsp;
+	<a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onClonePolicy('${CGI_policy}')\"><b>复制策略组>></b></a>&nbsp;&nbsp;
+"; fi 
+echo -n "
+	<a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onAddPolicy()\"><b>创建策略组>></b></a>&nbsp;
+	</td>
+</tr>
+</table>
+";
+if [ "${CGI_policy}" != "" ]; then
+	rowno=1 
+echo -n "
+	<table id=tbl2 width=100% border=0 cellspacing=1 cellpadding=1>
+	<tr id=tblhdr height=22>
+        <td width=40  align=center>序号</td>
+        <td width=80  align=right>线路</td>
+        <td width=40  align=right>流向</td>
+        <td width=50  align=right>VLAN</td>
+        <td width=50  align=right>TTL</td>
+	<td width=120 align=right>内网地址</td>
+	<td width=120 align=right>外网地址</td>
+        <td width=40  align=right>协议</td>
+        <td width=100 align=right>应用</td>
+        <td width=150 align=right>用户特征</td>
+        <td width=80  align=right>动作</td>
+        <td width=45  align=right>IP限速</td>
+	<td width=30  align=right>DSCP</td>
+	<td width=40  align=right>优先级</td>
+        <td width=40  align=right>匹配后</td>
+	<td width=*   align=right>备注</td>
+        <td width=75  align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddRule('${CGI_policy}')\">添加策略</a>&nbsp;</td>
+	</tr>
+";
+	idname="row1"
+	${FLOWEYE} policy getgrp group=${CGI_policy} | \
+	while read polno bridge dir appid appname proto from intype inip inport to outtype outip outport \
+action nextstep iprate prclevel bps1 bps2 tos pri natip linkid disabled hasms qqcnt vlan ttl desc theothers
+	do 
+		[ "${ttl}" = "0-255" ] && ttl=""
+		[ "${desc}" = "NULL" ] && desc=""
+	
+echo -n "
+	"; if [ ${disabled} -ne 0 ]; then 
+echo -n "
+        	<tr id=row4>
+	"; else 
+echo -n "
+        	<tr id=${idname}>
+	"; fi 
+echo -n "
+		<td align=center>${polno}</td>
+		"; 
+			bdgname="${bridge#_wg.}"
+			[ "${bdgname}" = "0" ] && bdgname="any" 
+		
+echo -n "
+		<td align=right>${bdgname}</td>
+		"; if [ "${dir}" = "both" ]; then 
+echo -n "
+		<td align=right>any</td>
+		"; elif [ "${dir}" = "in" ]; then 
+echo -n "
+		<td align=right>下行</td>
+		"; else 
+echo -n "
+		<td align=right>上行</td>
+		"; fi 
+echo -n "
+		"; [ "${vlan}" = "0" ] && vlan="" 
+echo -n "
+		<td align=right>${vlan}</td>
+		<td align=right>${ttl}</td>
+		"; if [ "${inport}" = "any" -o "${inport}" = "0" ]; then 
+echo -n "
+		<td align=right>${inip}</td>
+		"; else 
+echo -n "
+		<td align=right>${inip}:${inport}</td>
+		"; fi 
+echo -n "
+		"; if [ "${outport}" = "any" ]; then 
+echo -n "
+		<td align=right>${outip}</td>
+		"; else 
+echo -n "
+		<td align=right>${outip}:${outport}</td>
+		"; fi 
+echo -n "
+		<td align=right>${proto}</td>
+		"; if [ "${appid}" = "any" ]; then 
+echo -n "
+        	<td align=right>any</td>
+		"; else 
+echo -n "
+        	<td align=right>${appname}</td>
+		"; fi 
+echo -n "
+		";
+			userattrs=""
+			if [ "${natip}" != "0" ]; then
+				userattrs="共享>=${natip}"
+			fi
+			if [ "${hasms}" != "0" ]; then
+				if [ "${userattrs}" != "" ]; then
+					userattrs="${userattrs};移动终端>=${hasms}"
+				else
+					userattrs="移动终端>=${hasms}"
+				fi
+			fi
+			if [ "${qqcnt}" != "0" -a "${qqcnt}" != "" ]; then
+				if [ "${userattrs}" != "" ]; then
+					userattrs="${userattrs};QQ用户>=${qqcnt}"
+				else
+					userattrs="QQ用户>=${qqcnt}"
+				fi
+			fi
+			echo "<td align=right>${userattrs}</td>"
+		
+echo -n "
+	";
+	case "${action}" in
+	"deny")
+		echo "<td align=right><img src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+		;;
+	"permit")
+		echo "<td align=right><img src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+		;;
+	ROUTE*)
+		pxy=`echo ${action} | cut -d'-' -f2-`
+		echo "<td align=right>包转发->${pxy}</td>"
+		;;
+	PROXY*)
+		echo "<td align=right>${action}</td>"
+		;;
+	DUP*)
+		pxy=`echo ${action} | cut -d'-' -f2`
+		echo "<td align=right>报文镜像->${pxy}</td>"
+		;;
+	*)
+		echo "<td align=right>${action}</td>"
+		;;
+	esac
+	
+echo -n "
+        	"; if [ "${iprate}" = "0" ]; then 
+echo -n "
+               	<td></td>
+        	"; else 
+echo -n "
+               	<td align=right>${iprate}</td>
+        	"; fi 
+echo -n "
+		<td align=right>${tos}</td>
+		<td align=right>${pri}</td>
+		"; if [ "${nextstep}" = "continue" ]; then 
+echo -n "
+		<td align=right>继续</td>
+		"; else 
+echo -n "
+		<td align=right>停止</td>
+		"; fi 
+echo -n "
+		<td align=right>${desc}</td>
+        	<td align=right>
+                <img src=\"/img/edit.png\" style=\"margin-top: 3px\" onclick=\"modifyRule('${CGI_policy}', '${polno}')\" title=\"修改策略\" />&nbsp;
+                <img src=\"/img/delete.png\" style=\"margin-top: 3px\" onclick=\"deleteRule('${CGI_policy}', '${polno}', '${linkid}')\" title=\"删除策略\" />&nbsp;
+        	"; if [ ${disabled} -eq 0 ]; then 
+echo -n "
+                <img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disablePolicy('${CGI_policy}', '${polno}')\" title=\"禁用策略\" />&nbsp;
+        	"; else 
+echo -n "
+                <img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enablePolicy('${CGI_policy}', '${polno}')\" title=\"启用策略\" />&nbsp;
+        	"; fi 
+echo -n "
+        	</td>
+        	</tr>
+";
+        	if [ "${idname}" = "row1" ]; then
+                	idname="row2"
+        	else
+                	idname="row1"
+        	fi
+	done
+fi
+
+echo -n "
+</body>
+</html>
+";

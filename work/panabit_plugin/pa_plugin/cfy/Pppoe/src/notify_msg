@@ -1,0 +1,185 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Pppoe/`basename $0`"
+MOD_TAB_LIST="欢迎页面#/cgi-bin/Pppoe/notify_welcome 到期提醒#/cgi-bin/Pppoe/notify_time 过期提示#/cgi-bin/Pppoe/notify_expire"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function GetLengthByte(str) {
+    var realLength = 0, len = str.length, charCode = -1;
+    for (var i = 0; i < len; i++) {
+        charCode = str.charCodeAt(i);
+        if (charCode >= 0 && charCode <= 128) realLength += 1;
+        else realLength += 2;
+    }
+    return realLength;
+};
+function beforeCommit(frm)
+{
+	var welcome = document.getElementsByName(\"welcomemsg\")[0];
+	var expired = document.getElementsByName(\"expiredmsg\")[0];
+	var intime  = document.getElementsByName(\"intimemsg\")[0];
+	if (welcome.value == \"\") {
+		alert(\"登录欢迎不能为空!\");
+		welcome.select();
+		return false;
+	}
+	if (expired.value == \"\") {
+		alert(\"到期页面不能为空!\");
+		expired.select();
+		return false;
+	}
+	
+	if (intime.value == \"\") {
+		alert(\"过期页面不能为空!\");
+		intime.select();
+	}
+	if(GetLengthByte(welcome.value) > 998) {
+		alert(\"登录欢迎页面内容长度不能大于998!\");
+		welcome.select();
+		return false;
+	}
+	
+	if(GetLengthByte(expired.value) > 998) {
+		alert(\"到期提醒页面内容长度不能大于998!\");
+		expired.select();
+		return false;
+	}
+	
+	if(GetLengthByte(intime.value) > 998) {
+		alert(\"过期提示页面内容长度不能大于998!\");
+		intime.select();
+		return false;
+	}
+	
+	return true;
+}
+function OnChangContent(obj, chgnub)
+{
+	var nub = document.getElementById(chgnub);
+	
+	nub.innerText = 998 - GetLengthByte(obj.value);
+}
+function loadini()
+{
+	var obj = document.getElementsByName(\"welcomemsg\")[0];
+	
+	OnChangContent(obj, 'welcome_nub');
+	
+	obj = document.getElementsByName(\"intimemsg\")[0];
+	OnChangContent(obj, 'intime_nub');
+	
+	obj = document.getElementsByName(\"expiredmsg\")[0];
+	OnChangContent(obj, 'expired_nub');
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}" pppoeman
+	echo "${CGI_welcomemsg}" > ${PGETC}/pppoe_welcome.html
+	echo "${CGI_expiredmsg}" > ${PGETC}/pppoe_expired.html
+	echo "${CGI_intimemsg}"  > ${PGETC}/pppoe_intime.html
+	cmdstrs="${cmdstrs} welcome_enable=${CGI_welcome_enable}"
+	cmdstrs="${cmdstrs} intime_enable=${CGI_intime_enable}"
+	cmdstrs="${cmdstrs} intime_days=${CGI_intime_days}"
+	cmdstrs="${cmdstrs} intime_hours=${CGI_intime_hours}"
+	cmdstrs="${cmdstrs} loadmsg=1"
+	
+	errmsg=`${FLOWEYE} pppoesvr config ${cmdstrs}`
+	[ "$?" != "0" ] && afm_dialog_msg "操作失败:${errmsg}"
+fi
+CGI_expiredmsg=`${FLOWEYE} pppoesvr config showexpiredmsg=1`
+CGI_welcomemsg=`${FLOWEYE} pppoesvr config showwelcomemsg=1`
+CGI_intimemsg=`${FLOWEYE}  pppoesvr config showintimemsg=1`
+for nameval in `${FLOWEYE} pppoesvr stat`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<body onload=\"loadini();\">
+"; cgi_show_title "PPPOE接入->页面通知" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"width:800; font-bold:true; font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>登录欢迎页面</b>[<span id=welcome_nub>0</span>]</td>
+	<td width=* align=right>
+		<select name=welcome_enable value=\"${CGI_welcome_enable}\" style=\"width:80\">
+		";
+			if [ "${CGI_welcome_enable}" = "1" ]; then
+				echo "<option value=0>不启用</option>"
+				echo "<option value=1 selected>启用</option>"
+			else
+				echo "<option value=0 selected>不启用</option>"
+				echo "<option value=1>启用</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=* align=left><textarea name=welcomemsg rows=9 style=\"width:800\" onkeyup=\"OnChangContent(this, 'welcome_nub');\" onchange=\"OnChangContent(this, 'welcome_nub');\">${CGI_welcomemsg}</textarea></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true; font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>到期提醒页面</b>[<span id=intime_nub>0</span>]</td>
+	<td width=* align=right>
+		提前<input type=text name=intime_days value=\"${CGI_intime_days}\" style=\"width:50\"></input>天提醒&nbsp;&nbsp;
+		每隔<input type=text name=intime_hours value=\"${CGI_intime_hours}\" style=\"width:50\"></input>小时提醒一次&nbsp;&nbsp;
+		<select name=intime_enable value=\"${CGI_intime_enable}\" style=\"width:80\">
+		";
+			if [ "${CGI_intime_enable}" = "1" ]; then
+				echo "<option value=0>不启用</option>"
+				echo "<option value=1 selected>启用</option>"
+			else
+				echo "<option value=0 selected>不启用</option>"
+				echo "<option value=1>启用</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=* align=left><textarea name=intimemsg rows=9 style=\"width:800\" onkeyup=\"OnChangContent(this, 'intime_nub');\" onchange=\"OnChangContent(this, 'intime_nub');\">${CGI_intimemsg}</textarea></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true; font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>过期提示页面</b>[<span id=expired_nub>0</span>]</td>
+</tr>
+</table>
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=* align=left><textarea name=expiredmsg rows=9 style=\"width:800\" onkeyup=\"OnChangContent(this, 'expired_nub');\" onchange=\"OnChangContent(this, 'expired_nub');\">${CGI_expiredmsg}</textarea></td>
+</tr>
+</table>
+<br>
+<table style=\"width:800\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

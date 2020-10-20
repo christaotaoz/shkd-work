@@ -1,0 +1,144 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+CGI_bridge="${CGI_vlinkid}"
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="vlink=${CGI_bridge}&vlinkname=${CGI_vlinkname}&inip=${CGI_inip}&outip=${CGI_outip}"
+cgiurl="${cgipath}?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function popupurl(url, width, height)
+{
+ 	ShowWindow(url, \"scrollbars=1,resizable=0\", width, height);
+}
+function showapp(appid, appname)
+{
+	var url = \"/cgi-bin/Monitor/appview_topip?bridge=${CGI_bridge}&appid=\" + appid +
+	      \"&appname=\" + appname;
+ 	ShowWindow(url, \"scrollbars=1,resizable=0\", 650, 680);
+}
+function opengrp(grpid, grpname)
+{
+        var url = \"/cgi-bin/Monitor/vlink_viewgroup?vlinkname=${CGI_vlinkname}&bridge=${CGI_bridge}&group=\" + grpid + 
+	      \"&title=\" + grpname + \"概览\";
+        ShowWindow(url, \"scrollbars=1,resizable=0\", 700, 800);
+}
+</script>
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlp3day\" style=\"display:none\">查看最近三天趋势图</span>
+<span id=\"hlpall\" style=\"display:none\">查看最近一周、一月的趋势图</span>
+"; cgi_show_title "虚拟链路->${CGI_vlinkname}" 640 
+echo -n "
+<br>
+<table class=bgurl width=640 border=0 cellspacing=1 cellpadding=2>
+<tr id=tblhdr height=22>
+	<td width=120 align=center>协议组</td>
+	<td width=100 align=center>上行bps</td>
+	<td width=100 align=center>下行bps</td>
+	<td width=150 align=center>累计流量</td>
+	<td width=* align=center>最近10分钟流量</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} app stat app=group sort=last bridge=${CGI_vlinkid} showsum | \
+while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall theother
+do
+
+echo -n "
+	<tr id=${idname}>
+"; if [ "${appid}" != "total" ]; then 
+echo -n "
+	<td align=center><a href=\"javascript:opengrp('${appid}', '${appname}')\">${appname}</td>
+	<td align=right>${rup}</td>
+	<td align=right>${rdown}</td>
+	"; wid=`echo "${per1}" |awk '{print ($1 * 75.00) / 100.00}'` 
+echo -n "
+	<td><table cellpading=0 cellspacing=0><tr id=${idname}><td width=80 align=right>${all}</td>
+	<td align=left>&nbsp;<img src=\"/img/data_bar.gif\" width=${wid} height=10 alt=\"${per1}%\" border=0>&nbsp;${per1}</td>
+	</tr></table></td>
+	"; wid=`echo "${per2}" |awk '{print ($1 * 75.00) / 100.00}'` 
+echo -n "
+	<td><table cellpading=0 cellspacing=0><tr id=${idname}><td width=80 align=right>${lall}</td>
+	<td align=left>&nbsp;<img src=\"/img/data_bar.gif\" width=${wid} height=10 alt=\"${per2}%\" border=0>&nbsp;${per2}</td>
+	</tr></table></td>
+"; else 
+echo -n "
+	<td align=left><b>${appname}</b></td>
+	<td align=right><b>${rup}</b></td>
+	<td align=right><b>${rdown}</b></td>
+	<td align=center><b>${all}</b></td>
+	<td align=center><b>${lall}</b></td>
+"; fi 
+echo -n "
+	</tr>
+"; 
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+<br>
+";
+TMPPATH=${PGPATH}/admin/tmp
+DSUP=""
+DSDOWN=""
+DSFLOW=""
+for appgrp in `${FLOWEYE} app stat app=group | awk '{print $1}'`
+do
+	DSUP="${DSUP} tag=${appgrp}.bpsout"
+	DSDOWN="${DSDOWN} tag=${appgrp}.bpsin"
+	DSFLOW="${DSFLOW} tag=${appgrp}.flow"
+done
+comargs="bridge=${CGI_vlinkid} width=640 height=240" 
+updaypng=vlink_${CGI_bridge}_day_group_upbw_stat.png
+rm -rf ${TMPPATH}/${updaypng}
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${updaypng} hours=24 ${DSUP}`
+downdaypng=vlink_${CGI_bridge}_day_group_downbw_stat.png
+rm -rf ${TMPPATH}/${downdaypng}
+errmsg=`${FLOWEYE} chart show ${comargs} outimg=${TMPPATH}/${downdaypng} hours=24 ${DSDOWN}`
+
+echo -n "
+<table style=\"width:640; font:bold 14px; color:#CE6C04\">
+<tr>
+	<td align=left><b>最近24小时上行流量趋势图</b></td>
+	<td align=right>
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/grpgraph?vlinkname=${CGI_vlinkname}&bridge=${CGI_bridge}&type=bpsout&time=3day', 680, 680)\" 
+		   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/grpgraph?vlinkname=${CGI_vlinkname}&bridge=${CGI_bridge}&type=bpsout&time=mon', 680, 680)\" 
+		   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=640 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${updaypng}\"></img></td></tr>
+</table>
+<br>
+<table style=\"width:640; font:bold 14px; color:#CE6C04\">
+<tr>
+	<td align=left><b>最近24小时下行流量趋势图</b></td>
+	<td align=right>
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/grpgraph?vlinkname=${CGI_vlinkname}&bridge=${CGI_bridge}&type=bpsin&time=3day', 680, 680)\" 
+		   onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>&nbsp;&nbsp;
+		<a href=\"javascript:popupurl('/cgi-bin/Monitor/grpgraph?vlinkname=${CGI_vlinkname}&bridge=${CGI_bridge}&type=bpsin&time=mon', 680, 680)\" 
+		   onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=640 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${downdaypng}\"></img></td<</tr>
+</table>
+</body>
+</html>
+";

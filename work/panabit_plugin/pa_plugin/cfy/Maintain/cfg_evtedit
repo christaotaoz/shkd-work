@@ -1,0 +1,128 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var syslogsvrip = document.getElementsByName(\"logip\")[0];
+	var syslogsvrport = document.getElementsByName(\"logport\")[0];
+	syslogsvrip.value = TrimAll(syslogsvrip.value);
+	if (syslogsvrip.value != \"\" && !IsIPAddr(syslogsvrip.value)) {
+		alert(\"请输入正确的IP地址!\");
+		syslogsvrip.select();
+		return false;
+	}
+	syslogsvrport.value = TrimAll(syslogsvrport.value);
+	if (svrport.value == \"\" && !IsDigitIn(syslogsvrport.value, 1, 65535)) {
+		alert(\"错误的端口号!\");
+		syslogsvrport.select();
+		return false;
+	}
+	
+	return true;
+}
+function onCancel()
+{
+	window.location.href=\"/cgi-bin/Maintain/cfg_evtlog\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cfgstr="event=${CGI_evtype}"
+	cfgstr="${cfgstr} logtype=${CGI_logtype} logip=${CGI_logip} logport=${CGI_logport}"
+	errmsg=`${FLOWEYE} logger config ${cfgstr}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "/cgi-bin/Maintain/cfg_evtlog"
+		exit 0
+	fi
+else
+	allstrings=`${FLOWEYE} logger stat event_detail=1 | grep "evtcfg ${CGI_evtype} "`
+	CGI_evtname=`echo ${allstrings} | cut -d' ' -f3`
+	CGI_logip=`echo ${allstrings} | cut -d' ' -f4`
+	CGI_logport=`echo ${allstrings} | cut -d' ' -f5`
+	CGI_logtype=`echo ${allstrings} | cut -d' ' -f6`
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "日志配置->事件日志" 
+echo -n "
+";
+if [ "${CGI_evtname}" = "" ]; then
+	allstrings=`${FLOWEYE} logger stat event_detail=1 | grep "cfgevt ${CGI_evtype} "`
+	CGI_evtname=`echo ${allstrings} | cut -d' ' -f3`
+fi
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td align=left>事件类型</td>
+        <td align=left width=*><b>${CGI_evtname}</b></td>
+</tr>
+<tr id=row1>
+        <td style=\"width:50\"></td>
+        <td align=left style=\"width:120\">接收服务器IP:端口</td>
+        <td align=left width=*>
+                <input type=text name=logip value=\"${CGI_logip}\" style=\"width:110\"></input>:
+                <input type=text name=logport value=\"${CGI_logport}\" style=\"width:50\"></input>&nbsp;(格式为xxx.xxx.xxx.xxx:nnn)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>日志格式</td>
+        <td align=left width=*>
+	<select name=logtype value=\"${CGI_logtype}\" style=\"width:165px\"> ";
+		if [ "${CGI_evtype}" = "flow" ]; then
+			logtypelist="none syslog netflow"
+		else
+			logtypelist="none syslog"
+		fi
+		for logtype in ${logtypelist}; do
+			selected=""
+			[ "${CGI_logtype}" = "${logtype}" ] && selected="selected"
+			case "${logtype}" in
+			"none")
+				echo "<option value=${logtype} ${selected}>不记录</option>"
+				;;
+			*)
+				echo "<option value=${logtype} ${selected}>${logtype}</option>"
+				;;
+			
+			esac
+		done
+	
+echo -n "</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=hidden name=evtype value=\"${CGI_evtype}\"></input>
+  		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

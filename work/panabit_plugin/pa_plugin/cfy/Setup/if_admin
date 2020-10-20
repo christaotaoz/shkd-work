@@ -1,0 +1,51 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself=/cgi-bin/cfy/Setup/`basename $0`
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	afm_isipaddr "${CGI_ipaddr}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "请输入正确的IP地址!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	afm_isipaddr "${CGI_netmask}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "请输入正确的网络掩码!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	afm_isipaddr "${CGI_gateway}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "请输入正确的网关!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ "${CGI_ipaddr}" != "${ADMIN_IP}" -o \
+	     "${CGI_netmask}" != "{ADMIN_MASK}" -o \
+	     "${CGI_gateway}" != "${GATEWAY}" ]; then
+		echo "ADMIN_IP=${CGI_ipaddr}
+ADMIN_MASK=${CGI_netmask}
+GATEWAY=${CGI_gateway}" > ${PGETC}/ifadmin.conf
+		sync
+		sync
+	fi
+		
+	if [ "${CGI_ipaddr}" != "${ADMIN_IP}" -o "${CGI_netmask}" != "${ADMIN_MASK}" ]; then
+		ifconfig ${ADMIN_PORT} ${CGI_ipaddr} netmask ${CGI_netmask} 2>/dev/null
+	fi
+		
+	errmsg=`route delete default 2>/dev/null`
+	if [ "${CGI_gateway}" != "" ]; then
+		errmsg=`route add default ${CGI_gateway} 2>/dev/null`
+	fi
+fi
+. ${PGETC}/ifadmin.conf
+

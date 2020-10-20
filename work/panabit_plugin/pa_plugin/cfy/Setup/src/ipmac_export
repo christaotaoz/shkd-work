@@ -1,0 +1,33 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<body>
+"; 
+cgi_show_title "MAC管控->导出MAC绑定表"
+tmpfile="${TMPPATH}/ipmac.txt"
+[ -f ${tmpfile} ] && rm -rf ${tmpfile}
+touch ${tmpfile}
+${FLOWEYE} ipmac list | while read ipaddr mac theothers
+do
+	if [ "${mac}" != "00-00-00-00-00-00" ]; then
+		echo "${ipaddr} ${mac}" >> ${tmpfile}
+	fi
+done
+
+echo -n " 
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3>
+<tr>
+    <td width=20></td>
+    <td style=\"font:13px bold\" width=*><a href=\"/tmp/ipmac.txt\">在此处<b style=\"font-size:14px;color:#ff0000;\">点击鼠标右键，选择\"另存为...\"</b>菜单导出当前绑定的IP列表</a></td>
+</tr>
+</table>
+<br>
+</body>
+</html>
+";

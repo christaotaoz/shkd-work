@@ -1,0 +1,540 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Monitor/`basename $0`"
+[ "${CGI_link}" = "" ] && CGI_link=0
+curpolinfo=`${FLOWEYE} policy getcurgrp`
+curpolicy=`echo ${curpolinfo} | cut -d' ' -f1`
+curpolicyname=`echo ${curpolinfo} | cut -d' ' -f2`
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddPipe()
+{
+	var url = \"/cgi-bin/Setup/pipe_add\";
+	ShowWindow(url, \"\", 640, 260);
+}
+function onDeletePipe(pname)
+{
+	if (confirm(\"Èç¹ûÄãÉ¾³ý´ËÍ¨µÀ£¬ÏµÍ³½«É¾³ýËùÓÐÊ¹ÓÃ´ËÍ¨µÀµÄ²ßÂÔ£¬ÄãÈ·ÐÅÒªÉ¾³ýÂð£¿\")) 
+		window.location.href = \"${myself}?action=deletepipe&pname=\" + pname; 
+}
+function onModifyPipe(url)
+{
+	ShowWindow(url, \"\", 460, 420);
+}
+function onStatPipe(pname)
+{
+	var url = \"/cgi-bin/Monitor/pipe_stat?pname=\" + pname;
+	ShowWindow(url, \"\", 600, 300);
+}
+function onAddRule(policy) 
+{
+	var url = \"/cgi-bin/Setup/policy_addrule?policy=\" + policy + \"&policystat=1\";
+	window.location.href = url;
+}
+function modifyRule(group, polno) 
+{
+	var url = \"/cgi-bin/Setup/policy_setrule?group=\" + group + \"&polno=\" + polno + \"&policystat=1\";
+	window.location.href = url;
+}
+function deleteRule(group, rule, linkid)
+{
+	if (confirm(\"È·¶¨ÒªÉ¾³ý¸Ã¹æÔò?\")) {
+		window.location.href = \"${myself}?action=rmvrule\" + \"&group=\" + group + 
+			\"&ruleid=\" + rule + \"&link=\" + linkid;
+	}
+}
+function openPolicyTime()
+{
+	var url = \"/cgi-bin/Setup/policy_listtime\";
+	ShowWindow(url, \"\", 840, 500);
+}
+function showProxy(proxyname)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+	ShowWindow(url, \"\", 350, 400); 
+}
+function showIPGrp(gname)
+{
+	var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + gname;
+	ShowWindow(url, \"\", 860, 630); 
+}
+function showApp(appid, appname)
+{
+	var url = \"/cgi-bin/Monitor/app_show?appid=\" + appid + \"&title=\" + appname;
+	ShowWindow(url, \"\", 740, 620); 
+}
+function setLink(linkid)
+{
+	var url = \"/cgi-bin/Setup/policy_setlink?showrate=1&link=\" + linkid;
+	if (\"${JOS_RELEASE}\" == \"2\" || \"${JOS_RELEASE}\" == \"3\")
+		ShowWindow(url, \"\", 540, 610); 
+	else
+		ShowWindow(url, \"\", 540, 350); 
+}
+function enablePolicy(grp, polno)
+{
+	var url;
+	url = \"${myself}?action=enable&link=${CGI_link}\" + \"&group=\" + grp + \"&policyid=\" + polno;
+	window.location.href = url;
+}
+function disablePolicy(grp, polno)
+{
+	var url;
+	url = \"${myself}?action=disable&link=${CGI_link}\" + \"&group=\" + grp + \"&policyid=\" + polno;
+	window.location.href = url;
+}
+function showWG(wgname)
+{
+	var url;
+	url = \"/cgi-bin/Route/wg_show?name=\" + wgname;
+	ShowWindow(url, \"\", 540, 350);
+}
+function onLinkChanged(obj)
+{
+	var url;
+	url = \"${myself}?link=\" + obj.value;
+	window.location.href = url;
+}
+function onDynaRate()
+{
+        var url = \"/cgi-bin/Setup/policy_listlink\";
+        ShowWindow(url, \"\", 780, 620);
+}
+function setPassip()
+{
+        var url;
+        var retval;
+	var passip;
+	passip = document.getElementsByName(\"passip\")[0];
+	url = \"/cgi-bin/Monitor/passip_set?passip=\" + passip.value;
+        retval = ShowDialog(url, \"\", 300, 60);
+        if (retval == \"NONE\") return;
+}
+function getbwostats()
+{
+	var i;
+	var outobj, dropobj; 
+	AJXS({type: 'POST', 
+	       url: '/cgi-bin/Monitor/ajax_bwo_stat', 
+	     error: function(status){setTimeout(getbwostats, 3000);},
+	   success: function(data) { 
+		var d;
+		try {
+			d = eval('('+data+')');
+		} catch(e) {
+			setTimeout(getbwostats, 4000);
+			return;
+		}
+		for (i = 0; i < d.length; i++) {
+			outobj = document.getElementById(\"bwoout_\" + d[i].id);
+			if (outobj != null)
+				outobj.innerHTML = d[i].outbps;
+			dropobj = document.getElementById(\"bwodrop_\" + d[i].id);
+			if (dropobj != null)
+				dropobj.innerHTML = d[i].dropbps;
+		}
+		setTimeout(getbwostats, 4000);
+	}});
+}
+function getpolicystats()
+{
+	var row;
+	AJXS({type: 'POST', 
+	       url: '/cgi-bin/Monitor/ajax_policy_stat', 
+	     error: function(status){setTimeout(getpolicystats, 4000);},
+	   success: function(data) { 
+		var d, i;
+		var bpsobj;
+		try {
+			d = eval('('+data+')');
+		} catch(e) {
+			setTimeout(getpolicystats, 4000);
+			return;
+		}
+		for (i = 0; i < d.length; i++) {
+                        bpsobj = document.getElementById(\"polbps_\" + d[i].id);
+                        colorobj = document.getElementById(\"color_\" + d[i].id);
+                        if (bpsobj != null)
+                                bpsobj.innerHTML = d[i].inbps + \"/\" + d[i].outbps;
+                        if (colorobj != null) {
+                                if (d[i].inbps != d[i].outbps)
+                                        colorobj.style.color = \"#ff0000\";
+                                else
+                                        colorobj.style.color = \"#0000ff\";
+                        }
+		}
+		
+		setTimeout(getpolicystats, 4000);
+	}});
+}
+function onloaddoc()
+{
+	getbwostats();
+	getpolicystats();
+        if (document.body.clientWidth > 1300) {
+                document.getElementById(\"tbl1\").style.width=\"100%\";
+                document.getElementById(\"tbl2\").style.width=\"100%\";
+                document.getElementById(\"tbl3\").style.width=\"100%\";
+	}
+        else {
+                document.getElementById(\"tbl1\").style.width=\"1300\";
+                document.getElementById(\"tbl2\").style.width=\"1300\";
+                document.getElementById(\"tbl3\").style.width=\"1300\";
+	}
+}
+</script>
+";
+if [ "${CGI_action}" = "deletepipe" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy rmvbwo ${CGI_pname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "²Ù×÷Ê§°Ü:${errmsg}"
+	fi
+fi
+if [ "${CGI_action}" = "rmvrule" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy rmvrule ${CGI_group} ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "³öÏÖ´íÎó:${errmsg}"
+	fi
+fi
+if [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy disable group=${CGI_group} id=${CGI_policyid} disable=0`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "³öÏÖ´íÎó:${errmsg}"
+	fi
+fi
+if [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy disable group=${CGI_group} id=${CGI_policyid} disable=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "³öÏÖ´íÎó:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body onload=\"onloaddoc()\">
+";
+cgi_show_title "µ±Ç°²ßÂÔ->Á÷Á¿¿ØÖÆ"
+if [ ${curpolicy} -eq 0 ]; then
+	echo "<br>"
+	echo "<table style=\"width:100%; color:#0000ff\">"
+	echo "<tr><td align=left>Ä¿Ç°Ã»ÓÐ²ßÂÔ×é±»µ÷¶È£¬<a style=\"color:#ff0000;font-bold:true;font-size:å515;\" href=\"javascript:openPolicyTime()\"><b>Çëµã»÷´Ë´¦×ö²ßÂÔµ÷¶È</b></a></td></tr>"
+	echo "</table>"
+	echo "<br>"
+	echo "</body>"
+	echo "</html>"
+	exit 0
+fi
+
+echo -n "
+<table id=tbl1 width=100% border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr>
+        <td width=80  align=center>Í¨µÀ±àºÅ</td>
+        <td width=260 align=center>Í¨µÀÃû³Æ</td>
+        <td width=200 align=center>Í¨µÀ´ø¿í(kb/s)</td>
+	<td width=200 align=center>Á÷³öËÙÂÊ(bps)</td>
+	<td width=200 align=center>Å×ÆúËÙÂÊ(bps)</td>
+	<td width=* align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddPipe()\">Ìí¼ÓÍ¨µÀ>></a>&nbsp;</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} policy listbwo | while read pid pname prate pbytes psize outbps dropbps active theothers
+do 
+	[ "${pid}" = "id" ] && continue
+	[ "${active}" = "0" ] && continue
+
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${pid}</td>
+	<td align=center>${pname}</td>
+	<td align=center>${prate}</td>
+	<td align=right><span id=\"bwoout_${pid}\">${outbps}</span></td>
+	<td align=right><span id=\"bwodrop_${pid}\">${dropbps}</span></td>
+	<td align=right>
+	<img src=\"/img/edit.png\" style=\"margin-top: 3px\" onclick=\"onModifyPipe('/cgi-bin/Setup/pipe_edit?pname=${pname}')\" title=\"ÐÞ¸ÄÍ¨µÀ\" />&nbsp;
+	<img src=\"/img/delete.png\" style=\"margin-top: 3px\" onclick=\"onDeletePipe('${pname}')\" title=\"É¾³ýÍ¨µÀ\" />&nbsp;
+	<a style=\"color:#0000ff\" href=\"javascript:onStatPipe('${pname}')\">ÐÅÏ¢</a></td>
+	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+        	idname="row2"
+	else
+        	idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+";
+if [ "${curpolicy}" = "0" ]; then
+	echo "</body></html>"
+	exit 0
+fi
+CGI_passip=`${FLOWEYE} policy stat | grep "^passip=" | cut -d'=' -f2`
+[ "${CGI_passip}" = "" ] && CGI_passip="0.0.0.0"
+
+echo -n "
+<br> 
+<table id=tbl2 style=\"width:100%; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+<td align=left><b>µ±Ç°²ßÂÔ×é:${curpolicyname}&nbsp;
+<a style=\"color:#ff0000;font-size:13px;\" href=\"javascript:openPolicyTime()\">[µã»÷´Ë´¦ÐÞ¸Ä²ßÂÔµ÷¶È]</a></b>
+</td>
+<td width=* align=right>
+	<a style=\"color:#0000ff;font-size:14px;\" href=\"javascript:onDynaRate()\"><b>¶¯Ì¬ÏÞËÙÉèÖÃ...</b></a>&nbsp;&nbsp;&nbsp;
+	<b><a style=\"color:#0000ff;font-size:13px\" href=\"javascript:setPassip()\">ÉèÖÃ²»ÏÞËÙIP
+	<input type=text style=\"width:120px;height:19px;\"  disabled name=passip value=\"${CGI_passip}\" /></a></b>
+	&nbsp;
+	<select name=link style=\"width:65\" onchange=\"onLinkChanged(this)\" value=\"${CGI_link}\">
+";
+	if [ "${CGI_link}" = "0" ]; then
+		echo "<option value=0 selected>ËùÓÐÏßÂ·</option>"
+	else
+		echo "<option value=0>ËùÓÐÏßÂ·</option>"
+	fi
+	${FLOWEYE} policy listlink | while read linkname linkid theothers
+	do
+		if [ "${linkid}" = "${CGI_link}" ]; then
+			echo "<option value=${linkid} selected>${linkname}</option>"
+		else
+			echo "<option value=${linkid}>${linkname}</option>"
+		fi
+	done
+
+echo -n "
+	</select></td>
+</tr>   
+</table>
+<table id=tbl3 width=100% border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr>
+        <td width=32  align=center>ÐòºÅ</td>
+        <td width=70  align=right>ÏßÂ·</td>
+        <td width=35  align=right>Á÷Ïò</td>
+        <td width=45  align=right>VLAN</td>
+        <td width=40  align=right>TTL</td>
+        <td width=118 align=right>ÄÚÍøµØÖ·</td>
+        <td width=118 align=right>ÍâÍøµØÖ·</td>
+        <td width=35  align=right>Ð­Òé</td>
+        <td width=80  align=right>Ó¦ÓÃ</td>
+        <td width=120 align=right>ÓÃ»§ÌØÕ÷</td>
+        <td width=80  align=right>¶¯×÷</td>
+        <td width=45  align=right>IPÏÞËÙ</td>
+        <td width=30  align=right>DSCP</td>
+        <td width=40  align=right>ÓÅÏÈ¼¶</td>
+        <td width=45  align=right>Æ¥Åäºó</td>
+        <td width=120 align=right>¶¯×÷Ç°/ºóËÙÂÊ</td>
+	<td width=*   align=right>±¸×¢</td>
+        <td width=65  align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddRule('${curpolicy}')\">Ìí¼Ó²ßÂÔ</a>&nbsp;</td>
+</tr> 
+";
+idname="row1"
+${FLOWEYE} policy getgrp group=${curpolicy} link="${CGI_link}" | \
+while read polno bridge dir appid appname proto from intype inip inport to outtype outip outport action nextstep iprate prclevel \
+pktbps pktbps2 tos pri natip linkid disabled hasms qqcnt vlan ttl desc theothers
+do 
+	[ "${ttl}" = "0-255" ] && ttl=""
+	[ "${desc}" = "NULL" ] && desc=""
+
+echo -n "
+"; if [ ${disabled} -ne 0 ]; then 
+echo -n "
+	<tr id=row4 height=23>
+"; else 
+echo -n "
+	<tr id=${idname} height=23>
+"; fi 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:modifyRule('${curpolicy}', '${polno}')\">${polno}</a>&nbsp;</td>
+	"; 
+	bdgname="${bridge#_wg.}"
+	if [ "${bdgname}" != "${bridge}" ]; then
+		echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:showWG('${bdgname}')\">${bdgname}</a></td>"
+	else
+		[ "${bdgname}" = "0" ] && bdgname="any"
+		if [ ${JOS_RELEASE} -ne 0 -a "${linkid}" != "0" ]; then
+			echo "<td align=right><a style=\"color:#0000ff\" href=\"javascript:setLink('${linkid}')\">${bdgname}</a></td>"
+		else
+			echo "<td align=right>${bdgname}</td>"
+		fi
+	fi
+	
+echo -n "
+	"; if [ "${dir}" = "in" ]; then 
+echo -n "
+	<td align=right>ÏÂÐÐ</td>
+	"; elif [ "${dir}" = "out" ]; then 
+echo -n "
+	<td align=right>ÉÏÐÐ</td>
+	"; else 
+echo -n "
+	<td align=right>any</td>
+	"; fi 
+echo -n "
+	"; [ "${vlan}" = "0" ] && vlan="&nbsp;" 
+echo -n "
+	<td align=right>${vlan}</td>
+	<td align=right>${ttl}</td>
+	"; if [ "${intype}" = "table" ]; then 
+		if [ "${inport}" = "any" ]; then 
+echo -n "
+			<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}</a></td>
+	";     else 
+echo -n "
+			<td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${inip}')\">${inip}:${inport}</a></td>
+	";	fi 
+echo -n "
+	"; elif [ "${intype}" = "usr" -o "${intype}" = "pppoe" ]; then 
+echo -n "
+			<td align=right>${inip}</td>
+	"; else 
+		if [ "${inport}" = "any" ]; then 
+echo -n "
+			<td align=right>${inip}</td>
+	";     else 
+echo -n "
+			<td align=right>${inip}:${inport}</td>
+	";	fi 
+	    fi 
+echo -n "
+	"; if [ "${outtype}" = "table" ]; then
+		if [ "${outport}" = "any" ]; then 
+echo -n "
+		    <td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}</a></td>
+	";	else 
+echo -n "
+		    <td align=right><a style=\"color:#0000ff\" href=\"javascript:showIPGrp('${outip}')\">${outip}:${outport}</a></td>
+	";	fi 
+echo -n "
+	"; else 
+		if [ "${outport}" = "any" ]; then 
+echo -n "
+			<td align=right>${outip}</td>
+	";	else 
+echo -n "
+			<td align=right>${outip}:${outport}</td>
+	";	fi
+	    fi 
+echo -n "
+	<td align=right>${proto}</td>
+	"; if [ "${appid}" = "any" ]; then 
+echo -n "
+	<td align=right>any</td>
+	"; else 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showApp('${appid}', '${appname}')\">${appname}</a></td>
+	"; fi 
+echo -n "
+	";
+		userattrs=""
+		[ "${natip}" != "0" ] && userattrs="¹²Ïí>=${natip}"
+		if [ "${hasms}" != "0" -a "${hasms}" != "" ]; then
+			if [ "${userattrs}" != "" ]; then
+				userattrs="${userattrs};ÒÆ¶¯ÖÕ¶Ë>=${hasms}"
+			else
+				userattrs="ÒÆ¶¯ÖÕ¶Ë>=${hasms}"
+			fi
+		fi
+		if [ "${qqcnt}" != "0" -a "${qqcnt}" != "" ]; then
+			if [ "${userattrs}" != "" ]; then
+				userattrs="${userattrs};QQÓÃ»§>=${qqcnt}"
+			else
+				userattrs="QQÓÃ»§>=${qqcnt}"
+			fi
+		fi
+		[ "${userattrs}" = "" ] && userattrs="&nbsp;"
+		echo "<td align=right>${userattrs}</td>"
+	
+echo -n "
+	"; 
+	case "${action}" in
+	"deny")
+		echo "<td align=right><img src=\"/img/no.png\" title=\"¶ªÆú\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+		;;
+	"permit")
+		echo "<td align=right><img src=\"/img/yes.png\" title=\"ÔÊÐí\" style=\"margin-right:5px;vertical-align:middle;\" /></td>"
+		;;
+	ROUTE*)
+		pxy=`echo ${action} | cut -d'-' -f2-`
+		echo "<td align=right>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">×ª·¢->${pxy}</a>"
+		echo "</td>"
+		;;
+	PROXY*)
+		pxy=`echo ${action} | cut -d'-' -f2-`
+		echo "<td align=right>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">${action}</a>"
+		echo "</td>"
+		;;
+	DUP*)
+		pxy=`echo ${action} | cut -d'-' -f2-`
+		echo "<td align=right>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxy}')\">¾µÏñ->${pxy}</a>"
+		echo "</td>"
+		;;
+	*)
+		echo "<td align=right>${action}</td>"
+		;;
+	esac
+	[ "${iprate}" = "0" ] && iprate="&nbsp;" 
+	echo "<td align=right>${iprate}</td>"
+	if [ "${tos}" != "0" ]; then 
+		echo "<td align=right>${tos}</td>"
+	else 
+		echo "<td align=right>&nbsp;</td>"
+	fi 
+	if [ "${pri}" != "0" ]; then 
+		echo "<td align=right>${pri}</td>"
+	else 
+		echo "<td align=right>&nbsp;</td>"
+	fi 
+	if [ "${nextstep}" = "continue" ]; then 
+		echo "<td align=right>¼ÌÐø</td>"
+	else 
+		echo "<td align=right>Í£Ö¹</td>"
+	fi 
+	
+echo -n "
+";	
+	if [ "${pktbps}" != "${pktbps2}" ]; then 
+		color="#ff0000"
+	else
+		color="#0000ff"
+	fi
+
+echo -n "
+	<td id=\"color_${polno}\" style=\"color:${color}\" align=right><span id=\"polbps_${polno}\" ${pktbps}/${pktbps2}</span></td>
+	<td align=right>${desc}</td>
+	<td align=right>
+		<img src=\"/img/delete.png\" style=\"margin-top: 3px\" onclick=\"deleteRule('${curpolicy}', '${polno}', '${linkid}')\" title=\"É¾³ý²ßÂÔ\" />&nbsp;
+	"; if [ ${disabled} -eq 0 ]; then 
+echo -n "
+		<img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disablePolicy('${curpolicy}', '${polno}')\" title=\"½ûÓÃ²ßÂÔ\" />&nbsp;
+	"; else 
+echo -n "
+		<img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enablePolicy('${curpolicy}', '${polno}')\" title=\"ÆôÓÃ²ßÂÔ\" />&nbsp;
+	"; fi 
+echo -n "
+	</td>
+       	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

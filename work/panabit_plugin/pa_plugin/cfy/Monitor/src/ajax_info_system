@@ -1,0 +1,95 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+typep=${CGI_type}
+if [ "${typep}" = "flowrate_chart" ]; then
+	json="{\"rows\":["
+	
+	result=`floweye chart dump hours=24 tag=flow.newrate`
+	while read tag tm ipcnt
+	do
+			if [ "${tag}" = "DATA" ]; then
+					t=$((${tm}*1000))
+					json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+			fi
+	done << EOF
+			${result}
+EOF
+	json="${json}{\"x\":${t}, \"y\":0}]}"
+	echo ${json}
+fi
+if [ "${typep}" = "iptrend_charts" ]; then
+	json="{"
+	id=1
+	result=`floweye chart dump hours=24 tag=ip tag=appobj.natipcnt`
+	while read tag tm ipcnt
+	do
+			if [ "${tag}" = "DATA" ]; then
+					t=$((${tm}*1000))
+					json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+			else
+					if [ ${id} -gt 1 ]; then
+							json="${json}{\"x\":${t}, \"y\":0}],"
+					fi
+					
+					json="${json}\"rows${id}\":["	
+					id=$((${id}+1))
+			fi
+	done << EOF
+			${result}
+EOF
+	json="${json}{\"x\":${t}, \"y\":0}]}"
+	echo ${json}
+fi
+if [ "${typep}" = "cpu_charts" ]; then
+	json="{\"rows\":["
+	result=`floweye chart dump hours=24 tag=cpu.busy`
+	while read tag tm ipcnt
+	do
+			if [ "${tag}" = "DATA" ]; then
+					t=$((${tm}*1000))
+					json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+			fi
+	done << EOF
+			${result}
+EOF
+	json="${json}{\"x\":${t}, \"y\":0}]}"
+	echo ${json}
+fi
+if [ "${typep}" = "pps_charts" ]; then
+	json="{\"rows\":["
+	result=`floweye chart dump hours=24 tag=sys_pps`
+	while read tag tm ipcnt
+	do
+			if [ "${tag}" = "DATA" ]; then
+					t=$((${tm}*1000))
+					json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+			fi
+	done << EOF
+			${result}
+EOF
+	json="${json}{\"x\":${t}, \"y\":0}]}"
+	echo ${json}
+fi
+if [ "${typep}" = "temp_charts" ]; then
+	json="{\"rows\":["
+	result=`floweye chart dump hours=24 tag=cpu.temp`
+	while read tag tm ipcnt
+	do
+			if [ "${tag}" = "DATA" ]; then
+					t=$((${tm}*1000))
+					json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+			fi
+	done << EOF
+			${result}
+EOF
+	json="${json}{\"x\":${t}, \"y\":0}]}"
+	echo ${json}
+fi
+
+echo -n "
+";

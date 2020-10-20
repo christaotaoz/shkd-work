@@ -1,0 +1,88 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<title>协议选择</title>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/dtree.js\"></script>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script type=\"text/javascript\">
+function onAppClick(appid, appname)
+{
+	if (appid == \"custom\" || appid == \"usrgrp\") {
+		window.returnValue = \"NONE\";
+		document.getElementsByName(\"btnok\")[0].disabled = true;
+	}
+	else {
+		window.returnValue = appid + \",\" + appname;
+		document.getElementsByName(\"btnok\")[0].disabled = false;
+	}
+}
+function onCancel()
+{
+	window.returnValue = \"NONE\";
+	window.close();
+}
+var srcWin;
+var srcOrigin;
+function onOK()
+{
+	if(typeof srcWin == \"object\")
+		srcWin.postMessage(\"data:\"+window.returnValue, srcOrigin);
+	window.close();
+}
+SetDialogPostEvent(function(event){
+	//if (event.origin !== \"https://192.168.0.199\")
+	//return;
+	if(event.data == 'Hello Panabit') {
+		event.source.postMessage(event.data, event.origin);
+		srcWin = event.source;
+		srcOrigin = event.origin;
+	}
+});
+</script>
+</head>
+";
+. /etc/PG.conf
+FLOWEYE=${PGPATH}/bin/floweye
+
+echo -n "
+<body>
+<base target=\"_self\">
+<div style=\"overflow: auto; position:absolute;left:8px;top:8px;height:540px;width:280px;border:2px\">
+<script type=\"text/javascript\">
+	d = new dTree('d');
+	d.add(0, -1, '请选择协议');
+	d.add(1044, 0, '应用协议');
+	d.add(2000, 1044, '所有协议', \"javascript:onAppClick('any', '任意协议')\", '','','','', false);
+	d.add(2001, 1044, '未知协议', \"javascript:onAppClick('default', '未知协议')\", '','','','', false);
+	";
+		${FLOWEYE} app showtree all | while read parentid myid appid appname type
+		do
+			if [ "${appid}" != "unknown" -a "${appid}" != "default" ]; then
+				url="javascript:onAppClick('${appid}', '${appname}')"
+				echo "d.add(${myid}, ${parentid}, '${appname}', \"${url}\", '','','','', false);"
+			fi
+		done
+	
+echo -n "
+	document.write(d);
+</script>
+</div>
+<div style=\"overflow: auto; position:absolute;left:300px;top:8px;height:30px;width:100px;border:2px\">
+<input type=button name=btnok value=\"确定\" align=center disabled style=\"width:80px\" onclick=\"onOK()\"></input>
+</div>
+<div style=\"overflow: auto; position:absolute;left:300px;top:40px;height:30px;width:100px;border:2px\">
+<input type=button value=\"取消\" align=center style=\"width:80px\" onclick=\"onCancel()\"></input>
+</div>
+</body>
+</html>
+";

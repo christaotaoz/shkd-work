@@ -1,0 +1,137 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+myself="/cgi-bin/cfy/App/ping/`basename $0`"
+FLOWEYE=/usr/ramdisk/bin/floweye
+MOD_TAB_LIST="PING外网#/cgi-bin/cfy/App/ping/webmain PING内网#/cgi-bin/cfy/App/ping/lanping"
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	cmdargs="if=${CGI_wan} ip=${CGI_ip} seq=${CGI_seq} "
+	if [ "${CGI_nexthop}" != "" -a "${CGI_nexthop}" != "0.0.0.0" ]; then
+		cmdargs="${cmdargs} nexthop=${CGI_nexthop}"
+	fi
+	errmsg=`${FLOWEYE} ping ${cmdargs} count=1`
+	if [ "${errmsg}" = "" ]; then 
+		echo "error: no response from ${CGI_ip}"
+	else
+		echo "${errmsg}"
+	fi
+	exit 0;
+fi
+CGI_browsertitle="PING工具"
+. ../../common/common.sh
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script>
+var g_wan, g_ip;
+var g_seq = 0;
+var iStoping = true;
+var g_nexthop;
+function cmdping()
+{
+	if(g_wan == \"\" || g_ip == \"\" || iStoping)
+		return ;
+	AJXS({type: 'POST', 
+	      url: '${myself}?ip=' + g_ip + '&wan=' + g_wan + '&seq=' + g_seq + '&nexthop=' + g_nexthop, 
+	    error: function(status){setTimeout(cmdping, 3000);},
+	  success: function(data){ 
+		var r, e;
+		var pingbox = document.getElementById(\"pingbox\");
+		var wrapper = document.getElementById(\"wrapper\");
+		
+		if(pingbox.rows.length >= 100)
+			pingbox.deleteRow(1);
+			
+		r = pingbox.insertRow(-1);
+		if (data.indexOf(\"error\") >= 0)
+			r.style.color = \"#ff0000\";
+		else
+			r.style.color = \"#0000ff\";
+		r.style.fontSize = \"11px\";
+		e = r.insertCell(0);
+		e.setAttribute('align', 'left');
+		e.innerText = data;
+		wrapper.scrollTop = wrapper.scrollHeight;
+		setTimeout(cmdping, 1000);
+	}});
+	
+	g_seq++;
+}
+function stoping()
+{
+	iStoping=true;
+}
+function doping()
+{
+	var pingbox = document.getElementById(\"pingbox\");
+	var wan = document.getElementById(\"wan_id\");
+	var ip = document.getElementById(\"ip\");
+	var action = document.getElementById(\"action\");
+	var nexthop = document.getElementById(\"nexthop\");
+	if (action.value == \"停止\") {
+		iStoping = true;
+		action.value = \"开始\";
+		return;
+	}
+	else {
+		iStoping = false;
+		action.value = \"停止\";
+	}
+	if(wan.value == \"\") {
+		alert(\"请选择一条作为ping的路由线路\");
+		return ;
+	}
+	ip.value = TrimAll(ip.value);
+	if(ip.value == \"\"){
+		alert(\"被PING的IP地址不能为空！\");
+		return ;
+	}
+	nexthop.value = TrimAll(nexthop.value);
+	while (pingbox.rows.length > 0)
+		pingbox.deleteRow(0);
+	g_wan = wan.value;
+	g_ip = ip.value;
+	g_nexthop = nexthop.value;
+	g_seq = 0;
+	iStoping=false;
+	cmdping();
+}
+</script>
+<body>
+"; cgi_print_mod_header "PING内网" 470 
+echo -n "
+<table width=470 border=0 cellspacing=0 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td align=left width=*>
+	<select id=\"wan_id\" value=\"${CGI_wan_id}\" style=\"width:130;height:19\">
+	";
+                ${FLOWEYE} nat listproxy type=routerif.posvrif | while read type id name theothers
+                do
+                        if [ "${CGI_wan_id}" = "${id}" ]; then
+                                echo "<option value=${id} selected>${name}</option>"
+                        else
+                                echo "<option value=${id}>${name}</option>"
+                        fi
+                done
+	
+echo -n "
+       	</select>
+        IP地址&nbsp;<input type=text id=\"ip\" value=\"${CGI_ip}\" style=\"width:105;height:19\" />下一跳
+	<input type=text id=\"nexthop\" value=\"${CGI_nexthop}\" style=\"width:105\" />
+        <input type=button id=\"action\" style=\"width:40\" value=\"开始\" onclick=\"doping();\" />
+	</td>
+</tr>
+</table>
+<div id=\"boxtop\" style=\"border-radius:0px; border:0px solidred; padding:0px;width:470px;\"> 
+<div id=\"wrapper\" style=\"min-height:0px; overflow-y:auto; max-height:460px;\"> 
+<table width=470 border=0 cellspacing=0 cellpadding=0 bgcolor=\"#ffffff\" style=\"font-size:12px\" id=pingbox>
+</table>
+</div> 
+</div>  
+</body>
+</html>
+";

@@ -1,0 +1,102 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Route/`basename $0`"
+if [ "${CGI_from}" != "" ]; then
+	returnurl="${CGI_from}"
+else
+	returnurl="policy_list"
+fi
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/cfy/Route/policy_list"
+	cmdargs="id=${CGI_polno}"
+	[ "${CGI_inifname}" != "any" ] && cmdargs="${cmdargs} inif=${CGI_inifname}"
+	case "${CGI_srctype}" in
+	"any")
+		CGI_srcip="any"
+		;;
+	"net")
+		CGI_srcip="${CGI_srcipnet}"
+		;;
+	"range")
+		CGI_srcip="${CGI_srciprng}"
+		;;
+	"table")
+		CGI_srcip="${CGI_srciptbl}"
+		;;
+	esac
+	if [ "${CGI_srcport}" != "" -a "${CGI_srcport}" != "0" ]; then
+		CGI_srcip="${CGI_srcip}:${CGI_srcport}"
+	fi
+	cmdargs="${cmdargs} src=${CGI_srcip}"
+	case "${CGI_dsttype}" in
+	"any")
+		CGI_dstip="any"
+		;;
+	"net")
+		CGI_dstip="${CGI_dstipnet}"
+		;;
+	"range")
+		CGI_dstip="${CGI_dstiprng}"
+		;;
+	"table")
+		CGI_dstip="${CGI_dstiptbl}"
+		;;
+	esac
+	if [ "${CGI_dstport}" != "" -a "${CGI_dstport}" != "0" ]; then
+		CGI_dstip="${CGI_dstip}:${CGI_dstport}"
+	fi
+	cmdargs="${cmdargs} dst=${CGI_dstip}"
+	if [ "${CGI_dscp}" != "" -a "${CGI_dscp}" != "0" ]; then
+		cmdargs="${cmdargs} dscp=${CGI_dscp}"
+	fi
+	[ "${CGI_proto}" != "any" ] && cmdargs="${cmdargs} proto=${CGI_proto}"
+	cmdargs="${cmdargs} app=${CGI_appid}"
+	if [ "${CGI_action}" = "nat" ]; then
+		cmdargs="${cmdargs} action=nat-${CGI_nat_proxy}"
+		cmdargs="${cmdargs} nexthop=${CGI_nat_nexthop}"
+	else 
+		cmdargs="${cmdargs} action=route-${CGI_route_proxy}"
+		[ "${CGI_route_nexthop}" = "" ] && CGI_route_nexthop="0.0.0.0"
+		cmdargs="${cmdargs} nexthop=${CGI_route_nexthop}"
+	fi
+	if [ "${CGI_vlan}" != "" -a "${CGI_vlan}" != "0" -a "${CGI_vlan}" != "0-0" ]; then
+		cmdargs="${cmdargs} vlan=${CGI_vlan}"
+	fi
+	if [ "${CGI_schtime}" != "" -a "${CGI_schtime}" != "0" ]; then
+		cmdargs="${cmdargs} schtime=${CGI_schtime}"
+	fi
+	[ "${CGI_ttl}" != "" ] && cmdargs="${cmdargs} ttl=${CGI_ttl}"
+        if [ "${CGI_desc}" = "" ]; then
+                cmdargs="${cmdargs} desc=NULL"
+        else
+                cmdargs="${cmdargs} desc=${CGI_desc}"
+        fi
+	errmsg=`${FLOWEYE} route add ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		#afm_dialog_msg "出现错误:${errmsg}"
+	else
+		#afm_dialog_msg "操作成功!"
+		#afm_load_page 0 "/cgi-bin/Route/${returnurl}"
+		#WEB_LOGGER "添加路由策略" "id=${CGI_polno}"
+		#sleep .500
+		exit 0
+	fi
+else
+	[ "${CGI_dscp}" = "" ] && CGI_dscp=0
+	[ "${CGI_srcport}" = "" ] && CGI_srcport=0
+	[ "${CGI_dstport}" = "" ] && CGI_dstport=0
+	[ "${CGI_nat_nexthop}" = "" ] && CGI_nat_nexthop="_NULL_"
+	[ "${CGI_route_nexthop}" = "" ] && CGI_route_nexthop="0.0.0.0"
+	[ "${CGI_vlan}" = "0-0" -o "${CGI_vlan}" = "0" ] && CGI_vlan=""
+	[ "${CGI_ttl}" = "0-255" ] && CGI_ttl=""
+	[ "${CGI_schtime}" = "" ] && CGI_schtime=0
+	[ "${CGI_action}" = "" ] && CGI_action="nat"
+fi
+

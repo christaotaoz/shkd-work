@@ -1,0 +1,125 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function editIppool(id) 
+{
+	window.location.href = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+}
+function showOnline(id)
+{
+        var url = \"/cgi-bin/Pppoe/show_online?id=\" + id;
+        ShowWindow(url, \"\", 780, 500);
+}
+function addAcct(id)
+{
+	window.location.href = \"/cgi-bin/Pppoe/pppoe_addacct?where=pool&poolid=\" + id;
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; cgi_show_title "基本对象->地址池" 
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50  align=center>编号</td>
+        <td width=*   align=right>名称</td>
+	<td width=150 align=right>地址范围</td>
+	<td width=120 align=right>上行速率(kbps)</td>
+	<td width=120 align=right>下行速率(kbps)</td>
+	<td width=160 align=right>用户DNS</td>
+	<td width=100 align=right>用户账号#</td>
+	<td width=100 align=right>可分配IP#</td>
+	<td width=100 align=right>在线时间(时)</td>
+	<td width=100 align=right>过期用户</td>
+	<td width=120 align=right>操作</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} pppoeippool list |  \
+while read id name start end ipleft nextip acctcnt ratein rateout dns0 dns1 maxonlinetime clntepa theothers
+do 
+	if [ "${start}" = "0.0.0.0" -a "${end}" = "0.0.0.0" ]; then
+		echo "<tr id=row4 height=22 ondblclick=\"editIppool('${id}')\">"
+	else
+		echo "<tr id=${idname} height=22 ondblclick=\"editIppool('${id}')\">"
+	fi
+	[ "${ratein}" = "0" -o "${ratein}" = "" ] && ratein="不限"
+	[ "${rateout}" = "0" -o "${rateout}" = "" ] && rateout="不限"
+	[ "${dns0}" = "0.0.0.0" ] && dns0=""
+	[ "${dns1}" = "0.0.0.0" ] && dns1=""
+	if [ "${dns0}" != "" ]; then
+		dns="${dns0}"
+		[ "${dns1}" != "" ] && dns="${dns},${dns1}"
+	else
+		dns=""
+	fi
+
+echo -n "
+	<td align=center>${id}</td>
+	<td align=right>${name}&nbsp;</td>
+	<td align=right>${start}&nbsp;-&nbsp;${end}&nbsp;</td>
+	<td align=right>${rateout}&nbsp;</td>
+	<td align=right>${ratein}&nbsp;</td>
+	<td align=right>${dns}&nbsp;</td>
+	<td align=right>${acctcnt}&nbsp;</td>
+	<td align=right>${ipleft}&nbsp;</td>
+	<td align=right>${maxonlinetime}&nbsp;</td>
+";
+	case "${clntepa}" in
+	"reject")
+		echo "<td align=right>不能登陆&nbsp;</td>"
+		;;
+	"login")
+		echo "<td align=right>可登陆但不能上网&nbsp;</td>"
+		;;
+	"pass")
+		echo "<td align=right>可登陆,可上网&nbsp;</td>"
+		;;
+	*)
+		echo "<td align=right></td>"
+		;;
+		
+	esac
+
+echo -n "
+       	<td align=right>
+		<a style=\"color:#0000ff\" href=\"javascript:editIppool('${id}')\">编辑</a>&nbsp;&nbsp;
+	"; if [ "${start}" = "0.0.0.0" -a "${end}" = "0.0.0.0" ]; then 
+echo -n "
+		加账号&nbsp;&nbsp;
+	"; else 
+echo -n "
+		<a style=\"color:#0000ff\" href=\"javascript:addAcct('${id}')\">加账号</a>&nbsp;&nbsp;
+	"; fi 
+echo -n "
+	</td>
+	</tr>
+	"; if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

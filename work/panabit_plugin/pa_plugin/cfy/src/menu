@@ -1,0 +1,66 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/p2p.css\" />
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/dtree.js\"></script>
+<script type=\"text/javascript\">
+function openurl(url)
+{
+        window.parent.document.getElementById(\"content\").src = url;
+}
+</script>
+</head>
+<body>
+<div style=\"position:absolute;top:6px\">
+<script type=\"text/javascript\">
+	d = new dTree('d');
+	d.add(0, -1, '用户认证');
+	d.add(1, 0, '基本对象', '','','','','', true);
+	d.add(11, 1, '地址池', \"javascript:openurl('/cgi-bin/Pppoe/ippool_list')\");
+	d.add(12, 1, '本地账号', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_account')\");
+       	d.add(13, 1, 'RADIUS', \"javascript:openurl('/cgi-bin/Pppoe/radsvr_list')\");
+	d.add(14, 1, '账号导出', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_exportacct')\");
+	d.add(15, 1, '账号导入', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_importacct')\");
+	d.add(2, 0, 'WEB认证', '','','','','', true);
+       	d.add(21,2, '基本设置', \"javascript:openurl('/cgi-bin/Setup/webauth_config')\");
+       	d.add(22,2, '账号管理', \"javascript:openurl('/cgi-bin/Setup/usrinfo_list')\");
+       	d.add(23,2, '临时账号', \"javascript:openurl('/cgi-bin/Setup/usrinfo_templist')\");
+       	d.add(24,2, '动态密码', \"javascript:openurl('/cgi-bin/Setup/usrinfo_wifitoken')\");
+	d.add(3,  0, 'PPPOE认证', '','','','','', true);
+"; if [ "${PANABIT_USER}" != "pppoeman" ]; then 
+echo -n "
+	d.add(31, 3, '基本配置', \"javascript:openurl('/cgi-bin/Pppoe/pppoesvr_config')\");
+	d.add(34, 3, '服务列表', \"javascript:openurl('/cgi-bin/Pppoe/pppoesvr_list')\");
+"; fi 
+echo -n "
+	d.add(35, 3, '页面通知', \"javascript:openurl('/cgi-bin/Pppoe/notify_msg')\");
+	d.add(36, 3, '在线用户', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_online')\");
+	d.add(37, 3, '拨号退出', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_dialing')\");
+	d.add(38, 3, '下线日志', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_exitlog')\");
+	d.add(7,  0, 'PPPOE代理', '','','','','', true);
+	d.add(71, 7, '账号管理', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_extacct')\");
+	d.add(72, 7, '在线用户', \"javascript:openurl('/cgi-bin/Pppoe/pppoe_extonline')\");
+	
+	d.add(4,  0, 'PPPOE旁路', '','','','','', true);
+"; if [ "${PANABIT_USER}" != "pppoeman" ]; then 
+echo -n "
+	d.add(41, 4, '参数设置', \"javascript:openurl('/cgi-bin/Setup/l2bypass_config')\");
+"; fi 
+echo -n "
+	d.add(42, 4, '账号管理', \"javascript:openurl('/cgi-bin/Setup/l2bypass_account')\");
+	document.write(d);
+</script>
+</div>
+</body>
+</html>
+";

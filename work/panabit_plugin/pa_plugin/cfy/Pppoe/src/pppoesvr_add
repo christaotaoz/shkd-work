@@ -1,0 +1,283 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Pppoe/`basename $0`"
+return_url="/cgi-bin/Pppoe/pppoesvr_list"
+AIDE_REMARKMAN="${PGPATH}/admin/cgi-bin/common/aide_remarkman"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"${return_url}\";
+}
+function beforeAddServer(frm)
+{
+	var svrname = document.getElementsByName(\"svrname\")[0];
+	var ifname = document.getElementsByName(\"ifname\")[0];
+	var addr = document.getElementsByName(\"addr\")[0];
+	var dns0 = document.getElementsByName(\"dns0\")[0];
+	var dns1 = document.getElementsByName(\"dns1\")[0];
+	var vlan = document.getElementsByName(\"vlan\")[0];
+	var mtu  = document.getElementsByName(\"mtu\")[0];
+	var service = document.getElementsByName(\"service\")[0];
+	var maxclnt = document.getElementsByName(\"maxclnt\")[0];
+	svrname.value = TrimAll(svrname.value);
+	if (!IsName(svrname.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		svrname.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请选择网卡!\");
+		ifname.select();
+		return false;
+	}
+	addr.value = TrimAll(addr.value);
+	if (!IsIPAddr(addr.value)) {
+		alert(\"请输入IP地址!\");
+		addr.select();
+		return false;
+	}
+	dns0.value = TrimAll(dns0.value);
+	if (dns0.value == \"\" || !IsIPAddr(dns0.value)) {
+		alert(\"请输入正确的DNS服务器地址!\");
+		dns0.select();
+		return false;
+	}
+	dns1.value = TrimAll(dns1.value);
+	if (dns1.value != \"\" && !IsIPAddr(dns1.value)) {
+		alert(\"请输入正确的DNS服务器地址!\");
+		dns1.select();
+		return false;
+	}
+	mtu.value = TrimAll(mtu.value);	
+	vlan.value = TrimAll(vlan.value);
+	service.value = TrimAll(service.value);
+	maxclnt.value = TrimAll(maxclnt.value);
+	return true;
+}
+function onAuthChanged(obj)
+{
+	var radsvr = document.getElementsByName(\"radsvr\")[0];
+	if (obj.value == \"radius\" || obj.value == \"localrad\") 
+		radsvr.style.display = \"block\";
+	else
+		radsvr.style.display = \"none\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_svrname}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "服务名称中包含特殊字符!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	[ "${CGI_mtu}" = "" ] && CGI_mtu="1492"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_maxclnt}" = "" ] && CGI_maxclnt="0"
+	cmdargs="name=${CGI_svrname} ifname=${CGI_ifname} addr=${CGI_addr}"
+	cmdargs="${cmdargs} dns0=${CGI_dns0} dns1=${CGI_dns1} vlan=${CGI_vlan} mtu=${CGI_mtu}"
+	[ "${CGI_service}" != "" ] && cmdargs="${cmdargs} service=${CGI_service}"
+	cmdargs="${cmdargs} auth=${CGI_auth} pool=${CGI_pool} maxclnt=${CGI_maxclnt}"
+	[ "${CGI_radsvr}" = "" ] && CGI_radsvr=0
+	cmdargs="${cmdargs} radsvr=${CGI_radsvr}"
+	
+	errmsg=`${FLOWEYE} nat addposvrif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${return_url}"
+		errmsg=`${AIDE_REMARKMAN} -c ${CGI_svrname} ${CGI_remark}`
+		if [ "${errmsg}" != "" ]; then
+			errmsg=`${AIDE_REMARKMAN} -a ${CGI_svrname} ${CGI_remark}`
+		fi
+		exit 0
+	fi
+else
+	CGI_dns0="114.114.114.114"
+	CGI_dns1="8.8.8.8"
+	CGI_vlan=0
+	CGI_mtu=1492
+	CGI_auth="local"
+	CGI_pool=0
+	CGI_maxclnt=0
+	CGI_remark="`${AIDE_REMARKMAN} -l | grep -E "^${CGI_svrname} " | awk '{print $2}'`"
+	CGI_radsvr=0
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "PPPOE服务->添加服务器" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddServer(this)\" action=\"${myself}\">
+<table style=\"font:14px;width:800\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=120 align=left>服务器名</td>
+	<td width=* align=left><input type=text name=svrname style=\"width:120px\" value=\"${CGI_svrname}\" />&nbsp;(不能包含&,|,>,\,-等特殊字符)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>物理网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:120\">
+";
+		for ifname in `${FLOWEYE} if list | grep inside | awk '{print $1}'`; do
+			if [ "${CGI_ifname}" = "${ifname}" ]; then
+				echo "<option value=\"${ifname}\" selected>${ifname}</option>"
+			else
+				echo "<option value=\"${ifname}\">${ifname}</option>"
+			fi
+		done
+
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=120 align=left>PPPOE网关</td>
+        <td width=* align=left><input type=text name=addr style=\"width:120px\" value=\"${CGI_addr}\" /></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>服务</td>
+        <td align=left><input type=text name=service style=\"width:120px\" value=\"${CGI_service}\" />&nbsp;(如果不为空，则只接受同名服务的客户请求)</td>
+</tr>
+"; [ "${CGI_vlan}" = "" ] && CGI_vlan="0" 
+echo -n "
+<tr id=row1>
+	<td></td>
+        <td align=left>VLAN</td>
+        <td align=left><input type=text name=vlan style=\"width:120px\" value=\"${CGI_vlan}\" />&nbsp;(格式100,或100-200,不填或填0表示接受任意VLAN客户请求)</td>
+</tr>
+"; [ "${CGI_mtu}" = "" ] && CGI_mtu=1492 
+echo -n "
+<tr id=row1>
+	<td></td>
+        <td align=left>MTU</td>
+        <td align=left><input type=text name=mtu style=\"width:120px\" value=\"${CGI_mtu}\" /></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>第一DNS</td>
+        <td align=left><input type=text name=dns0 style=\"width:120px\" value=\"${CGI_dns0}\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>第二DNS</td>
+        <td align=left><input type=text name=dns1 style=\"width:120px\" value=\"${CGI_dns1}\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>认证方式</td>
+        <td align=left>
+		<select name=auth style=\"width:120\" value=\"${CGI_auth}\" onchange=\"onAuthChanged(this)\">
+";
+		case "${CGI_auth}" in
+		"local")
+			echo "<option value=\"local\" selected>本地认证</option>"
+			echo "<option value=\"radius\">RADIUS认证</option>"
+			echo "<option value=\"localrad\">先本地后RADIUS</option>"
+			echo "<option value=\"free\">免认证</option>"
+			;;
+	
+		"radius")
+			echo "<option value=\"local\">本地认证</option>"
+			echo "<option value=\"radius\" selected>RADIUS认证</option>"
+			echo "<option value=\"localrad\">先本地后RADIUS</option>"
+			echo "<option value=\"free\">免认证</option>"
+			;;
+		"localrad")
+			echo "<option value=\"local\">本地认证</option>"
+			echo "<option value=\"radius\" >RADIUS认证</option>"
+			echo "<option value=\"localrad\" selected>先本地后RADIUS</option>"
+			echo "<option value=\"free\">免认证</option>"
+			;;
+		"free")
+			echo "<option value=\"local\">本地认证</option>"
+			echo "<option value=\"radius\">RADIUS认证</option>"
+			echo "<option value=\"localrad\">先本地后RADIUS</option>"
+			echo "<option value=\"free\" selected>免认证</option>"
+			;;
+		esac
+
+echo -n "
+		</select>
+		<select name=radsvr style=\"width:120\" value=\"${CGI_radsvr}\">
+		";
+			${FLOWEYE} radsvr list | while read id ip name theothers
+			do
+				if [ "${CGI_radsvr}" = "${id}" ]; then
+					echo "<option value=${id} selected>${name}</option>"
+				else
+					echo "<option value=${id}>${name}</option>"
+				fi
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td width=120 align=left>默认地址池</td>
+	<td width=* align=left>
+		<select name=pool value=${CGI_pool} style=\"width:120px\">
+";
+			if [ ${CGI_pool} -eq 0 ]; then
+				echo "<option value=0 selected>空地址池</option>"
+			else
+				echo "<option value=0>空地址池</option>"
+			fi
+			${FLOWEYE} pppoeippool list | while read poolid poolname theothers
+			do
+				if [ ${CGI_pool} -eq ${poolid} ]; then
+					echo "<option value=${poolid} selected>${poolname}</option>"
+				else 
+					echo "<option value=${poolid}>${poolname}</option>"
+				fi
+			done
+
+echo -n "
+		</select>&nbsp;(地址池在使用免认证或RADIUS认证时使用)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>最大接入用户</td>
+        <td align=left><input type=text name=maxclnt style=\"width:120px\" value=\"${CGI_maxclnt}\" />&nbsp;(最大允许接入的用户数,0表示不限制)</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td align=left width=120>备注</td>
+        <td align=left width=*>
+		<input type=text name=remark style=\"width:380px\" value=\"${CGI_remark}\"></input>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn value=\"提交\"></input>
+		<input type=button id=newbtn value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

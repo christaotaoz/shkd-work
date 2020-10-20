@@ -1,0 +1,44 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+if [ "${CGI_where}" = "pool" ]; then
+	returl="/cgi-bin/Pppoe/ippool_list"
+else
+	returl="/cgi-bin/Pppoe/pppoe_account"
+fi
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then 
+	operator_check "${myself}" pppoeman
+	cmdargs="poolid=${CGI_poolid} name=${CGI_account} password=${CGI_passwd1} start=${CGI_start} expire=${CGI_expire}" 
+	if [ "${CGI_bindmac}" != "" -a "${CGI_bindmac}" != "00-00-00-00-00-00" ]; then
+		cmdargs="${cmdargs} bindmac=${CGI_bindmac}"
+	fi
+	[ "${CGI_maxonline}" = "" ] && CGI_maxonline="1"
+	[ "${CGI_maxonline}" != "1" ] && cmdargs="${cmdargs} maxonline=${CGI_maxonline}"
+	[ "${CGI_bindip}" = "" ] && CGI_bindip="0.0.0.0"
+	[ "${CGI_bindip}" != "0.0.0.0" ] && cmdargs="${cmdargs} bindip=${CGI_bindip}"
+	[ "${CGI_outvlan}" != "" ] && cmdargs="${cmdargs} outvlan=${CGI_outvlan}"
+	[ "${CGI_cname}" != "" ] && cmdargs="${cmdargs} cname=${CGI_cname}"
+	[ "${CGI_phone}" != "" ] && cmdargs="${cmdargs} phone=${CGI_phone}"
+	[ "${CGI_card}"  != "" ] && cmdargs="${cmdargs} card=${CGI_card}"
+	[ "${CGI_other}" != "" ] && cmdargs="${cmdargs} other=${CGI_other}"
+	errmsg=`${FLOWEYE} pppoeacct add ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		[ "${errmsg}" = "EXIST" ] && errmsg="ÕËºÅ´æÔÚ!"
+		#afm_dialog_msg "²Ù×÷Ê§°Ü:${errmsg}"
+	else
+		#afm_load_page 0 "/cgi-bin/Pppoe/pppoe_account"
+		exit 0
+	fi
+fi
+[ "${CGI_expire}" = "" ] && CGI_expire=`date +%Y-%m-%d`
+[ "${CGI_start}" = "" ] && CGI_start=`date +%Y-%m-%d`
+[ "${CGI_bindmac}" = "" ] && CGI_bindmac="00-00-00-00-00-00"
+[ "${CGI_bindip}" = "" ] && CGI_bindip="0.0.0.0"
+

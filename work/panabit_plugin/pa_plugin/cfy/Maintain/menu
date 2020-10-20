@@ -1,0 +1,95 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/p2p.css\" />
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/dtree.js\"></script>
+<script type=\"text/javascript\">
+function openurl(url)
+{
+        window.parent.document.getElementById(\"content\").src = url;
+}
+</script>
+</head>
+<body>
+<div style=\"position:absolute;top:6px\">
+<script type=\"text/javascript\">
+	d = new dTree('d');
+	d.add(0, -1, '系统维护');
+	d.add(2, 0, '系统管理', '', '','','','',true);
+"; if [ "${PANABIT_USER}" = "admin" -o "${PANABIT_USER}" = "superman" ]; then 
+echo -n "
+	d.add(20, 2, '管理接口', \"javascript:openurl('/cgi-bin/Setup/if_admin')\");
+"; fi 
+echo -n "
+        d.add(21, 2, '系统时间', \"javascript:openurl('/cgi-bin/Maintain/date_config')\");
+        d.add(22, 2, '密码修改', \"javascript:openurl('/cgi-bin/Maintain/passwd_config')\");
+"; if [ "${PANABIT_USER}" = "admin" -o "${PANABIT_USER}" = "superman" ]; then 
+echo -n "
+        d.add(23, 2, '系统重启', \"javascript:openurl('/cgi-bin/Maintain/sys_reboot?action=reboot')\");
+        d.add(24, 2, '系统关机', \"javascript:openurl('/cgi-bin/Maintain/sys_reboot?action=halt')\");
+        d.add(25, 2, '系统名称', \"javascript:openurl('/cgi-bin/Maintain/sysname')\");
+"; fi 
+echo -n "
+"; if [ "${PANABIT_USER}" = "admin" -o "${PANABIT_USER}" = "superman" ]; then 
+echo -n "
+	d.add(3, 0, '配置管理', '','','','','', true);
+        d.add(31, 3, '配置导入', \"javascript:openurl('/cgi-bin/Maintain/cfg_import')\");
+        d.add(32, 3, '配置导出', \"javascript:openurl('/cgi-bin/Maintain/cfg_export')\");
+";	. /etc/PG.conf
+	if [ "${TOPSEC}" = "" ]; then 
+echo -n "
+        	d.add(33, 3, '配置同步', \"javascript:openurl('/cgi-bin/Maintain/cfg_sync')\");
+";	else 
+echo -n "
+        	d.add(33, 3, '统一下发', \"javascript:openurl('/cgi-bin/Maintain/cfg_sync')\");
+";	fi 
+echo -n "
+"; fi 
+echo -n "
+	d.add(4, 0, '日志管理', '','','','','', true);
+	d.add(40, 4, \"设备编号\", \"javascript:openurl('/cgi-bin/Maintain/cfg_deviceid')\");
+	d.add(41, 4, \"流量日志\", \"javascript:openurl('/cgi-bin/Maintain/cfg_datalog')\");
+	d.add(42, 4, \"会话日志\", \"javascript:openurl('/cgi-bin/Maintain/flow_config')\");
+	d.add(43, 4, \"URL日志\",  \"javascript:openurl('/cgi-bin/Maintain/url_config')\");
+	d.add(44, 4, \"其它事件\", \"javascript:openurl('/cgi-bin/Maintain/cfg_evtlog')\");
+        d.add(45, 4, '清除流量日志', \"javascript:openurl('/cgi-bin/Maintain/sys_clearlog')\");
+	d.add(6, 0, '管理日志', '','','','','', true);
+        d.add(61, 6, '今日日志', \"javascript:openurl('/cgi-bin/Maintain/web_log')\");
+        d.add(62, 6, '历史日志', \"javascript:openurl('/cgi-bin/Maintain/history_log')\");
+        d.add(63, 6, '在线用户', \"javascript:openurl('/cgi-bin/Maintain/web_online')\");
+	d.add(7, 0, '系统告警', '','','','','', true);
+        d.add(71, 7, '参数设置', \"javascript:openurl('/cgi-bin/Maintain/alert_config')\");
+        d.add(72, 7, '今日信息', \"javascript:openurl('/cgi-bin/Maintain/alert_log')\");
+        d.add(73, 7, '历史信息', \"javascript:openurl('/cgi-bin/Maintain/history_alert')\");
+        d.add(74, 7, '攻击告警', \"javascript:openurl('/cgi-bin/Maintain/alarm_config')\");
+"; if [ "${PANABIT_USER}" = "admin" -o "${PANABIT_USER}" = "superman" ]; then 
+	. /usr/ramdisk/etc/panabit.inf 
+echo -n "
+	d.add(5, 0, '系统升级', '', '','','','',true);
+	d.add(51, 5, '升级系统', \"javascript:openurl('/cgi-bin/Maintain/sys_upgrade')\");
+";	if [ ${JOS_RELEASE} -ne 0 ]; then 
+echo -n "
+	d.add(53, 5, '升级License', \"javascript:openurl('/cgi-bin/Maintain/license_upgrade')\");
+";	fi 
+echo -n "
+	d.add(8, 0, '高级功能', '','','','','', true);
+	d.add(80, 8, 'SSH远程管理', \"javascript:openurl('/cgi-bin/Maintain/cfg_ssh')\");
+	d.add(82, 8, 'WWW加强代理', \"javascript:openurl('/cgi-bin/Maintain/cfg_wwwproxy')\");
+"; fi 
+echo -n "
+	document.write(d);
+</script>
+</div>
+</body>
+</html>
+";

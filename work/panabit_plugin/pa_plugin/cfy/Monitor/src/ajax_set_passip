@@ -1,0 +1,21 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+FLOWEYE=/usr/ramdisk/bin/floweye
+if [ "${CGI_passip}" != "" ]; then
+	errmsg=`${FLOWEYE} policy config passip=${CGI_passip}`
+	if [ "${errmsg}" = "" ]; then
+		printf "[{'errmsg':'OK'}]"
+	else
+		printf "[{'errmsg]:'${errmsg}'}]"
+	fi
+else
+	printf "[{'errmsg]:'no ip'}]"
+fi
+
+echo -n "
+";

@@ -1,0 +1,139 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+IPE_DDNS=${PGPATH}/app/ddns/ipe_ddns
+MOD_TAB_LIST="基本配置#/cgi-bin/Route/ddns_config DDNS列表#/cgi-bin/Route/ddns_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddDDNS()
+{
+        window.location.href = \"/cgi-bin/Route/ddns_add\";
+}
+function onDeleteDDNS(name)
+{
+        if (confirm(\"确定要删除?\"))
+                window.location.href = \"${myself}?action=delete&hostname=\" + name; 
+}
+function editDDNS(name)
+{
+        window.location.href = \"/cgi-bin/Route/ddns_edit?hostname=\" + name;
+}
+function onDDNSLog(name)
+{
+        var url;
+        url = \"/cgi-bin/Route/ddns_logger?hostname=\" + name;
+        ShowWindow(url, \"\", 750, 400);
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+        operator_check "${myself}"
+        errmsg=`${IPE_DDNS} -d ${CGI_hostname}`
+        [ "$?" != "0" ] && afm_dialog_msg "操作失败:${errmsg}"
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "网络配置->DDNS管理" 
+echo -n "
+<br>
+"; cgi_print_mod_header "DDNS列表" 1080 
+echo -n "
+<table width=1080 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=40 align=center>状态</td>
+        <td width=140  align=center>域名</td>
+        <td width=80  align=center>绑定主线</td>
+        <td width=80  align=center>绑定副线</td>
+        <td width=140 align=center>域名提供商</td>
+        <td width=100 align=center>用户名</td>
+        <td width=100 align=center>创建于</td>
+        <td width=100 align=center>修改于</td>
+        <td width=140  align=center>备注</td>
+        <td width=100 align=center><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddDDNS()\">添加>>&nbsp;&nbsp;</a></td>
+</tr>
+";
+natcount=0
+idname="row1"
+${IPE_DDNS} -l | while read type disbled createtm chgtm linename hostname userpasswd remark othe
+do
+	case ${type} in
+	
+		"1")
+			type="花生壳(<a href=\"http://www.oray.com\" target=\"_blank\">oray.com</a>)"
+		;;
+		"2")
+			type="公云(<a href=\"http://www.pubyun.com\" target=\"_blank\">pubyun.com</a>)"
+		;;
+		"3")
+			type="88IP(<a href=\"http://www.88ip.com\" target=\"_blank\">88ip.cn</a>)"
+		;;
+		"4")
+			type="noip(<a href=\"http://www.noip.com\" target=\"_blank\">noip.com</a>)"
+		;;
+		"5")
+			type="dyn(<a href=\"http://www.dyn.com\" target=\"_blank\">dyn.com</a>)"
+		;;
+		"6")
+			type="changeip(<a href=\"http://www.changeip.com\" target=\"_blank\">changeip.com</a>)"
+		;;
+		*)
+			continue
+		;;
+	esac
+	if [ "${disbled}" = "1" ]; then
+		disbled="禁用"
+	else
+		disbled="启用"
+	fi
+	
+	createtm="`date -r ${createtm} "+%Y-%m-%d %H:%M:%S"`"
+	chgtm="`date -r ${chgtm} "+%Y-%m-%d %H:%M:%S"`"
+	DNSSvr_master_des=""
+	DNSSvr_slave_des=""
+	cmdline=`echo "${linename}" | awk -F':' '{split($1,m,"@");split($2,s,"@"); print "linename_master="m[1]" linename_slave="s[1]" DNSSvr_master="m[2]" DNSSvr_slave="s[2]}'`
+	eval "${cmdline}"
+	[ "${linename_master}" = "auto" ] && linename_master="自动"
+	[ "${linename_slave}" = "auto" ] && linename_slave="自动"
+	[ "${DNSSvr_master}" != "" ] && linename_master="<span style=\"color:#5fa207\" title="DNSvr：${DNSSvr_master}">${linename_master}</span>"
+	[ "${DNSSvr_slave}" != "" ] && linename_slave="<span style=\"color:#5fa207\" title="DNSvr：${DNSSvr_slave}">${linename_slave}</span>"
+
+echo -n "
+    <tr id=${idname}>
+    <td align=center>${disbled}&nbsp;</td>
+    <td align=center><a style=\"color:#0000ff\" href=\"javascript:editDDNS('${hostname}')\">${hostname}&nbsp;</a></td>
+    <td align=center>${linename_master}&nbsp;</td>
+	<td align=center>${linename_slave}&nbsp;</td>
+    <td align=center>${type}&nbsp;</td>
+    <td align=center>${userpasswd%:*}&nbsp;</td> 
+    <td align=center>${createtm}&nbsp;</td> 
+    <td align=center>${chgtm}&nbsp;</td>
+    <td align=left>${remark}&nbsp;</td>
+    <td align=right>
+        <a style=\"color:#0000ff\" href=\"javascript:onDDNSLog('${hostname}')\">日志</a>&nbsp;
+        <a style=\"color:#0000ff\" href=\"javascript:editDDNS('${hostname}')\">编辑</a>&nbsp;
+        <a style=\"color:#0000ff\" href=\"javascript:onDeleteDDNS('${hostname}')\">删除</a>&nbsp;
+    </td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+	
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

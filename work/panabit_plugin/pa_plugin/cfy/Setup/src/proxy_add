@@ -1,0 +1,169 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+return_url="/cgi-bin/Setup/proxy_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var proxyname = document.getElementsByName(\"proxyname\")[0];
+	var proxyaddr = document.getElementsByName(\"proxyaddr\")[0];
+	var proxygw   = document.getElementsByName(\"proxygw\")[0];
+	var proxydns  = document.getElementsByName(\"proxydns\")[0];
+	var ifname    = document.getElementsByName(\"ifname\")[0];
+	var vlan      = document.getElementsByName(\"vlan\")[0];
+	var pingip    = document.getElementsByName(\"pingip\")[0];
+	proxyname.value = TrimAll(proxyname.value);
+	if (!IsName(proxyname.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		proxyname.select();
+		return false;
+	}
+	proxyaddr.value = TrimAll(proxyaddr.value);
+	if (!IsIPAddr(proxyaddr.value)) {
+		alert(\"请输入代理的IP地址!\");
+		proxyaddr.select();
+		return false;
+	}
+	proxygw.value = TrimAll(proxygw.value);
+	if (!IsIPAddr(proxygw.value)) {
+		alert(\"请输入网关地址!\");
+		proxygw.select();
+		return false;
+	}
+	proxydns.value = TrimAll(proxydns.value);
+	if (proxydns.value != \"\" && !IsIPAddr(proxydns.value)) {
+		alert(\"请输入正确的DNS服务器地址!\");
+		proxydns.select();
+		return false;
+	}
+	vlan.value = TrimAll(vlan.value);
+	if (!IsDigitIn(vlan.value, 0, 65535)) {
+		alert(\"VLAN TAG不对!\");
+		vlan.select();
+		return false;
+	}
+	pingip.value = TrimAll(pingip.value);
+	if (pingip.value != \"\" && !IsIPAddr(pingip.value)) {
+		alert(\"请输入正确的IP地址!\n\");
+		pingip.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请选择网卡!\");
+		ifname.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"${return_url}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	[ "${CGI_proxydns}" = "" ] && CGI_proxydns="0.0.0.0"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	errmsg=`${FLOWEYE} nat addproxy name=${CGI_proxyname} ifname=${CGI_ifname} \
+addr=${CGI_proxyaddr} gateway=${CGI_proxygw} dns=${CGI_proxydns} vlan=${CGI_vlan} \
+pingip=${CGI_pingip}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "${return_url}"
+		exit 0
+	fi
+fi
+[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+
+echo -n "
+<body>
+"; cgi_show_title "策略对象->数据代理->添加代理" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>代理名称</td>
+	<td width=400 align=left>
+		<input type=text name=proxyname style=\"width:120px\" value=\"${CGI_proxyname}\"></input>&nbsp;
+		(不要超过8个汉字或15个英文字符)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>所在网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:120\">
+		";
+		for ifname in `${FLOWEYE} if list | grep outside | awk '{print $1}'`; do
+			echo "<option value=\"${ifname}\">${ifname}</option>"
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>IP地址</td>
+        <td align=left>
+		<input type=text name=proxyaddr style=\"width:120px\" value=\"${CGI_proxyaddr}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>网关地址</td>
+        <td align=left>
+		<input type=text name=proxygw style=\"width:120px\" value=\"${CGI_proxygw}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>DNS服务器</td>
+        <td align=left>
+		<input type=text name=proxydns style=\"width:120px\" value=\"${CGI_proxydns}\"></input> (xxx.xxx.xxx.xxx)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>VLAN</td>
+        <td align=left>
+		<input type=text name=vlan style=\"width:120px\" value=\"${CGI_vlan}\"></input>(外出数据包的VLAN Tag, 0表示外出数据包不带Tag)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>心跳服务器IP</td>
+        <td align=left>
+		<input type=text name=pingip style=\"width:120px\" value=\"${CGI_pingip}\"></input>(通过ping此IP来对线路做健康检查,0.0.0.0表示关闭)
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,42 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+adminip=`/usr/ramdisk/bin/floweye jflow stat | grep ifadmin_addr | cut -d'=' -f2` 
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function getWifitoken()
+{
+        var url = \"http://${adminip}:8010/cgi-bin/wifitoken\";
+        ShowWindow(url, \"\", 640, 700);
+}
+</script>
+<body>
+"; 
+cgi_show_title "WEB认证->动态密码" 
+
+echo -n "
+<br>
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1 height=30>
+	<td width=40></td>
+        <td align=left style=\"color:#000000;font-size:15px\">1. 动态密码可以用于网吧等经营场所的WIFI防蹭网</td>
+</tr>
+<tr id=row1 height=30>
+	<td width=40></td>
+        <td align=left style=\"color:#000000;font-size:15px\">2. 动态密码只能通过PC机访问产生，用手机或iPad等移动终端无效</td>
+</tr>
+<tr id=row1 height=30>
+	<td width=40></td>
+	<td align=left style=\"color:#000000;font-size:15px\">3. 在PC机上访问链接&nbsp;<a href=\"javascript:getWifitoken()\" style=\"color:#0000ff;font-size:15px;font-weight:bold;\">http://${adminip}:8010/cgi-bin/wifitoken</a>&nbsp;获取动态账号和密码</td>
+</tr>
+</table>
+</body>
+</html>
+";

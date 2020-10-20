@@ -1,0 +1,89 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_link}->TOP应用"
+. ../common/common.sh 
+[ "${CGI_sort}" = "" ] && CGI_sort="bps"
+MOD_TAB_LIST="`cgi_show_pxytablist ${CGI_link}`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showApp(appid, appname)
+{
+        var url = \"/cgi-bin/Monitor/appview_topip?appid=\" + appid +
+              \"&appname=\" + appname;
+        ShowWindow(url, \"scrollbars=1,resizable=1\", 740, 800);
+}
+var g_sort = \"bps\";
+var g_wan = \"${CGI_link}\";
+function setSort(s)
+{
+	g_sort = s;
+}
+function proxyTopApp()
+{
+        AJXS({
+            type: 'POST',
+            url: '/cgi-bin/Monitor/ajax_proxy_apprate?wan=' + g_wan + '&sort=' + g_sort,
+            error: function(status){setTimeout(proxyTopApp, 400);},
+            success: function(data){
+                var d;
+                try {
+                        d = eval('('+data+')');
+                }catch(e) {
+                        d = undefined;
+                }
+                if(typeof(d) == \"undefined\") {
+                        setTimeout(proxyTopApp, 1000);
+                        return;
+                }
+                var e, i;
+                var cname, upbps, downbps, allbps;
+                var applist = document.getElementById(\"applist\");
+		while (applist.rows.length > 1)
+			applist.deleteRow(applist.rows.length - 1);
+                for(i = 0; i < d.length; i++) {
+                        e = applist.insertRow(-1);
+			e.id = \"row1\";
+                        cname = e.insertCell(0);
+                        cname.setAttribute('align', 'left');
+			cname.innerHTML = \"&nbsp;<a href=javascript:showApp(\" +
+				\"'\" + d[i].name + \"'\" +  \",'\" + d[i].cname + \"')\" +
+				\">\" + d[i].cname + \"</a>\";
+			upbps = e.insertCell(1);
+                        upbps.setAttribute('align', 'right');
+			upbps.innerHTML = d[i].upbps + \"&nbsp;\";
+			downbps = e.insertCell(2);
+                        downbps.setAttribute('align', 'right');
+			downbps.innerHTML = d[i].downbps + \"&nbsp;\";
+			allbps = e.insertCell(3);
+                        allbps.setAttribute('align', 'right');
+			allbps.innerHTML = d[i].allbps + \"&nbsp;\";
+                }
+                setTimeout(proxyTopApp, 4000);
+        }});
+}
+function onloaddoc()
+{
+	proxyTopApp();
+}
+</script>
+<body onload=\"onloaddoc()\">
+"; cgi_print_mod_header  "TOP应用"  600 
+echo -n "
+<table id=applist width=600 border=0 cellspacing=1 cellpadding=0>
+<tr id=tblhdr>
+	<td width=160 align=left>&nbsp;协议名称</td>
+	<td width=150 align=right><a href=\"javascript:setSort('bpsup')\">上行bps</a></td>
+	<td width=150 align=right><a href=\"javascript:setSort('bpsdn')\">下行bps</a></td>
+	<td width=*   align=right><a href=\"javascript:setSort('bps')\">总速率</a></td>
+</tr>
+</table>
+</body>
+</html>
+";

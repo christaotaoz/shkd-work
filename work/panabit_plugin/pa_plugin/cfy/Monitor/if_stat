@@ -1,0 +1,199 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function ifShow(ifname)
+{
+        var url = \"/cgi-bin/Monitor/if_show?name=\" + ifname + \"&title=网络接口->\" + ifname;
+        ShowWindow(url, \"\", 720, 700);
+}
+function ifEdit(ifname)
+{
+        var url = \"/cgi-bin/Setup/if_edit?ifname=\" + ifname;
+        ShowWindow(url, \"\", 400, 200);
+}
+function bridgeView(bridge, bdgname)
+{
+        var url = \"/cgi-bin/Monitor/group_stat?bridge=\" + bridge + \"&bdgname=\" + bdgname;
+        ShowWindow(url, \"\", 940, 800);
+}
+function ifRtgraph(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/ifpxy_rtgraph?type=if&name=\" + proxyname;
+        ShowWindow(url, \"\", 720, 680);
+}
+function ifDump(ifname) 
+{
+	var url = \"/cgi-bin/Monitor/ifdump?ifname=\" + ifname;
+	ShowWindow(url, \"\", 550, 720);
+}
+function ifSchedule() 
+{
+	var url = \"/cgi-bin/Monitor/if_schedule\"
+	ShowWindow(url, \"\", 500, 720);
+}
+function getifstats()
+{
+	var i;
+	var stateobj;
+	var inbpsobj, outbpsobj;
+	var inppsobj, outppsobj;
+	AJXS({type: 'POST', 
+	       url: '/cgi-bin/Monitor/ajax_if_stat', 
+	     error: function(status){setTimeout(getifstats, 3000);},
+	   success: function(data) { 
+		var d;
+		try {
+			d = eval('('+data+')');
+		} catch(e) {
+			setTimeout(getiftats, 3000);
+			return;
+		}
+		for (i = 0; i < d.length; i++) {
+			stateobj = document.getElementById(\"state_\" + d[i].name);
+			if (stateobj != null) {
+				if (d[i].state)
+					stateobj.src = \"/img/yes.png\";
+				else
+					stateobj.src = \"/img/no.png\";
+			}
+			inbpsobj = document.getElementById(\"inbps_\" + d[i].name);
+			if (inbpsobj != null) 
+				inbpsobj.innerHTML = d[i].inbps;
+			outbpsobj = document.getElementById(\"outbps_\" + d[i].name);
+			if (outbpsobj != null) 
+				outbpsobj.innerHTML = d[i].outbps;
+			inppsobj = document.getElementById(\"inpps_\" + d[i].name);
+			if (inppsobj != null) 
+				inppsobj.innerHTML = d[i].inpps;
+			outppsobj = document.getElementById(\"outpps_\" + d[i].name);
+			if (outppsobj != null) 
+				outppsobj.innerHTML = d[i].outpps;
+		}
+		setTimeout(getifstats, 3000);
+	}});
+}
+function onresize()
+{
+	if (document.body.clientWidth > 1280) 
+		document.getElementById(\"mytbl\").style.width=\"100%\";
+	else
+		document.getElementById(\"mytbl\").style.width=\"1280\";
+}
+function onloaddoc()
+{
+	getifstats();
+	onresize();
+}
+</script>
+<body onload=\"onloaddoc()\">
+"; cgi_show_title "系统概况->网络接口" 
+echo -n "
+<table id=mytbl width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=24>
+        <td width=60  align=center>名称</td>
+	<td width=60  align=right>接入模式</td>
+        <td width=60  align=right>接入位置</td>
+        <td width=60  align=right>对端接口</td>
+        <td width=60  align=right>状态</td>
+        <td width=60  align=right>驱动</td>
+        <td width=60  align=right>工作速率</td>
+        <td width=120 align=right>型号</td>
+	<td width=120 align=right>MAC</td>
+        <td width=100 align=right>流入速率</td>
+        <td width=100 align=right>流出速率</td>
+        <td width=100 align=right>流入PPS</td>
+	<td width=100 align=right>流出PPS</td>
+        <td width=*   align=right><a style=\"color:#0000ff;font-size:13px;\" href=\"javascript:ifSchedule()\">网卡调度>></a>&nbsp;</td>
+</tr> 
+";
+idname="row1"
+${FLOWEYE} if list showsum=1 | while read name mode zone status driver mac type bpsin bpsout ppsin ppsout bdgname ifspeed ifpeer theothers
+do 
+	[ "${ifpeer}" = "NULL" ] && ifpeer=""
+	if [ "${name}" = "summary" ]; then
+	
+
+echo -n "
+		<tr id=${idname}>
+		<td align=center><b>汇总</b></td>
+		<td /><td /> <td /> <td /> <td /> <td /> <td /> <td />
+		<td align=right><span id=inbps_${name}>${bpsin}</span></td>
+		<td align=right><span id=outbps_${name}>${bpsout}</span></td>
+		<td align=right><span id=inpps_${name}>${ppsin}</span></td>
+		<td align=right><span id=outpps_${name}>${ppsout}</span></td>
+		<td />
+		</tr>
+";	
+		continue
+	fi 
+echo -n "
+	<tr id=${idname} height=24>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:ifShow('${name}')\">${name}</a>&nbsp;</td>
+	"; if [ "${mode}" = "0" ]; then 
+echo -n "
+	<td align=right>监控</td>
+	"; else 
+echo -n " 
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:bridgeView('${mode}', '${bdgname}')\">${bdgname}</a></td>
+	"; fi 
+echo -n "
+	"; if [ "${zone}" = "inside" ]; then 
+echo -n "
+	<td align=right>内网</td>
+	"; else 
+echo -n "
+	<td align=right>外网</td>
+	"; fi 
+echo -n "
+	<td align=right>${ifpeer}&nbsp;</td>
+	"; if [ "${status}" = "up" ]; then 
+echo -n "
+	<td align=right><img id=state_${name} src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+	"; else 
+echo -n "
+	<td align=right><img id=state_${name} src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+	"; fi 
+echo -n "
+	"; if [ "${driver}" = "PANAOS" ]; then 
+echo -n "
+	<td align=right>增强型</td>
+	"; else 
+echo -n "
+	<td align=right>${driver}</td>
+	"; fi 
+echo -n "
+	"; [ "${ifspeed}" = "NONE" ] && ifspeed="" 
+echo -n "
+	<td align=right>${ifspeed}</td>		
+	<td align=right>${type}</td>
+	<td align=right>${mac}</td>
+	<td align=right><span id=inbps_${name}>${bpsin}</span></td>
+	<td align=right><span id=outbps_${name}>${bpsout}</span></td>
+	<td align=right><span id=inpps_${name}>${ppsin}</span></td>
+	<td align=right><span id=outpps_${name}>${ppsout}</span></td>
+	<td align=right>
+                <a style=\"color:#0000ff\" href=\"javascript:ifEdit('${name}')\">设置</a>&nbsp;
+		<a style=\"color:#0000ff\" href=\"javascript:ifDump('${name}')\">内参</a>&nbsp;
+		<img src=\"/img/trend.png\" style=\"margin-top:3px\" onclick=\"ifRtgraph('${name}')\"  title=\"实时流量\" />&nbsp;
+	</td>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else    
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

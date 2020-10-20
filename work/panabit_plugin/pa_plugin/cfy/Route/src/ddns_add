@@ -1,0 +1,251 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+returl="/cgi-bin/Route/ddns_list"
+IPE_DDNS=${PGPATH}/app/ddns/ipe_ddns
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var hostname = document.getElementsByName(\"hostname\")[0];
+	var user = document.getElementsByName(\"user\")[0];
+	var passwd = document.getElementsByName(\"passwd\")[0];
+	
+	hostname.value = TrimAll(hostname.value);
+	if (hostname.value == \"\") {
+		alert(\"请输入域名名称!\");
+		hostname.select();
+		return false;
+	}
+	user.value = TrimAll(user.value);
+	if (user.value == \"\") {
+		alert(\"帐号不能为空!\");
+		user.select();
+		return false;
+	}
+	if (passwd.value != passwd.value) {
+		alert(\"请输入密码!\");
+		passwd1.select();
+		return false;
+	}
+	
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"${returl}\";
+}
+function onChangeSrcdst(obj)
+{
+	var i;
+	var td = document.getElementById(\"registration\");
+	if(obj.value == 1)
+		td.href = \"http://www.oray.com\";
+	else if(obj.value == 2)
+		td.href = \"http://www.pubyun.com\";
+	else if(obj.value == 3)
+		td.href = \"http://www.88ip.cn\";
+	else if(obj.value == 4)
+		td.href = \"http://www.noip.com\";
+	else if(obj.value == 5)
+		td.href = \"http://www.dyn.com\";
+	else if(obj.value == 6)
+		td.href = \"http://www.changeip.com\";
+	else 
+		td.href = \"http://www.panabit.com\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cmdargs="${CGI_type} ${CGI_disbled} ${CGI_linename_master}@${CGI_DNSSvr_master}:${CGI_linename_slave}@${CGI_DNSSvr_slave} ${CGI_hostname} ${CGI_user}:${CGI_passwd} ${CGI_remark}"
+	errmsg=`${IPE_DDNS} -a ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${returl}"
+		exit 0
+	fi
+fi
+[ "${CGI_type}" = "" ] && CGI_type=1
+
+echo -n "
+<body>
+"; cgi_show_title "网络配置->DDNS管理->添加账号" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td width=90 align=left>域名</td>
+        <td align=left colspan=3>
+		<input type=text class=text name=hostname style=\"width:150px\" value=\"${CGI_hostname}\"></input>
+		</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>绑定线路（主）</td>
+        <td align=left style=\"width: 180px;\">
+		<select name=linename_master style=\"width:150;height:21\">
+			<option value=\"auto\" selected>自动</option>
+";
+				${FLOWEYE} nat listproxy type=proxy.pppoe | while read type id name theothers
+				do
+						if [ "${CGI_linename_master}" = "${name}" ]; then
+								echo "<option value=\"${name},${id}\" selected>${name}</option>"
+						else
+								echo "<option value=\"${name},${id}\">${name}</option>"
+						fi
+				done
+
+echo -n "
+		</select>
+		</td>
+        <td width=90 align=left>绑定线路（备）</td>
+        <td align=left>
+		<select name=linename_slave style=\"width:150;height:21\">
+			<option value=\"auto\" selected>自动</option>
+";
+				${FLOWEYE} nat listproxy type=proxy.pppoe | while read type id name theothers
+				do
+						if [ "${CGI_linename_slave}" = "${name}" ]; then
+								echo "<option value=\"${name},${id}\" selected>${name}</option>"
+						else
+								echo "<option value=\"${name},${id}\">${name}</option>"
+						fi
+				done
+
+echo -n "
+		</select>
+		</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>DNS 服务（主）</td>
+	<td width=* align=left>
+		<input type=text name=DNSSvr_master style=\"width:150px\" value=\"${CGI_DNSSvr_master}\"></input>
+	</td>
+	<td align=left>DNS 服务（备）</td>
+	<td width=* align=left>
+		<input type=text name=DNSSvr_slave style=\"width:150px\" value=\"${CGI_DNSSvr_slave}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left></td>
+	<td align=left colspan=2>&nbsp;(可用“,”分割表示多个，如果不填，则会使用选线的DNS服务)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>域名提供商</td>
+	<td width=* align=left colspan=3>
+		<select name=type value=\"${CGI_type}\" style=\"width:150;height:21\" onchange=\"onChangeSrcdst(this)\"> 
+";
+	option_value_1="1"
+	option_value_2="2"
+	option_value_3="3"
+	option_value_4="4"
+	option_value_5="5"
+	option_value_6="6"
+	case "${CGI_type}" in
+		2)
+			option_value_2="2 selected"
+			href="http://www.pubyun.com"
+		;;
+		3)
+			option_value_3="3 selected"
+			href="http://www.88ip.cn"
+		;;
+		4)
+			option_value_4="4 selected"
+			href="http://www.noip.com"
+		;;
+		5)
+			option_value_5="5 selected"
+			href="http://www.dyn.com"
+		;;
+		6)
+			option_value_6="6 selected"
+			href="http://www.changeip.com"
+		;;
+		*)
+			option_value_1="1 selected"
+			href="http://www.oray.com"
+		;;
+	esac
+
+echo -n "
+			<option value=${option_value_1}>花生壳(oray.com)</option>
+			<option value=${option_value_2}>公云(pubyun.com)</option>
+			<option value=${option_value_3}>88IP(88ip.cn)</option>
+			<option value=${option_value_4}>noip(noip.com)</option>
+			<option value=${option_value_5}>dyn(dyn.com)</option>
+			<option value=${option_value_6}>changeip(changeip.com)</option>
+		</select> 
+		&nbsp;(<a id=registration href=\"${href}\" target=\"_blank\">注册一个</a>）
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>用户名</td>
+	<td width=* align=left colspan=3>
+		<input type=text name=user style=\"width:150px\" value=\"${CGI_user}\"></input>
+		&nbsp;(不超过30个英文字符)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>密码</td>
+	<td width=* align=left colspan=3>
+		<input type=password name=passwd style=\"width:150px\" value=\"${CGI_passwd}\"></input>
+		&nbsp;(不超过30个英文字符)
+	</td>
+</tr> 
+<tr id=row1>
+	<td></td>
+        <td align=left>使用状态</td>
+        <td align=left colspan=3>
+		<select name=disbled style=\"width:150;height:21\">
+"; if [ "${CGI_disbled}" = "1" ]; then 
+echo -n "
+			<option value=0>启用</option>
+			<option value=1 selected>禁用</option>
+"; else 
+echo -n "
+			<option value=0 selected>启用</option>
+			<option value=1>禁用</option>
+"; fi 
+echo -n "
+		</select> 
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>备注</td>
+        <td align=left colspan=3><input type=text class=text name=remark style=\"width:450\" value=\"${CGI_remark}\"></input>&nbsp;(不超过200个字符)
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right> 
+		<input type=submit style=\"width:80\" value=\"提交\" />
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

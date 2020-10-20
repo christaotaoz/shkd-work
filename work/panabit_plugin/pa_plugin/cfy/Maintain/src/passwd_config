@@ -1,0 +1,126 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function Validate(frm)
+{
+	frm.curpwd.value  = TrimAll(frm.curpwd.value);
+	frm.newpwd1.value = TrimAll(frm.newpwd1.value);
+	frm.newpwd2.value = TrimAll(frm.newpwd2.value);
+	if (frm.curpwd.value == \"\")
+	{
+		alert(\"请输入当前密码\");
+		frm.curpwd.select();
+		return false;
+	}
+	if (frm.newpwd1.value == \"\")
+	{
+		alert(\"请输入新密码!\");
+		frm.newpwd1.select();
+		return false;
+	}
+	if (frm.newpwd2.value != frm.newpwd1.value)
+	{
+		alert(\"两次输入密码不匹配，请重新输入!\");
+		frm.newpwd2.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+PASSWDFILE=${PGPATH}/admin/.htpasswd
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	if [ "${CGI_newpwd1}" != "${CGI_newpwd2}" ]; then
+		afm_dialog_msg "两次输入的新密码不一致，请重新输入!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ ! -f ${PASSWDFILE} ]; then
+		afm_dialog_msg "发现严重错误，系统密码文件毁坏!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	curpasswd=`cat ${PASSWDFILE} | grep "${PANABIT_USER}:" | cut -d':' -f2-`
+	if [ "${curpasswd}" != "${CGI_curpwd}" ]; then
+		afm_dialog_msg "对不起，密码不对，你无法修改系统密码!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	mkdir -p /usr/ramdisk/tmp
+	tmpfile=/usr/ramdisk/tmp/tmppwd.tmp
+	[ -f ${tmpfile} ] && rm -f ${tmpfile}
+	touch -f {tmpfile}
+	cat ${PASSWDFILE} | while read line; do
+		username=`echo ${line} | cut -d':' -f1`
+		userpasswd=`echo ${line} | cut -d':' -f2-`
+		if [ "${username}" = "${PANABIT_USER}" ]; then
+			echo "${PANABIT_USER}:${CGI_newpwd1}" >> ${tmpfile}
+		else
+			echo "${username}:${userpasswd}" >> ${tmpfile}
+		fi
+	done
+	mv ${tmpfile} ${PASSWDFILE}
+	# save to disk
+	. /etc/PG.conf
+	cp -f ${PASSWDFILE} ${PGPATH}/admin/.htpasswd
+        sync
+	afm_dialog_msg "操作成功!如果没有关闭当前浏览器窗口，您仍然可以使用旧密码.\n当您打开新的浏览器窗口时，新密码将会生效!"
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "系统管理->密码修改" 
+echo -n "
+<br>
+<table width=500 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>请输入当前密码</td>
+	<td width=240 align=left>
+		<input type=password class=text name=curpwd style=\"width:100\"></input>
+	</td>
+	<td></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>请输入新密码</td>
+	<td width=240 align=left>
+		<input type=password class=text name=newpwd1 style=\"width:100\"></input>
+		&nbsp;&nbsp;(密码中不能包含空格)
+	</td>
+	<td></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td align=left>请再次输入新密码</td>
+	<td align=left>
+		<input type=password class=text name=newpwd2 style=\"width:100\"></input>
+		&nbsp;&nbsp;(密码中不能包含空格)
+	</td>
+	<td></td>
+</tr>
+</table>
+<table style=\"width:500; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>     
+<table width=500 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr>
+	<td width=* align=right width=100px class=cssTDArial><input type=submit style=\"width:100px\" value=\"提交修改\"></input></td>
+</tr>
+</form>
+</table>
+</center>
+</body>
+</html>
+";

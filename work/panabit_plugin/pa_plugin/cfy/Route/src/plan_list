@@ -1,0 +1,414 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`"
+IPE_PPPOEPLAN=${PGPATH}/bin/ipe_pppoeplan
+MOD_TAB_LIST="基本配置#/cgi-bin/Route/plan_config 计划列表#${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddPlan()
+{
+	window.location.href = \"/cgi-bin/Route/plan_add\";
+}
+function onImportPlan()
+{
+	window.location.href = \"/cgi-bin/Route/plan_import\";
+}
+function onExportPlan()
+{
+	window.location.href = \"/cgi-bin/Route/plan_export\";
+}
+function onDeletePlan(name)
+{
+	if (confirm(\"确定要删除此计划吗?\")) 
+		window.location.href = \"${myself}?action=delete&proxyname=\" + name; 
+}
+function showProxy(type, proxyname)
+{
+        var url;
+	url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 400);
+}
+function editPlan(obj)
+{
+	var row = obj.parentElement.parentElement;
+	var arg = \"\";
+	
+	arg=\"year=\"+row.getAttribute(\"year\");
+	arg+=\"&month=\"+row.getAttribute(\"month\");
+	arg+=\"&day=\"+row.getAttribute(\"day\");
+	arg+=\"&week=\"+row.getAttribute(\"week\");
+	arg+=\"&hour=\"+row.getAttribute(\"hour\");
+	arg+=\"&minute=\"+row.getAttribute(\"minute\") + \"&\";
+	window.location.href = \"/cgi-bin/Route/plan_edit?\"+arg+\"data=\"+row.getAttribute(\"name\");
+}
+function onAddIflan()
+{
+        window.location.href = \"/cgi-bin/Route/iflan_add\";
+}
+function onDeleteIflan(name)
+{
+        if (confirm(\"系统将删除和此虚拟接口相关的所有路由策略，确定要删除?\"))
+                window.location.href = \"${myself}?action=delete&proxyname=\" + name;
+}
+function pppoeRedial(name)
+{
+	if (confirm(\"确定要重拨吗?\"))
+		window.location.href = \"${myself}?action=redial&proxyname=\" + name;
+}
+function onEditWG(id, name, type)
+{
+	window.location.href = \"/cgi-bin/Route/wg_edit?id=\" + id + 
+		\"&name=\" + name + \"&type=\" + type;
+}
+function onAddWGwan(id, name)
+{
+	window.location.href = \"/cgi-bin/Route/wg_addwan?id=\" + id + \"&name=\" + name;
+}
+function onEditWGwan(id, name, proxy, weight)
+{
+	window.location.href = \"/cgi-bin/Route/wg_editwan?id=\" + id + 
+		\"&name=\" + name + \"&proxy=\" + proxy + \"&weight=\" + weight;
+}
+function onRmvWGwan(id, proxy)
+{
+	if (confirm(\"确定要从WAN群组中删除线路?\"))
+		window.location.href = \"${myself}?action=rmvwgwan&id=\" + id + \"&proxy=\" + proxy;
+}
+function showIf(ifname)
+{
+        var url = \"/cgi-bin/Monitor/ifview?ifname=\" + ifname + \"&title=网络接口->\" + ifname;
+        ShowWindow(url, \"\", 840, 800);
+}
+function onSelectItemSub(obj)
+{
+	var table = obj.parentElement.parentElement.parentElement.children;
+	var count = 0;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked)
+			count++;
+	}
+	if(obj.checked) {
+		table.item(0).cells[0].children[0].checked = (count == table.length - 1);
+	} else {
+		table.item(0).cells[0].children[0].checked = false;
+		if(count == 0){
+			table.item(0).cells[7].children[0].style.color  = '#545454';
+			table.item(0).cells[7].children[1].style.color  = '#545454';
+			return ;
+		}
+	}
+	table.item(0).cells[7].children[0].style.color  = '#0000ff';
+	table.item(0).cells[7].children[1].style.color  = '#0000ff';
+}
+function onSelectItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	if(table.length > 1) {
+		for(i = 1;i < table.length; i++)
+			table.item(i).cells[0].children[0].checked = obj.checked;
+		if(obj.checked) {
+			table.item(0).cells[7].children[0].style.color  = '#0000ff';
+			table.item(0).cells[7].children[1].style.color  = '#0000ff';
+			return;
+		}
+	}
+	table.item(0).cells[7].children[0].style.color  = '#545454';
+	table.item(0).cells[7].children[1].style.color  = '#545454';
+}
+function onEditSelectItem(obj)
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i, arg=\"\";
+	
+	for(i = 1; i < table.length; i++)
+	{
+		if(table[i].cells[0].childNodes[0].checked)
+			items.push(table[i].getAttribute(\"name\"));
+	}
+	if(items.length > 0 && confirm(\"确定要编辑这些计划吗?\")) {
+		if(items.length == 1) {
+			i--;
+			arg=\"year=\"+table[i].getAttribute(\"year\");
+			arg+=\"&month=\"+table[i].getAttribute(\"month\");
+			arg+=\"&day=\"+table[i].getAttribute(\"day\");
+			arg+=\"&week=\"+table[i].getAttribute(\"week\");
+			arg+=\"&hour=\"+table[i].getAttribute(\"hour\");
+			arg+=\"&minute=\"+table[i].getAttribute(\"minute\") + \"&\";
+		}
+		window.location.href = \"/cgi-bin/Route/plan_edit?\"+arg+\"data=\"+items.join(' ');
+	}
+}
+function onDeleteSelectItem(obj)
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i;
+	
+	for(i = 1; i < table.length; i++)
+	{
+		if(table[i].cells[0].childNodes[0].checked)
+			items.push(table[i].getAttribute(\"name\"));
+	}
+	if(items.length > 0 && confirm(\"确定要删除这些计划吗?\"))
+		window.location.href = \"${myself}?action=batchdelete&items=\"+items.join(' ');
+}
+function onRedialSelectItem(obj)
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i;
+	for(i = 1;i < table.length; i++)
+	{
+		if(table[i].cells[0].childNodes[0].checked)
+			items.push(table[i].getAttribute(\"name\"));
+	}
+	if(items.length > 0 && confirm(\"确定要对所选线路进行重拨?\"))
+		window.location.href = \"${myself}?action=batchredial&items=\"+items.join(' ');
+}
+function ajxs(settings)
+{
+	var http;
+	if (typeof XMLHttpRequest != 'undefined') 
+		http = new XMLHttpRequest();
+	else {
+		try {
+			http = new ActiveXObject(\"Msxml2.XMLHTTP\");    
+		}catch (e) {
+			try {
+				http = new ActiveXObject(\"Microsoft.XMLHTTP\");
+			} catch (e) {return ;}
+		}
+	}
+	http.open(settings.type, settings.url, true);
+	http.setRequestHeader(\"Accept\", \"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\");
+	http.setRequestHeader(\"Cache-Control\", \"no-cache\");
+	http.setRequestHeader(\"Accept-Language\", \"zh-CN,zh;q=0.8\");
+	http.setRequestHeader(\"Content-Type\", \"text/html; charset=GB2312\");
+	http.onreadystatechange = function() { 
+		if (http.readyState == 4) {
+			if (http.status == 200)
+				settings.success(http.responseText);
+			else
+				settings.error(http.status);
+		}
+	}
+	http.send(null);
+}
+function getstatus()
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i;
+	
+	for(i = 1; i < table.length; i++)
+		items.push(table[i].getAttribute(\"name\"));
+	if(items.length <= 0)
+		return;
+	ajxs({type: 'POST', 
+				 url: '/cgi-bin/common/plan_action?action=status&log=1&items=' + items.join(' '), 
+				 error: function(status){setTimeout(getstatus, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			setTimeout(getstatus, 1000);
+			return;
+		}
+		if(table.length == d.data.length) {
+			for(i=1; i < d.data.length; i++) {
+				table[i].cells[2].childNodes[0].setAttribute('title', d.data[i].username + ':' + d.data[i].password);
+				if(d.data[i].linkup == 1) {
+					table[i].cells[3].childNodes[0].innerHTML = \"正常\";
+					table[i].cells[3].childNodes[0].style.color = \"#00ff00\";
+				} else {
+					table[i].cells[3].childNodes[0].innerHTML = \"不通\";
+					table[i].cells[3].childNodes[0].style.color = \"#ff0000\";
+				}
+				
+				table[i].cells[4].childNodes[0].innerHTML = d.data[i].outbps + \" / \" + d.data[i].inbps;
+				var log = d.data[i].log.split(\" \"); 
+				log.shift();
+				
+				var week={Mon:\"周一\", Tue:\"周二\", Wed:\"周三\", Thu:\"周四\", Fri:\"周五\", Sat:\"周六\", Sun:\"周日\"};
+				try {
+					log[1] = week[log[1]];
+				} catch (e) {log[1] = \"\";}
+				
+				if(log[3] == \"Success\") {
+					log[3] = '成功';
+					table[i].cells[6].childNodes[0].style.color = \"#0CBE0C\";
+				} else{
+					log[3] = '失败';
+					table[i].cells[6].childNodes[0].style.color = \"#ff0000\";
+				}
+				table[i].cells[6].childNodes[0].innerHTML = log.join(' ');
+			}
+		}
+		
+		setTimeout(getstatus, 1000);
+	}});
+}
+function onloaddoc()
+{
+	getstatus();
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${IPE_PPPOEPLAN} -d ${CGI_proxyname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "redial" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat setpppoe name=${CGI_proxyname} redial=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		sleep 1
+	fi
+elif [ "${CGI_action}" = "batchdelete" ]; then
+	operator_check "${myself}"
+	errcount=0
+	allcount=0
+	
+	for id in ${CGI_items}
+	do
+		errmsg=`${IPE_PPPOEPLAN} -d ${id}`
+		[ "$?" != "0" ] && errcount=$((${errcount}+1))
+		allcount=$((${allcount}+1))
+	done
+	[ "${errcount}" != "0" ] && afm_dialog_msg "总共${allcount}个，操作失败${errcount}个: 请稍后再试。"
+elif [ "${CGI_action}" = "batchredial" ]; then
+	operator_check "${myself}"
+	errcount=0
+	allcount=0
+	CGI_items=`echo ${CGI_items} | tr ',' ' '`
+	for name in ${CGI_items}
+	do
+		errmsg=`${FLOWEYE} nat setpppoe name=${name} redial=1`
+		[ "$?" != "0" ] && errcount=$((${errcount}+1))
+		allcount=$((${allcount}+1))
+		echo "<br><b><p style=\"color:#0000ff;font-size:13px\">发送重拨指令给线路\"${name}\"......</p>"
+		sleep .1
+	done
+	sleep .5
+	afm_load_page 0 "${myself}"
+	exit 0
+fi
+
+echo -n "
+<body onload=\"onloaddoc();\">
+";
+cgi_show_title "应用路由->其它->PPPOE定时拨号"
+
+echo -n "
+<br>
+"; cgi_print_mod_header "计划列表" 1080 
+echo -n "
+<br>
+<table width=1080 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=30  align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' onclick=\"onSelectItem(this)\"/></td>
+	<td width=40  align=center>序号</td>
+	<td width=120 align=center>线路名称</td>
+	<td width=70 align=center>线路状态</td>
+	<td width=120 align=center>速率(out/in)</td>
+	<td width=240 align=center>计划</td>
+	<td width=290 align=center>最后日志</td>
+	<td width=* align=right>
+		<a style=\"color:#545454;font-size:14px\" href=\"javascript:void(0)\" onclick=\"onEditSelectItem(this)\">编辑&nbsp;</a>
+		<a style=\"color:#545454;font-size:14px\" href=\"javascript:void(0)\" onclick=\"onDeleteSelectItem(this)\">删除&nbsp;</a>
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddPlan()\">添加>>&nbsp;&nbsp;</a>
+	</td>
+</tr>
+";
+idname="row1"
+natcount=0
+${IPE_PPPOEPLAN} -l | while read proxy_name disbled createtm chgtm year month day week hour minute remark othe 
+do
+	natcount=$((${natcount}+1))
+	
+	createtm="`date -r ${createtm} "+%Y-%m-%d %H:%M:%S"`"
+	chgtm="`date -r ${chgtm} "+%Y-%m-%d %H:%M:%S"`"
+	y=${year}
+	m=${month}
+	d=${day}
+	w=${week}
+	h=${hour}
+	ms=${minute}
+	
+	[ "${year}" = "0000" ] && year="每"
+	[ "${month}" = "00" ] && month="每"
+	[ "${day}" = "00" ] && day="每"
+	case ${week} in
+		"Mon")
+			week=周一
+		;;
+		"Tue")
+			week=周二
+		;;
+		"Wed")
+			week=周三
+		;;
+		"Thu")
+			week=周四
+		;;
+		"Fri")
+			week=周五
+		;;
+		"Sat")
+			week=周六
+		;;
+		"Sun")
+			week=周日
+		;;
+		*)
+			week=每周
+		;;
+	esac
+	
+	[ "${hour}" = "24" ] && hour="每"
+	[ "${minute}" = "60" ] && minute="每"
+
+echo -n "
+    <tr id=\"${idname}\" name=\"${proxy_name}\" year=\"${y}\" month=\"${m}\" day=\"${d}\" week=\"${w}\" hour=\"${h}\" minute=\"${ms}\">
+	<td align=center><input type=checkbox style=\"color:#0000ff\" value='${name}' onclick=\"onSelectItemSub(this)\"></td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('pppoe', '${proxy_name}')\">${natcount}&nbsp;</a></td>
+	
+    <td align=right><a style=\"color:#0000ff\" href=\"javascript:void(0)\" onclick=\"editPlan(this)\">${proxy_name}&nbsp;</a>&nbsp;</td>
+    <td align=center><span></span>&nbsp;</td>
+    <td align=center><span></span>&nbsp;</td>
+    <td align=center>${year}年&nbsp;${month}月&nbsp;${day}日&nbsp;${week}&nbsp;${hour}时&nbsp;${minute}分&nbsp;&nbsp;自动重拔</td> 
+	<td align=center><span></span>&nbsp;</td>
+    <td align=right>
+		<a style=\"color:#0000ff\" href=\"javascript:void(0)\" onclick=\"editPlan(this)\">编辑</a>&nbsp;&nbsp;&nbsp;
+		<a style=\"color:#0000ff\" href=\"javascript:onDeletePlan('${proxy_name}')\">删除</a>&nbsp;&nbsp;&nbsp;
+    </td>
+</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

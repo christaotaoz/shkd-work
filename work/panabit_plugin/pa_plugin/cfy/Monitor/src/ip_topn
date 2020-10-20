@@ -1,0 +1,186 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=0
+[ "${CGI_topn}" = "" ] && CGI_topn="30"
+[ "${CGI_statype}" = "" ] && CGI_statype="all"
+cgipath="/cgi-bin/Monitor/ip_topn"
+cgiargs="title=${CGI_title}&refresh=${CGI_refresh}&statype=${CGI_statype}&topn=${CGI_topn}"
+cgiargs="${cgiargs}&startip=${CGI_startip}&endip=${CGI_endip}"
+cgiurl="${cgipath}?${cgiargs}"
+[ ${CGI_refresh} -ne 0 ] && afm_load_page  ${CGI_refresh} "${cgiurl}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showip(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 820, 750);
+}
+function validate(frm) 
+{
+	var iprng;
+	iprng = document.getElementsByName(\"iprng\")[0].value;
+	iprng = TrimAll(iprng);
+	return true;
+}
+function onload()
+{
+        if (document.body.clientWidth > 1280) {
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+                document.getElementById(\"mytbl2\").style.width=\"100%\";
+        }
+        else {
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+                document.getElementById(\"mytbl2\").style.width=\"1280\";
+        }
+}
+</script>
+<body onload=\"onload()\">
+"; [ "${CGI_browsertitle}" = "" ] && cgi_show_title "Top排名->Top用户" 
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=0 cellpadding=1> 
+<form method=post onsubmit=\"return validate(this)\" action=\"${cgipath}\">
+<tr id=tblhdr height=22>
+	<td width=100 align=left><b>显示</b>
+	<select name=topn value=\"${CGI_topn}\" style=\"width:55;height:21\">
+	";
+		for tm in 10 20 30 50 100 0; do
+			if [  ${tm} -eq 0 ]; then
+				tmdesc="所有"
+			else
+				tmdesc="${tm}"
+			fi
+			if [ "${CGI_topn}" = "${tm}" ]; then
+				echo "<option selected value=${tm}>${tmdesc}</option>"
+			else
+				echo "<option value=${tm}>${tmdesc}</option>"
+			fi
+		done
+	
+echo -n "
+	</select>项</td>
+	<td width=150 align=left><b>每隔</b>
+	<select name=refresh value=\"${CGI_refresh}\" style=\"width:65;height:21\">
+	";
+		for tm in 15 30 45 60 2 0; do
+			if [ ${tm} -eq 0 ]; then
+				tmdesc="不刷新"
+			else
+				tmdesc="${tm}"
+			fi
+			if [ "${CGI_refresh}" = "${tm}" ]; then
+				echo "<option selected value=${tm}>${tmdesc}</option>"
+			else
+				echo "<option value=${tm}>${tmdesc}</option>"
+			fi
+		done
+	
+echo -n "
+	</select>秒刷新</td>
+	<td width=230 align=left><b>&nbsp;IP范围</b>
+		<input type=text style=\"width:180px;\" name=iprng value=\"${CGI_iprng}\" />
+	</td>
+	<td width=246 align=left>其他条件
+		<input type=text style=\"width:187px\" name=filter value=${CGI_filter}></input>
+	</td>
+	<td width=* align=left>
+		<input type=submit value=\"提  交\" style=\"width:80;\"></input>
+		<input type=hidden name=title value=\"${CGI_title}\"></input>
+	</td>
+</tr>
+</form>
+</table>
+";
+urlpath="${cgipath}?title=${CGI_title}&refresh=${CGI_refresh}&topn=${CGI_topn}&startip=${CGI_startip}&endip=${CGI_endip}"
+
+echo -n "
+<table id=mytbl2 width=\"100%\" border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=35  align=left>编号</td>
+	<td width=105 align=left><a href=\"${urlpath}&statype=ipaddr\">&nbsp;IP地址</a></td>
+	<td width=120 align=left>MAC地址</td>
+	<td width=55  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=flowcnt\">连接数</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=outbps\">流出bps</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=inbps\">流入bps</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=ratein\">流入限速</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=rateout\">流出限速</a></td>
+	<td width=60  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=account\">身份信息</a></td>
+	<td width=55  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=mstcnt\">移动终端</a></td>
+	<td width=110 align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=natip\">共享(IE/CH/加权)</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=onlinesecs\">在线时长</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=out\">流出流量</a></td>
+	<td width=70  align=left><a style=\"font-size:13px\" href=\"${urlpath}&statype=in\">流入流量</a></td>
+	<td width=*   align=left>账号信息</td>
+</tr>
+";
+idname="row1"
+args="-s ${CGI_statype}"
+[ ${CGI_topn} -ne 0 ] && args="-n ${CGI_topn} ${args}"
+[ "${CGI_iprng}" != "" ] && args="${args} -ip ${CGI_iprng}"
+rowno=0
+${FLOWEYE} ipobj list ${args} -summary | grep "${CGI_filter}" | \
+while read ip tmstr ttl flowcnt mac inbyte outbyte inrate outrate accounts iecookies chromecookies natips mstcnt maxinrate maxoutrate account theothers
+do 
+	if [ "${ip}" = "0.0.0.0" ]; then 
+
+echo -n "
+		<tr id=${idname} height=22>
+		<td align=left><b>合计</b></td>
+		<td align=left></td>
+		<td align=left></td>
+		<td align=left><b>${flowcnt}</b></td>
+		<td align=left><b>${outrate}</b></td>
+		<td align=left><b>${inrate}</b></td>
+		<td align=left></td>
+		<td align=left></td>
+		<td align=left><b>${accounts}</b></td>
+		<td align=left><b>${mstcnt}</b></td>
+		<td align=left><b>${iecookies}/${chromecookies}/${natips}</b></td>
+		<td align=left></td>
+		<td align=left><b>${outbyte}</b></td>
+		<td align=left><b>${inbyte}</b></td>
+		<td align=left></td>
+"; 	else 
+		rowno=$((${rowno} + 1))
+
+echo -n "
+		<tr id=${idname} height=23>
+		<td align=left>&nbsp;${rowno}</td>
+		<td align=left><a href=\"javascript:showip('${ip}')\">&nbsp;${ip}</a></td>
+		<td align=left>${mac}</td>
+		<td align=left>${flowcnt}</td>
+		<td align=left>${outrate}</td>
+		<td align=left>${inrate}</td>
+		<td align=left>${maxinrate}</td>
+		<td align=left>${maxoutrate}</td>
+		<td align=left>${accounts}</td>
+		<td align=left>${mstcnt}</td>
+		<td align=left>${iecookies}/${chromecookies}/${natips}</td>
+		<td align=left>${tmstr}</td>
+		<td align=left>${outbyte}</td>
+		<td align=left>${inbyte}</td>
+		"; [ "${account}" = "none" ] && account="" 
+echo -n "
+		<td align=left>${account}</td>
+";	fi 
+echo -n "
+	
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

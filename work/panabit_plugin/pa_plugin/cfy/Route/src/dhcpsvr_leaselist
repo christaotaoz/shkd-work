@@ -1,0 +1,187 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`" 
+[ "${CGI_id}" = "" ] && CGI_id=0
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function deleteLease(mac)
+{
+	if (confirm(\"确定要删除该租户?\"))
+		window.location.href = \"${myself}?action=delete&mac=\" + mac;
+}
+function addStatic(mac, ip, desc)
+{
+	var args;
+	args=\"&mac=\" + mac + \"&ip=\" + ip;
+	if (desc != \"\")
+		args += \"&desc=\" + desc;
+	window.location.href = \"${myself}?action=addstatic\" + args;
+}
+function showIp(ipaddr)
+{
+	var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+	ShowWindow(url, \"\", 650, 700);
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + name;
+        ShowWindow(url, \"\", 350, 380);
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	errmsg=`${FLOWEYE} dhcplease remove mac=${CGI_mac}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "addstatic" ]; then
+	cmdargs="mac=${CGI_mac} ip=${CGI_ip}"
+	[ "${CGI_desc}" != "" ] && cmdargs="${cmdargs} desc=${CGI_desc}"
+	errmsg=`${FLOWEYE} dhcpsta add ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "DHCP->租户信息" 
+echo -n "
+<br>
+<table width=1000 border=0 cellspacing=1 cellpadding=1> 
+<form method=post action=\"${myself}\">
+<tr id=tblhdr height=22>
+	<td width=* align=left>选择服务
+	<select name=id value=\"${CGI_id}\" style=\"width:105;height:21\">
+	";
+		if [ "${CGI_id}" = "0" ]; then
+			echo "<option value=0 selected>所有服务</option>"
+		else
+			echo "<option value=0>所有服务</option>"
+		fi
+		${FLOWEYE} nat listproxy type=routerif | while read type id name theothers
+		do
+			if [ "${id}" = "${CGI_id}" ]; then
+				echo "<option value=${id} selected>${name}</option>"
+			else
+				echo "<option value=${id}>${name}</option>"
+			fi
+		done
+	
+echo -n "
+        </select>&nbsp;其他条件<input type=text name=filter style=\"width:200\" value=\"${CGI_filter}\" />
+	&nbsp; <input type=submit value=\"查询\" style=\"width:70;height:20\"></input>
+	</td>
+</tr>
+</form>
+</table>
+<table width=1000 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=30  align=left>序号</td>
+	<td width=70  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=server\">DHCP服务</a></td>
+	<td width=125 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mac\">MAC地址</a></td>
+	<td width=110 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ip\">IP地址</a></td>
+	<td width=180 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=name\">用户名</a></td>
+	<td width=40  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=vlan\">VLAN</a></td>
+	<td width=60  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=state\">状态</a></td>
+	<td width=60  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=type\">类别</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=birth\">出租时间</a></td>
+	<td width=60  align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ttl\">租期(秒)</a></td>
+	<td width=*   align=right>操作&nbsp;</td>
+</tr>
+";
+case "${CGI_sort}" in
+"server")
+	sortargs="-k2"
+	;;
+"mac")
+	sortargs="-k3"
+	;;
+"ip")
+	sortargs="-k4"
+	;;
+"name")
+	sortargs="-k5"
+	;;
+"vlan")
+	sortargs="-k6"
+	;;
+"state")
+	sortargs="-k7"
+	;;
+"type")
+	sortargs="-k8"
+	;;
+"birth")
+	sortargs="-k9"
+	;;
+"ttl")
+	sortargs="-k10"
+	;;
+*)
+	sortargs="-k4"
+	;;
+esac
+cmdargs=""
+[ "${CGI_id}" != "0" ] && cmdargs="${cmdargs} id=${CGI_id}"
+idname="row1"
+count=0
+${FLOWEYE} dhcplease list ${cmdargs} | grep "${CGI_filter}" | sort  ${sortargs} | \
+while read lanif mac ip uip name vlan state type ltime ttl theothers
+do
+
+echo -n "
+	<tr id=${idname}>
+	<td align=left>${count}&nbsp;</td>
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:showServer('${lanif}')\">${lanif}&nbsp;</a></td>
+	<td align=right>${mac}&nbsp;</td>
+	<td align=right><a href=\"javascript:showIp('${ip}')\">${ip}&nbsp;</a></td>
+"; 	[ "${name}" = "NULL" ] && name="" 
+echo -n "
+	<td align=right>${name}&nbsp;</td>
+	<td align=right>${vlan}</td>
+	<td align=right>${state}</td>
+";	if [ "${type}" = "STATIC" ]; then 
+echo -n "
+	<td align=right>静态</td>
+";	else 
+echo -n "
+	<td align=right>动态</td>
+";	fi 
+echo -n "
+	<td align=right>${ltime}</td>
+	<td align=right>${ttl}</td>
+	<td align=right>
+		<a style=\"color:#0000ff\" href=\"javascript:deleteLease('${mac}')\">删除</a>&nbsp;
+";	if [ "${type}" != "STATIC" ]; then 
+echo -n "
+		<a style=\"color:#0000ff\" href=\"javascript:addStatic('${mac}', '${ip}', '${name}')\">转静态</a>&nbsp;
+";	else 
+echo -n "
+		转静态分配&nbsp;
+";	fi 
+echo -n "
+	</td>
+	</tr>
+"; 	if [ "${idname}" = "row1" ]; then
+	        idname="row2"
+	else
+	        idname="row1"
+        fi
+	
+	count=$((${count} + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

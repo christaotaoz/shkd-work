@@ -1,0 +1,50 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+typep=${CGI_type}
+if [ "${typep}" = "flowchart_10" ]; then
+	bridge=${CGI_bridge}
+	json=""
+	
+	result=`floweye app stat app=group sort=last bridge=${CGI_bridge} pie shownum`
+	while read appid appname color flowcnt allbytes allper1 allper2 lastbytes lastper1 lastper2 theothers
+	do
+			json="${json}${appname} ${lastbytes} ${color},"
+	done << EOF
+			${result}
+EOF
+	echo ${json}
+fi
+if [ "${typep}" = "flowchart_all" ]; then
+	bridge=${CGI_bridge}
+	json=""
+	
+	result=`floweye app stat app=group sort=last bridge=${CGI_bridge} pie shownum`
+	while read appid appname color flowcnt allbytes allper1 allper2 lastbytes lastper1 lastper2 theothers
+	do
+			json="${json}${appname} ${allbytes} ${color},"
+	done << EOF
+			${result}
+EOF
+	echo ${json}
+fi
+if [ "${typep}" = "flowchart_flowcnt" ]; then
+	bridge=${CGI_bridge}
+	json=""
+	
+	result=`floweye app stat app=group sort=last bridge=${CGI_bridge} pie shownum`
+	while read appid appname color flowcnt allbytes allper1 allper2 lastbytes lastper1 lastper2 theothers
+	do
+			json="${json}${appname} ${flowcnt} ${color},"
+	done << EOF
+			${result}
+EOF
+	echo ${json}
+fi
+
+echo -n "
+";

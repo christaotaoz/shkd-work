@@ -1,0 +1,82 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeEditWG(frm)
+{
+	var weight = document.getElementsByName(\"weight\")[0];
+	weight.value = TrimAll(weight.value);
+	if (!IsDigitIn(weight.value, 1, 10)) {
+		alert(\"请输入正确的权值!\");
+		weight.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Route/wg_list\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} wangroup set id=${CGI_id} proxy=${CGI_proxy} weight=${CGI_weight}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Route/wg_list"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "接口线路->${CGI_name}->编辑线路" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeEditWG(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>群组名称</td>
+	<td width=400 align=left><b>${CGI_name}</b></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>WAN线路</td>
+        <td align=left><b>${CGI_proxy}</b></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>带宽比重</td>
+	<td width=400 align=left><input type=text name=weight style=\"width:120px\" value=\"${CGI_weight}\" />&nbsp;(1~10,线路下行带宽比重,如1条100M和1条50M线路比重为2和1)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=id value=\"${CGI_id}\" />
+		<input type=hidden name=name value=\"${CGI_name}\" />
+		<input type=hidden name=proxy value=\"${CGI_proxy}\" />
+		<input type=submit id=newbtn value=\"提交\" />
+		<input type=button id=newbtn value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

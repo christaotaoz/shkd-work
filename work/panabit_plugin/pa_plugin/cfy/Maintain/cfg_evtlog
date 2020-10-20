@@ -1,0 +1,70 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onEditEvent(evt)
+{
+	window.location.href = \"/cgi-bin/Maintain/cfg_evtedit?evtype=\" + evt;
+}
+	
+</script>
+<body>
+"; cgi_show_title "日志配置->其它事件" 
+echo -n "
+<br>
+<table width=900 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=120 align=center>事件类型</td>
+	<td width=80 align=center>日志格式</td>
+	<td width=160 align=center>接收服务器IP:端口</td>
+	<td width=110 align=center>记录成功</td>
+	<td width=110 align=center>记录失败</td>
+	<td width=110 align=center>发送成功</td>
+	<td width=110 align=center>发送失败</td>
+        <td width=*   align=center>操作</td>
+</tr>
+";
+tblid="row1"
+${FLOWEYE} logger stat event_detail=1 | \
+while read cfgevt evtype desc svrip svrport logtype sentok sentfail dropped written theothers;
+do
+	[ "${cfgevt}" != "evtcfg" ] && continue
+	[ "${evtype}" = "appflow" -o "${evtype}" = "alg" ] && continue
+	[ "${evtype}" = "url" -o "${evtype}" = "flow" ] && continue
+	[ "${evtype}" = "tiebaapp" -a "${TOPSEC}" != "" ] && continue
+
+echo -n "
+	<tr id=${tblid}>
+	<td align=center>${desc}</td>
+	"; [ "${logtype}" = "none" ] && logtype="不记录" 
+echo -n "
+	<td align=center>${logtype}</td>
+	<td align=center>${svrip}:${svrport}</td>
+	<td align=center>${written}</td>
+	<td align=center>${dropped}</td>
+	<td align=center>${sentok}</td>
+	<td align=center>${sentfail}</td>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:onEditEvent('${evtype}')\">编辑</a></td>
+	</tr>
+";
+	if [ "${tblid}" = "row1" ]; then
+		tblid="row2"
+	else
+		tblid="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

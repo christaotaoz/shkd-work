@@ -1,0 +1,72 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function setLink(id) 
+{
+	window.location.href = \"/cgi-bin/Setup/policy_setlink?link=\" + id; 
+}
+</script>
+<body>
+"; cgi_show_title "流量管理->动态IP限速" 
+echo -n "
+<table width=760 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=*   align=center>线路名称</td>
+	<td width=70  align=center>类型</td>
+	<td width=80  align=center>带宽(kbps)</td>
+	<td width=100 align=center>启用动态限速</td>
+	<td width=110 align=center>速度维持时间(秒)</td>
+	<td width=140 align=center>带宽使用率(上限/下限)</td>
+	<td width=70  align=center>加速比</td>
+	<td width=70  align=center>减速比</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} policy listlink |  \
+while read name id type bandwidth enable holdtime lowwater highwater speedup speeddown theothers
+do 
+echo -n "
+	<tr id=${idname}>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:setLink('${id}')\">${name}</a></td>
+	"; if [ "${type}" = "bridge" ]; then 
+echo -n "
+	<td align=center>网桥</td>
+	"; else 
+echo -n "
+	<td align=center>WAN线路</td>
+	"; fi 
+echo -n "
+	<td align=center>${bandwidth}</td>
+	"; if [ ${enable} -eq 0 ]; then 
+echo -n "
+        <td align=center><img src=\"/img/no.png\" title=\"不启用\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+	"; else 
+echo -n "
+        <td align=center><img src=\"/img/yes.png\" title=\"启用\" style=\"margin-right:5px;vertical-align:middle;\" /></td>
+	"; fi 
+echo -n "
+	<td align=center>${holdtime}</td>
+	<td align=center>${highwater}%/${lowwater}%</td>
+	<td align=center>${speedup}%</td>
+	<td align=center>${speeddown}%</td>
+	</tr>
+	"; if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

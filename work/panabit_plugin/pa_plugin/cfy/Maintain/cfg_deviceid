@@ -1,0 +1,80 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var deviceid = document.getElementsByName(\"deviceid\")[0];
+	deviceid.value = TrimAll(deviceid.value);
+	if (deviceid.value == \"\" && !IsDigitIn(deviceid.value, 0, 255)) {
+		alert(\"错误的设备标识，设备标识为0~255范围的数字\");
+		deviceid.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} logger config deviceid=${CGI_deviceid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+else
+	for nameval in `${FLOWEYE} logger stat`
+	do
+		name=`echo ${nameval} | cut -d'=' -f1`
+		val=`echo ${nameval} | cut -d'=' -f2-`
+		export CGI_${name}="${val}"
+	done
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "日志配置->设备编号" 
+echo -n "
+";
+for nameval in `${FLOWEYE} logger stat`
+do
+	eval "${nameval}"
+done
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:20\"></td>
+        <td align=left style=\"width:80\">设备编号</td>
+        <td align=left width=*><input type=text name=deviceid value=\"${CGI_deviceid}\" style=\"width:60\"></input>
+		(0~255,设备编号被用来唯一标识此设备，日志接收端可以通过此编号来区分日志来源)</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

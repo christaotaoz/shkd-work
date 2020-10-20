@@ -1,0 +1,23 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+json="{\"rows\":["
+result=`floweye chart dump hours=${CGI_hours} tmend=${CGI_tmend} tag=${CGI_name}.${CGI_type}`
+while read tag tm ipcnt
+do
+		if [ "${tag}" = "DATA" ]; then
+				t=$((${tm}*1000))
+				json="${json}{\"x\":${t}, \"y\":${ipcnt}},"
+		fi
+done << EOF
+		${result}
+EOF
+json="${json}{\"x\":${t}, \"y\":0}]}"
+echo ${json}
+
+echo -n "
+";

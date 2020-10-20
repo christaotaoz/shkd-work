@@ -1,0 +1,130 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var loggerip = document.getElementsByName(\"logger_ip\")[0];
+	var port = document.getElementsByName(\"logger_port\")[0];
+	var internal = document.getElementsByName(\"logger_internal\")[0];
+	loggerip.value = TrimAll(loggerip.value);
+	if (loggerip.value != \"\" && !IsIPAddr(loggerip.value)) {
+		alert(\"请输入正确的IP地址!\");
+		loggerip.select();
+		return false;
+	}
+	port.value = TrimAll(port.value);
+	if (port.value == \"\" && !IsDigitIn(port.value, 0, 65535)) {
+		alert(\"错误的端口号!\");
+		port.select();
+		return false;
+	}
+	internal.value = TrimAll(internal.value);
+	if (internal.value == \"\" && !IsDigitIn(internal.value, 10, 600)) {
+		alert(\"采样间隔必须在10~600秒之间!\");
+		internal.select();
+		return false;
+	}
+	
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	[ "${CGI_logger_ip}" = "" ] && CGI_logger_ip="0.0.0.0"
+	[ "${CGI_logger_port}" = "" ] && CGI_logger_port="0"
+	[ "${CGI_logger_internal}" = "" ] && CGI_logger_internal="1"
+	cfgstr="logger_ip=${CGI_logger_ip} logger_port=${CGI_logger_port}"
+	cfgstr="${cfgstr} logger_internal=${CGI_logger_internal}"
+	cfgstr="${cfgstr} iplog_lognatip=${CGI_iplog_lognatip}"
+	errmsg=`${FLOWEYE} logger config ${cfgstr}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+else
+	for nameval in `${FLOWEYE} logger stat`
+	do
+		name=`echo ${nameval} | cut -d'=' -f1`
+		val=`echo ${nameval} | cut -d'=' -f2-`
+		export CGI_${name}="${val}"
+	done
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "日志配置->流量日志" 
+echo -n "
+";
+for nameval in `${FLOWEYE} logger stat`
+do
+	eval "${nameval}"
+done
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td style=\"width:50\"></td>
+        <td align=left style=\"width:120\">日志服务器IP</td>
+        <td align=left width=*><input type=text name=logger_ip value=\"${CGI_logger_ip}\" style=\"width:110\"></input></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>日志服务器端口</td>
+        <td align=left width=*>
+		<input type=text name=logger_port value=\"${CGI_logger_port}\" style=\"width:110\"></input>
+		&nbsp;(0~65535,0表示关闭流量日志输出功能)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>采样间隔</td>
+        <td align=left width=*><input name=logger_internal value=\"${CGI_logger_internal}\" style=\"width:110\" />&nbsp;(秒，10~600)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>是否记录共享用户</td>
+        <td align=left width=*>
+		<select name=iplog_lognatip value=\"${CGI_iplog_lognatip}\" style=\"width:110px\"> 
+		"; if [ "${CGI_iplog_lognatip}" = "0" ]; then 
+echo -n "
+			<option value=\"0\" selected>不记录</option>
+			<option value=\"1\">记录</option>
+		"; else 
+echo -n "
+			<option value=\"0\">不记录</option>
+			<option value=\"1\" selected>记录</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

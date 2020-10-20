@@ -1,0 +1,25 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+    wan_mtu:
+        type: string
+        description: >
+            The MTU for WAN Line interface
+        default: 1500
+    lan_mtu:
+        type: string
+        description: >
+            The MTU for LAN interface
+        default: 1500
+
+node_templates:
+    interface_conf:
+        type: cloudify.pa.interface_line
+        properties:
+            wan_mtu: { get_input: wan_mtu }
+            lan_mtu: { get_input: lan_mtu }
+          

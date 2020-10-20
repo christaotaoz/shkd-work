@@ -1,0 +1,158 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var ttl = document.getElementsByName(\"ipmac_ttl\")[0];
+	ttl.value = TrimAll(ttl.value);
+	if (ttl.value == \"\" || !IsDigit(ttl.value)) {
+		alert(\"请输入最大空闲时间!\");
+		ttl.select();
+		return false;
+	}
+	if (ttl.value < 60) {
+		alert(\"最大空闲时间不能小于60秒!\");
+		ttl.select();
+		return false;
+	}
+	return true;
+}
+function editIPgrp()
+{
+	var whitetbl = document.getElementsByName(\"ipmac_whitetbl\")[0];
+	if (whitetbl.value == \"0\") {
+		alert(\"请选择白名单后再编辑!\");
+		return;
+	}
+	var url = \"/cgi-bin/Protocol/ipgrp_list?ipgrp=\" + whitetbl.value;
+	ShowWindow(url, \"\", 840, 620);
+}
+</script>
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	[ "${CGI_ipmac_gateway}" = "" ] && CGI_ipmac_gateway="0.0.0.0"
+	args="ipmac_enable=${CGI_ipmac_enable}"
+	args="${args} ipmac_deny_dynamic=${CGI_ipmac_deny_dynamic}"
+	args="${args} ipmac_ttl=${CGI_ipmac_ttl}"
+	args="${args} ipmac_whitetbl=${CGI_ipmac_whitetbl}"
+	args="${args} ipmac_gateway=${CGI_ipmac_gateway}"
+	errmsg=`${FLOWEYE} ipmac set ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} ipmac stat`
+do
+	eval "${nameval}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "MAC管控->基本设置" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\">
+<table width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+	<td width=150 align=left>MAC绑定</td>
+	<td width=* align=left>
+		<select name=ipmac_enable value=${ipmac_enable} style=\"width:120\">
+		";
+			if [ ${ipmac_enable} -eq 0 ]; then
+				echo "<option value=1>打开</option>"
+				echo "<option value=0 selected>关闭</option>"
+			else
+				echo "<option value=1 selected>打开</option>"
+				echo "<option value=0>关闭</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>未绑定MAC的IP</td>
+	<td width=* align=left>
+		<select name=ipmac_deny_dynamic value=${ipmac_deny_dynamic} style=\"width:120\">
+		";
+			if [ ${ipmac_deny_dynamic} -eq 0 ]; then
+				echo "<option value=1>拒绝通信</option>"
+				echo "<option value=0 selected>允许通信</option>"
+			else
+				echo "<option value=1 selected>拒绝通信</option>"
+				echo "<option value=0>允许通信</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>白名单</td>
+	<td width=* align=left>
+		<select name=ipmac_whitetbl value=${ipmac_whitetbl} style=\"width:120\">
+		";
+			if [ "${ipmac_whitetbl}" = "0" ]; then
+				echo "<option value=0 selected>空IP群组</option>"
+			else
+				echo "<option value=0>空IP群组</option>"
+			fi
+			
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				if [ "${ipmac_whitetbl}" = "${tblid}" ]; then
+					echo "<option value=${tblid} selected>${tblname}</option>"
+				else
+					echo "<option value=${tblid}>${tblname}</option>"
+				fi
+			done
+		
+echo -n "
+		</select>(白名单中的IP不受\"未绑定MAC的IP\"选项限制, <a style=\"color:#0000ff\" href=\"javascript:editIPgrp()\">编辑白名单</a>)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>网关IP地址</td>
+	<td width=* align=left>
+		<input type=text name=ipmac_gateway style=\"width:120px\" value=\"${ipmac_gateway}\"></input>(为了避免网关没有绑定但拒绝了非绑定IP地址而导致网络不通,请输入网关地址)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>动态项老化时间</td>
+	<td width=* align=left>
+		<input type=text name=ipmac_ttl style=\"width:120px\" value=\"${ipmac_ttl}\"></input>(秒)
+	</td>
+</tr>
+</table>
+<table style=\"width:800; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:800\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

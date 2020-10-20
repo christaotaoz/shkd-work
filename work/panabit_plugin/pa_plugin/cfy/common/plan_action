@@ -1,0 +1,65 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html; charset=GB2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+RAMDISK="/usr/ramdisk"
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+
+. ${PGPATH}/etc/panabit.inf
+PGBIN=${PGPATH}/bin
+FLOWEYE=${PGBIN}/floweye
+EVENTFILE=${PGETC}/log/pending_events
+if [ -f ${PGETC}/sysname.conf ]; then
+        . ${PGETC}/sysname.conf
+fi
+
+IPE_PPPOEPLAN=${PGPATH}/bin/ipe_pppoeplan
+AIDE_REMARKMAN="${PGPATH}/admin/cgi-bin/common/aide_remarkman"
+
+if [ "${CGI_action}" = "status" ]; then
+
+	echo "{data: [ { time: `date +%s`" }
+	for item in ${CGI_items}
+	do
+		addr="0.0.0.0"
+		gwmac="00-00-00-00-00-00"
+		username=""
+		password=""
+		state="DATA"
+		linkup=0
+		inbps=0
+		outbps=0
+		log=""
+
+		eval "`floweye nat getproxy ${item} | grep -E "^(state=|username=|password=|addr=|gwmac=|linkup=|inbps=|outbps=)"`"
+		
+		if [ "${CGI_log}" = "1" ]; then
+			log="`${IPE_PPPOEPLAN} -g ${item} | tail -n 1`"
+		fi
+
+		echo ", {username: '${username}', password: '${password}', state: '${state}', linkup: '${linkup}', addr: '${addr}', gwmac: '${gwmac}', inbps: '${inbps}', outbps: '${outbps}', log: '${log}'}"
+	done
+	echo "]}"
+elif [ "${CGI_action}" = "remark" ]; then
+
+	[ "${CGI_name}" != "" ] && exit 0
+
+	remarkman="`${AIDE_REMARKMAN} -l`"
+
+	echo "{data: [ { time: `date +%s`" }
+	for item in ${CGI_items}
+	do
+		remark="`echo "${remarkman}" | grep -E "^${item} " | awk '{for(i=2;i<=NF;i++)printf $i" ";}'`"
+
+		echo ", {remark: '${remark}'}"
+	done
+	echo "]}"
+fi

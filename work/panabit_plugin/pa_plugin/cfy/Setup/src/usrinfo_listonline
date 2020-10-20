@@ -1,0 +1,86 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function kickoff(ipaddr, name)
+{
+        if (confirm(\"确定要让用户下线?\")) {
+                window.location.href = \"${myself}?\" + \"name=\" + name + 
+			\"&action=kickoff&ipaddr=\" + ipaddr;
+	}
+}
+function showip(ipaddr) 
+{
+        var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr; 
+        ShowWindow(url, \"\", 650, 700);
+}
+</script>
+";
+if [ "${CGI_action}" = "kickoff" ]; then
+        operator_check "${myself}"
+        errmsg=`${FLOWEYE} usrinfo logoff ip=${CGI_ipaddr}`
+        if [ "$?" != "0" ]; then
+		if [ "${errmsg}" = "BINDED" ]; then
+			afm_dialog_msg "IP被绑定，不能强制下线!"
+		else
+                	afm_dialog_msg "出现错误:${errmsg}"
+		fi
+        else
+                afm_load_page 0 "${myself}?name=${CGI_name}"
+                exit 0
+        fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "Web认证->在线用户[${CGI_name}]" 
+echo -n "
+<br>
+<table width=620 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=100 align=right>IP地址</td>
+	<td width=120 align=right>MAC地址</td>
+	<td width=130 align=right>登录时间</td>
+	<td width=80 align=right>流入bps</td>
+	<td width=80 align=right>流出bps</td>
+        <td width=* align=center>操作</td>
+</tr>
+";
+no=1
+idname="row1"
+cursecs=`date +%s`
+${FLOWEYE} ipobj list name=${CGI_name} | \
+while read ipaddr onlinesec ttl flowcnt mac inbyte outbyte inrate outrate accounts natips account theothers
+do 
+
+echo -n "
+	<tr id=\"${idname}\">
+	<td align=right><a href=\"javascript:showip('${ipaddr}')\">${ipaddr}</a></td>
+	<td align=right>${mac}</td>
+	<td align=right>${onlinesec}</td>
+	<td align=right>${inrate}</td>
+	<td align=right>${outrate}</td>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:kickoff('${ipaddr}', '${CGI_name}')\">踢下线</a></td>
+	</tr>
+";
+	no=$((${no} + 1))
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done 
+echo -n "
+</table>
+</body>
+</html>
+";

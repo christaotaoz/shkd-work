@@ -1,0 +1,203 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="应用商店->安装升级"
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"appfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请选择升级包文件!\");
+		return false;
+	}
+	return confirm(\"确定要上传应用?\");
+}
+function onCancel()
+{
+	window.location.href = \"/cgi-bin/Maintain/appstore\";
+}
+</script>
+";
+RAMDISK=/usr/ramdisk
+APPUPDIR=/usr/ramdisk/appupgrade
+if [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}"
+	# verify the archive
+	if [ "`tar ztf ${CGI_appfile} | grep app.inf`" = "" ]; then
+		afm_dialog_msg "上传的文件不是一个有效的APP安装包!"
+		rm -rf ${CGI_appfile}
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	# give it more space for upgrading
+	rm -rf ${RAMDISK}/admin/tmp/*
+	mkdir -p ${APPUPDIR}
+	rm -rf ${APPUPDIR}/*
+	mkdir -p ${RAMDISK}/tmp
+	rm -rf ${RAMDISK}/tmp/*
+	errmsg=`tar xzf ${CGI_appfile} -C ${APPUPDIR} 2>&1`
+	if [ "$?" != "0" ]; then
+		rm -rf ${APPUPDIR}/*
+		rm -rf ${CGI_appfile}
+		afm_dialog_msg "APP安装包无法解开!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	rm -rf ${CGI_appfile}	
+	sync
+	#app.inf, appctrl
+	appctrl=`find ${APPUPDIR} -name appctrl`
+	if [ "${appctrl}" = "" ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "安装包中没有appctrl脚本，终止安装!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ ! -x ${appctrl} ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "appctrl脚本不是可以执行程序，终止安装!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	appinf="`dirname ${appctrl}`/app.inf"
+	if [ ! -e ${appinf} ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "这不是一个有效的APP安装包，缺少重要文件!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	. ${appinf}
+	if [ "${app_name}" = "" -o "${app_id}" = "" ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "无效的APP名称或ID，终止安装!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+if [ "${CGI_action}" = "install" ]; then
+	operator_check "${myself}"
+	mkdir -p ${RAMDISK}/tmp
+	appinf=`find ${APPUPDIR} -name app.inf`
+	if [ "${appinf}" = "" ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "这不是一个有效的APP安装包，缺少重要文件!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	APPUPDIR=`dirname ${appinf}`
+	appctrl="${APPUPDIR}/appctrl"
+	if [ ! -x ${appctrl} ]; then
+		rm -rf ${APPUPDIR}/*
+		afm_dialog_msg "这不是一个有效的APP安装包，缺少重要文件!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	preinstall="${APPUPDIR}/preinstall"
+	if [ -x ${preinstall} ]; then
+		errmsg=`${preinstall}`
+		if [ "$?" != "0" ]; then
+			rm -rf ${APPUPDIR}/*
+			afm_dialog_msg "安装APP出错:${errmsg}"
+			afm_load_page 0 "${myself}"
+			exit 0
+		fi
+		rm -f ${preinstall}
+	fi
+	. ${appinf}
+	. /etc/PG.conf
+	mkdir -p ${PGPATH}/app/${app_name}
+	mkdir -p ${RAMDISK}/app/${app_name}
+	echo "<br><b><p style=\"color:#0000ff;font-size:14px\">开始安装...</p></b>"
+	cp -Rf ${APPUPDIR}/* ${PGPATH}/app/${app_name}/
+	cp -Rf ${APPUPDIR}/* ${RAMDISK}/app/${app_name}/
+	afterinstall="${APPUPDIR}/afterinstall"
+	if [ -x ${afterinstall} ]; then
+		errmsg=`${afterinstall}`
+		rm -f ${PGPATH}/app/${app_name}/afterinstall
+		rm -f ${RAMDISK}/app/${app_name}/afterinstall
+	fi
+	echo "<br><b><p style=\"color:#0000ff;font-size:14px\">成功安装,开始启动APP...</p></b>"
+	errmsg=`${appctrl} start`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "启动APP失败:${errmsg}"
+	else
+		echo "<br><b><p style=\"color:#0000ff;font-size:14px\">APP启动成功!</p></b>"
+	fi
+	
+	echo "<br><b><p style=\"color:#0000ff;font-size:14px\">安装过程中产生的临时文件已经清除!</p></b>"
+	rm -rf ${APPUPDIR}/*
+	sync
+	sleep 2
+	afm_dialog_msg "APP安装成功!"
+	afm_load_page 0 "/cgi-bin/Maintain/appstore"
+	exit 0
+fi
+
+echo -n "
+<body>
+"; if [ "${CGI_action}" = "upload" ]; then 
+echo -n "
+	<br>
+	<table style=\"width:100%; font-size:14px;\">
+	<tr>
+		<td width=20></td>
+		<td width=120 align=left>应用名称</td>
+		<td align=left>${app_cname}</td>
+	</tr>
+	<tr>
+		<td width=20></td>
+		<td width=120 align=left>软件版本</td>
+		<td align=left>${app_version}</td>
+	</tr>
+	<tr>
+		<td width=20></td>
+		<td width=120 align=left>功能描述</td>
+		<td align=left>${app_desc}</td>
+	</tr>
+	<table>
+	<br>
+	<table style=\"width:100%; font-size:14px;\">
+	<tr>
+		<td width=20></td>
+		<td align=left>请点击此处<a style=\"color:#0000ff;font-size:15px\" href=\"${myself}?action=install\"><b>安装应用</b></</td></tr>
+	</table>
+	<br>
+	<table style=\"width:100%; font-size:14px;\">
+	<tr>
+		<td width=20></td>
+		<td align=left>如果不想安装,点击此处<a style=\"color:#0000ff;font-size:15px\" href=\"${myself}?action=return\"><b>取消</b></a></td>
+	</tr>
+	</table>
+	</body></html>
+";
+	exit 0
+fi
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=800 border=0 cellspacing=0 cellpadding=0 bgcolor=\"#ffffff\">
+<tr>
+	<td width=130 style=\"font-bold:true;font-size:14px\" align=left>请输入应用包路径</td>
+	<td width=* class=cssTDArial align=left>
+		<input type=file name=appfile style=\"width:500px\">
+	</td>
+	<td width=190 align=right>
+		<input type=hidden name=action value=upload></input>
+		<input type=submit style=\"width:85\" value=\"应用上传\" />
+		<input type=button style=\"width:85\" onclick=\"onCancel()\" value=\"取消\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

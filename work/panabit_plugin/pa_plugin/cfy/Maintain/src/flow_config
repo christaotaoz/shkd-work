@@ -1,0 +1,155 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var syslogsvrip = document.getElementsByName(\"logip\")[0];
+	var syslogsvrport = document.getElementsByName(\"logport\")[0];
+	syslogsvrip.value = TrimAll(syslogsvrip.value);
+	if (syslogsvrip.value != \"\" && !IsIPAddr(syslogsvrip.value)) {
+		alert(\"请输入正确的IP地址!\");
+		syslogsvrip.select();
+		return false;
+	}
+	syslogsvrport.value = TrimAll(syslogsvrport.value);
+	if (svrport.value == \"\" && !IsDigitIn(syslogsvrport.value, 1, 65535)) {
+		alert(\"错误的端口号!\");
+		syslogsvrport.select();
+		return false;
+	}
+	
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cfgstr="event=flow"
+	cfgstr="${cfgstr} logtype=${CGI_logtype} logip=${CGI_logip} logport=${CGI_logport}"
+	cfgstr="${cfgstr} flow_lognat=${CGI_flow_lognat}"
+	errmsg=`${FLOWEYE} logger config ${cfgstr}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+for nameval in `${FLOWEYE} logger stat event=flow`
+do
+	name=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	export CGI_${name}="${val}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "日志配置->会话日志" 
+echo -n "
+<br>
+<table style=\"width:600; border-bottom:1px #787882 solid; font-bold:true;font-size:14px;\">
+<tr>
+	<td style=\"font:14px\"><b>当前统计信息</b></td>
+	<td style=\"font:12px;\" align=right width=\"*\"></td>
+</tr>
+</table>
+<br>
+<table width=600 border=0 cellspacing=2 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>当前序列号</td>
+	<td align=left width=*>${CGI_flowpkt_curseq}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>记录保存</td>
+	<td align=left>${CGI_written}/${CGI_dropped}(成功/失败)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>记录发送</td>
+	<td align=left>${CGI_sentok}/${CGI_sentfail}(成功/失败)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>数据包发送</td>
+	<td align=left>${CGI_flowpkt_sentok}/${CGI_flowpkt_sentfail}(成功/失败)</td>
+</tr>
+</table>
+<br>
+<table style=\"width:600; border-bottom:1px #787882 solid; font-bold:true;font-size:14px;\">
+<tr>
+	<td style=\"font:14px\"><b>当前配置信息</b></td>
+	<td style=\"font:12px;\" align=right width=\"*\"></td>
+</tr>
+</table>
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=40></td>
+        <td align=left width=120>接收服务器IP</td>
+        <td align=left width=*><input type=text name=logip value=\"${CGI_logip}\" style=\"width:120\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left width=120>接收服务器端口</td>
+        <td align=left width=*><input type=text name=logport value=\"${CGI_logport}\" style=\"width:60\" />&nbsp;(0~65535)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>是否记录日志</td>
+        <td align=left width=*>
+		<select name=logtype value=\"${CGI_logtype}\" style=\"width:120px\"> 
+		"; if [ "${CGI_logtype}" = "none" ]; then 
+echo -n "
+			<option value=\"none\" selected>不记录</option>
+			<option value=\"syslog\">记录</option>
+		"; else 
+echo -n "
+			<option value=\"none\">不记录</option>
+			<option value=\"syslog\" selected>记录</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>是否记录NAT信息</td>
+        <td align=left width=*>
+		<select name=flow_lognat value=\"${CGI_flow_lognat}\" style=\"width:120px\"> 
+		"; if [ "${CGI_flow_lognat}" = "0" ]; then 
+echo -n "
+			<option value=\"0\" selected>不记录</option>
+			<option value=\"1\">记录</option>
+		"; else 
+echo -n "
+			<option value=\"0\">不记录</option>
+			<option value=\"1\" selected>记录</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr><td align=right><input type=submit style=\"width:80\" value=\"提交\"></input></td></tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,59 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/p2p.css\" />
+<link rel=\"stylesheet\" type=\"text/css\" href=\"/img/dtree.css\" />
+<script type=\"text/javascript\" src=\"/img/dtree.js\"></script>
+<script type=\"text/javascript\">
+function openurl(url)
+{
+        window.parent.document.getElementById(\"content\").src = url;
+}
+</script>
+</head>
+<body>
+<div style=\"position:absolute;top:6px\">
+<script type=\"text/javascript\">
+	d = new dTree('d');
+";     . /usr/ramdisk/etc/panabit.inf 
+echo -n "
+	d.add(0, -1, '策略管理');
+	d.add(8, 0, '对象&参数', '','','','','', true);
+        d.add(80,8, '数据通道', \"javascript:openurl('/cgi-bin/Setup/pipe_list')\");
+	d.add(82,8, '文件类型', \"javascript:openurl('/cgi-bin/Protocol/urlextgrp_list')\");
+	d.add(83,8, '域名群组', \"javascript:openurl('/cgi-bin/Protocol/urldnsgrp_list')\");
+	d.add(84,8, 'IP群组', \"javascript:openurl('/cgi-bin/Protocol/ipgrp_list?title=其它对象->IP群组')\");
+        d.add(81,8, '内网IP统计', \"javascript:openurl('/cgi-bin/Setup/ipstat_config')\");
+"; if [ "${PANABIT_USER}" != "guest" ]; then 
+echo -n "	
+	d.add(4, 0, '流量控制', '','','','','', true);
+        d.add(41,4, '策略组', \"javascript:openurl('/cgi-bin/Setup/policy_getgrp')\");
+        d.add(42,4, '策略调度', \"javascript:openurl('/cgi-bin/Setup/policy_listtime')\");
+	d.add(5, 0, '连接控制', '','','','','', true);
+        d.add(51,5, '参数设置', \"javascript:openurl('/cgi-bin/Setup/conlimit_config')\");
+        d.add(52,5, '策略组', \"javascript:openurl('/cgi-bin/Setup/conlimit_getgrp')\");
+        d.add(53,5, '策略调度', \"javascript:openurl('/cgi-bin/Setup/conlimit_listime')\");
+	d.add(6, 0, 'HTTP管控', '','','','','', true);
+        d.add(61,6, '策略组', \"javascript:openurl('/cgi-bin/Setup/urlfilter_getgrp')\");
+        d.add(62,6, '策略调度', \"javascript:openurl('/cgi-bin/Setup/urlfilter_listime')\");
+	d.add(9, 0, 'MAC管控', '','','','','', true);
+        d.add(91,9, '基本设置', \"javascript:openurl('/cgi-bin/Setup/ipmac_config')\");
+        d.add(92,9, 'MAC绑定', \"javascript:openurl('/cgi-bin/Setup/ipmac_list')\");
+        d.add(93,9, 'MAC导出', \"javascript:openurl('/cgi-bin/Setup/ipmac_export')\");
+"; fi 
+echo -n "
+	document.write(d);
+</script>
+</div>
+</body>
+</html>
+";

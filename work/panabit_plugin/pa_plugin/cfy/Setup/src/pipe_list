@@ -1,0 +1,73 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script language=\"javascript\">
+function onAddPipe()
+{
+	window.location.href = \"/cgi-bin/Setup/pipe_add\";
+}
+function onDeletePipe(pname)
+{
+	if (confirm(\"系统将会删除所有使用此管道的规则，你确信要删除此管道吗?\")) 
+		window.location.href = \"${myself}?action=delete&pname=\" + pname; 
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy rmvbwo ${CGI_pname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "策略对象->数据通道" 
+echo -n "
+<br>
+<table width=800 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+	<td width=60  align=center>编号</td>
+	<td width=180 align=center>名称</td>
+	<td width=130 align=center>带宽(kbps)</td>
+	<td width=130 align=center>待发送(Bytes)</td>
+	<td width=130 align=center>队列长度</td>
+	<td width=* align=center><a  style=\"color:#0000ff\" href=\"javascript:onAddPipe()\">添加通道>></a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} policy listbwo | while read pid pname prate pbytes psize theothers
+do 
+	[ "${pid}" = "id" ] && continue
+
+echo -n "
+    <tr id=${idname}>
+    <td align=center>${pid}</td>
+    <td align=center>${pname}</td>
+    <td align=center>${prate}</td>
+    <td align=center>${pbytes}</td>
+    <td align=center>${psize}</td>
+    <td align=center><a style=\"color:#0000ff\" href=\"/cgi-bin/Setup/pipe_edit?pname=${pname}\">编辑</a>&nbsp;&nbsp;&nbsp;<a style=\"color:#0000ff\" href=\"javascript:onDeletePipe('${pname}')\">删除</a></td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

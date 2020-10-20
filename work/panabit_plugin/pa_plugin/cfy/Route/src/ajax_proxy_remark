@@ -1,0 +1,32 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+RAMDISK="/usr/ramdisk"
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+REMARKCONF=${PGETC}/remark/remark_list.conf
+firstelem=1
+printf "["
+if [ -e ${REMARKCONF} ]; then
+	cat ${REMARKCONF} | while read name remark
+	do 
+        	if [ ${firstelem} -eq 1 ]; then
+                	printf "{ 'name':'${name}','remark':'${remark}'}"
+                	firstelem=0
+        	else
+                	printf ",{ 'name':'${name}','remark':'${remark}'}"
+        	fi
+	done
+fi
+echo "]"
+
+echo -n "
+";

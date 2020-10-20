@@ -1,0 +1,137 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+returnurl="/cgi-bin/Route/wg_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeEditWG(frm)
+{
+	var name = document.getElementsByName(\"name\")[0];
+	name.value = TrimAll(name.value);
+	if (name.value == \"\") {
+		alert(\"Èº×éÃû³Æ²»ÄÜÎª¿Õ!\");
+		name.select();
+		return false;
+	}
+	if (!IsName(name.value)) {
+		alert(\"Ãû³ÆÖÐ²»ÄÜÓÐ&µÈÌØÊâ×Ö·û!\");
+		name.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"${returnurl}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} wangroup set id=${CGI_id} name=${CGI_name} type=${CGI_type}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "²Ù×÷Ê§°Ü:${errmsg}"
+	else
+		afm_load_page 0 "${returnurl}"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "Ó¦ÓÃÂ·ÓÉ->¶ÔÏó->ÏßÂ·Èº×é->${CGI_name}" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeEditWG(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=20></td>
+        <td width=80 align=left>Èº×éÃû³Æ</td>
+	<td width=500 align=left><input type=text name=name style=\"width:150px\" value=\"${CGI_name}\" />&nbsp;(²»Òª³¬¹ý8¸öºº×Ö»ò15¸öÓ¢ÎÄ×Ö·û)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>¸ºÔØÀàÐÍ</td>
+        <td align=left>
+		<select name=type style=\"width:150px\" value=\"${CGI_type}\">
+		";
+		case "${CGI_type}" in
+		"srcdst")
+			echo "<option value=\"srcdst\" selected>Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\">µØÖ·+¶Ë¿Ú</option>"
+			echo "<option value=\"src\">Ô´µØÖ·</option>"
+			echo "<option value=\"srcsport\">Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dst\">Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"dstdport\">Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		"src")
+			echo "<option value=\"srcdst\">Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\">µØÖ·+¶Ë¿Ú</option>"
+			echo "<option value=\"src\" selected>Ô´µØÖ·</option>"
+			echo "<option value=\"dst\">Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"srcsport\">Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dstdport\">Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		"dst")
+			echo "<option value=\"srcdst\">Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\">µØÖ·+¶Ë¿Ú</option>"
+			echo "<option value=\"src\">Ô´µØÖ·</option>"
+			echo "<option value=\"dst\" selected>Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"srcsport\">Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dstdport\">Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		"spdp")
+			echo "<option value=\"srcdst\">Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\" selected>µØÖ·+¶Ë¿Ú</option>"
+			echo "<option value=\"src\">Ô´µØÖ·</option>"
+			echo "<option value=\"dst\">Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"srcsport\">Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dstdport\">Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		"srcsport")
+			echo "<option value=\"srcdst\">Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\">µØÖ·+¶Ë¿Ú</option>"
+			echo "<option value=\"src\">Ô´µØÖ·</option>"
+			echo "<option value=\"dst\">Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"srcsport\" selected>Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dstdport\">Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		"dstdport")
+			echo "<option value=\"srcdst\">Ô´µØÖ·+Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"spdp\">µØÖ·+¶Ë¿Ú<é</option>"
+			echo "<option value=\"src\">Ô´µØÖ·</option>"
+			echo "<option value=\"dst\">Ä¿µÄµØÖ·</option>"
+			echo "<option value=\"srcsport\">Ô´µØÖ·+Ô´¶Ë¿Ú</option>"
+			echo "<option value=\"dstdport\" selected>Ä¿µÄµØÖ·+Ä¿µÄ¶Ë¿Ú</option>"
+			;;
+		esac
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=id value=\"${CGI_id}\" />
+		<input type=submit id=newbtn value=\"Ìá½»\" />
+		<input type=button id=newbtn value=\"È¡Ïû\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

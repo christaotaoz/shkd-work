@@ -1,0 +1,20 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+err_file=/usr/ramdisk/tmp/autosync_error.tmp
+[ ! -e ${err_file} ] && echo "autosync_error.tmp not exist, please inform the administrator!";
+err_msg=`sed -n '2p' ${err_file}`
+if [ "${err_msg}" != "" ]; then
+	echo "<b style="color:red">";
+	cat ${err_file};
+	echo "</b>";
+else
+	echo "Syncing......";
+fi
+
+echo -n "
+";

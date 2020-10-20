@@ -1,0 +1,773 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`"
+returnurl="/cgi-bin/Pppoe/pppoe_account"
+AIDE_PPPOECLIENTACCT=${PGPATH}/admin/cgi-bin/common/aide_pppoe_clientacct
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"${returnurl}\";
+}
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"cfgfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请输入配置文件路径!\");
+		return false;
+	}
+	if (confirm(\"确定要上传配置文件?\"))
+		return true;
+	else
+		return false;
+}
+function onBacking_out()
+{
+	window.location.href = \"${myself}\";
+}
+function GetFileType(file)
+{
+	var i = file.lastIndexOf(\".\");  
+	if(i > 0)
+		document.getElementById(\"cfgtype\").value = file.substr(i + 1, file.length - i);
+}
+function ValidateImportData()
+{
+	var i;
+	var items = \"\";
+	var data = document.getElementById(\"import_data\");
+	var table = document.getElementsByTagName(\"table\")[4].rows;
+	var poolid = document.getElementById(\"poolid\");
+	var dbid = document.getElementById(\"dbid\").getAttribute('dbid');
+	
+	var name;
+	var passwd ;
+	var disable;
+	var expire;
+	var fullname; 
+	var identitycard;
+	var telephone;
+	var remark;
+	var intpoolid;
+	var mac;
+	var start;
+	var birth;
+	var bindip;
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked) {
+			name = table[i].cells[2].children[0];
+			passwd = table[i].cells[3].children[0];
+			disable = table[i].cells[4].children[0];
+			intpoolid = table[i].cells[5].children[0];
+			expire = table[i].cells[6].children[0];
+			fullname = table[i].cells[7].children[0]; 
+			identitycard = proxyaddr = table[i].cells[8].children[0];
+			telephone = proxygw = table[i].cells[9].children[0];
+			remark = table[i].cells[10].children[0];
+			start = table.item(i).getAttribute('start');
+			birth = table.item(i).getAttribute('birth');
+			bindip = table.item(i).getAttribute('bindip');
+			name.value = TrimAll(name.value);
+			if(name.value == \"\") {
+				alert(\"第“\"+i+\"”行中，名称中不能为空!\");
+				name.select();
+				return false;
+			}
+			passwd.value = TrimAll(passwd.value);
+			if (passwd.value == \"\") {
+				alert(\"第“\"+i+\"”行中，密码不能为空!\");
+				passwd.select();
+				return false;
+			}
+			expire.value = TrimAll(expire.value);
+			if (expire.value == \"\") {
+				alert(\"第“\"+i+\"”行中，请输入有效期!\");
+				expire.select();
+				return false;
+			}
+			else {
+				if(/^(\d{4})-(\d{2})-(\d{2})$/.test(expire.value) == false){
+					alert(\"第“\"+i+\"”行中，有效日期格式不正确！例如格式：2014-05-01\");
+					expire.select();
+					return false;
+				}
+			}
+			fullname.value = TrimAll(fullname.value);
+			identitycard.value = TrimAll(identitycard.value);
+			telephone.value = TrimAll(telephone.value);
+			remark.value = TrimAll(remark.value);
+			
+			items += \"acct poolid=\" + intpoolid.value;
+			if(intpoolid.value == 0 && intpoolid.getAttribute('poolname') != null)
+				items += \" poolname=\" + intpoolid.getAttribute('poolname');
+			if(start != null)
+				items += \" start=\" + start;
+			if(birth != null)
+				items += \" birth=\" + birth;
+			if(bindip != null)
+				items += \" bindip=\" + bindip;
+			items += \" name=\" + name.value;
+			items += \" passwd=\" + passwd.value;
+			mac = name.getAttribute('bindmac');
+			if(mac != \"\" && mac != null)
+				items += \" bindmac=\" + name.getAttribute('bindmac');
+			items += \" disable=\" + disable.value;
+			items += \" expire=\" + expire.value;
+			items += \" memo=\" + dbid;
+			items += \";\" + fullname.value;
+			items += \";\" + identitycard.value;
+			items += \";\" + telephone.value;
+			items += \";\" + remark.value;
+			
+			items += \"\n\";
+		}
+	} 
+	data.value = items;
+	return table.length > 0;
+}
+function onSubmitData(obj)
+{
+	var form = obj.parentElement.parentElement.parentElement.parentElement.parentElement;
+	if(ValidateImportData())
+		form.submit();
+}
+function onSelectItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	for(i = 1;i < table.length; i++){
+		table.item(i).cells[0].children[0].checked = obj.checked;
+		for(j = 2; j < table.item(i).cells.length; j++)
+			table.item(i).cells[j].children[0].disabled = !obj.checked;
+	}
+}
+function onSubSelectItem(obj)
+{
+	var table = obj.parentElement.parentElement.parentElement.children;
+	var rowItems = obj.parentElement.parentElement.children;
+	var count = 0;
+	var i;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked)
+			count++;
+	}
+	if(obj.checked) {
+		table.item(0).cells[0].children[0].checked = (count == table.length - 1);
+	} else {
+		table.item(0).cells[0].children[0].checked = false;
+	}
+	for(i = 2; i < rowItems.length; i++)
+		rowItems[i].children[0].disabled = !obj.checked;
+}
+function onChangeSrcdst(obj)
+{
+	var i;
+	var table = document.getElementsByTagName(\"table\")[4].rows;
+	for(i = 1;i < table.length; i++){
+		if(table.item(i).cells[0].children[0].checked)
+			table.item(i).cells[5].children[0].children[obj.value-1].selected = true;
+	}
+}
+function onaddacct(obj)
+{
+	var table = document.getElementsByTagName(\"table\")[4];
+	var poolid = document.getElementById(\"poolid\");
+	var e = table.insertRow(1);
+	var cell1 = e.insertCell(0);
+	
+	cell1.setAttribute('align', 'center');
+	cell1.innerHTML = '<input type=checkbox style=\"color:#0000ff\" checked onclick=\"onSubSelectItem(this)\"/>';
+	
+	cell1 = e.insertCell(1);
+	cell1.setAttribute('align', 'center');
+	cell1.innerHTML = 1;
+	
+	e.insertCell(2).innerHTML = '<input type=\"text\" style=\"width:100px\" onfocusout=\"onFocusoutRow(this)\" onfocusin=\"onFocusinRow(this)\"/>';
+	e.insertCell(3).innerHTML = '<input type=\"text\" style=\"width:100px\"/>';
+	
+	cell1 = e.insertCell(4);
+	cell1.setAttribute('align', 'right');	
+	cell1.innerHTML = '<select value=\"0\" >' +
+					'<option value=\"0\" selected>启用</option>' +
+					'<option value=\"1\">禁用</option>' +
+				'</select>'
+	var select_HTML = '<select value=\"'+poolid.value+'\">';
+	var i;
+	for(i = 0; i < poolid.length; i++) {
+		if(poolid.item(i).value == poolid.value)
+			select_HTML += '<option value=\"'+poolid.item(i).value+'\" selected>'+poolid.item(i).text+'</option>';
+		else
+			select_HTML += '<option value=\"'+poolid.item(i).value+'\">'+poolid.item(i).text+'</option>';
+	}
+	e.insertCell(5).innerHTML = select_HTML + '</select>';
+	
+	e.insertCell(6).innerHTML = '<input type=\"text\" style=\"width:80px\"/>';
+	e.insertCell(7).innerHTML = '<input type=\"text\" style=\"width:90px\"/>';
+	e.insertCell(8).innerHTML = '<input type=\"text\" style=\"width:140px\"/>';
+	e.insertCell(9).innerHTML = '<input type=\"text\" style=\"width:90px\">';
+	e.insertCell(10).innerHTML = '<input type=\"text\" style=\"width:98%;\"/>';
+	
+	cell1 = e.insertCell(11);
+	cell1.setAttribute('align', 'right');	
+	cell1.innerHTML = '<input type=\"button\" onclick=\"onDeleteRow(this)\" value=\"删除\"/>';
+	
+	calceRowIndex(table.children[0], 2);
+}
+function calceRowIndex(table, startIndex)
+{
+	for(i = startIndex;i < table.children.length; i++)
+		table.children[i].cells[1].innerText  = i;
+}
+isDoNotChecked = false;
+function onDoNotChecke(obj)
+{
+	isDoNotChecked = obj.checked;
+}
+function onDeleteRow(obj)
+{
+	var table_tr = obj.parentElement.parentElement;
+	var table = table_tr.parentElement;
+	
+	var rowindex = table_tr.rowIndex;
+	var RepeatValue = \"\"; 
+	if(rowindex > 0 ) {
+		if(isDoNotChecked == false &&
+			table_tr.cells[2].children[0].value != \"\" && 
+			confirm(\"你确定要删除帐号“\"+table_tr.cells[2].children[0].value+\"”嘛？\") == false)
+			return;
+		if (obj.style.backgroundColor == 'rgb(255, 102, 0)')
+			obj.value;
+			
+		table.deleteRow(rowindex);
+		
+		calceRowIndex(table, rowindex);
+		
+		if (RepeatValue != \"\")
+			delRepeatRowsColor(table, RepeatValue);
+	}
+}
+function onFocusinRow(obj)
+{
+	samevalue = obj.value;
+}
+function onFocusoutRow(obj)
+{
+	var table_tr = obj.parentElement.parentElement;
+	var table = table_tr.parentElement;
+	var samecount = 0; 
+	
+	for(i = 1;i < table.children.length; i++) {
+		if(table.children[i] != table_tr) {
+			if(table.children[i].cells[2].children[0].value == obj.value) { 
+				table.children[i].cells[2].children[0].style.backgroundColor = '#f60';
+				samecount++; 
+			}
+		}
+	}
+	if(samecount > 0) {
+		obj.style.backgroundColor = '#f60';
+		// alert(\"该帐号已经存在，请检查。\");
+	}
+	else if (obj.style.backgroundColor == 'rgb(255, 102, 0)') {
+		obj.style.backgroundColor = '';
+		delRepeatRowsColor(table, samevalue);
+	}
+}
+function delRepeatRowsColor(table, RepeatValue)
+{
+	var sv = new Array();
+	for(i = 1;i < table.children.length; i++) {
+		if(table.children[i].cells[2].children[0].value == RepeatValue)
+			sv[sv.length] = i;
+	}
+	if(sv.length == 1) {
+		table.children[sv[0]].cells[2].children[0].style.backgroundColor = '';
+	}
+}
+";
+if [ "${CGI_action}" = "import" ]; then
+	statustm=`date +%s`
+
+echo -n "
+function ajxs(settings)
+{
+	var http;
+	if (typeof XMLHttpRequest != 'undefined') 
+		http = new XMLHttpRequest();
+	else {
+		try {
+			http = new ActiveXObject(\"Msxml2.XMLHTTP\");    
+		}catch (e) {
+			try {
+				http = new ActiveXObject(\"Microsoft.XMLHTTP\");
+			} catch (e) {return ;}
+		}
+	}
+	http.open(settings.type, settings.url, true);
+	http.setRequestHeader(\"Accept\", \"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\");
+	http.setRequestHeader(\"Cache-Control\", \"no-cache\");
+	http.setRequestHeader(\"Accept-Language\", \"zh-CN,zh;q=0.8\");
+	http.setRequestHeader(\"Content-Type\", \"text/html; charset=GB2312\");
+	http.onreadystatechange = function() { 
+		if (http.readyState == 4) {
+			if (http.status == 200)
+				settings.success(http.responseText);
+			else
+				settings.error(http.status);
+		}
+	}
+	http.send(null);
+}
+//	
+count_err = 0;
+count_ok = 0;
+lastnum = 0;
+function getstatus() {
+	ajxs({type: 'POST', 
+				 url: '/cgi-bin/common/importstatus?s=${statustm}&n='+lastnum, 
+				 error: function(status){setTimeout(getstatus, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			d = undefined;
+		}
+		if(typeof(d) == \"undefined\") {
+			setTimeout(getstatus, 1000);
+			return;
+		}
+		lastnum = d.count;
+		var e;
+		var cell1;
+		var i;
+		var err_table_box = document.getElementById(\"err_box\");
+		
+		for(i=0; i<d.err.length; i++) {
+			e = err_table_box.insertRow(1);
+			e.style.color = '#f00';
+			e.setAttribute('status', 'err');
+			cell1 = e.insertCell(0);
+			cell1.setAttribute('align', 'right');
+			cell1.innerText='err：';
+			cell1 = e.insertCell(1);
+			cell1.setAttribute('align', 'left');
+			cell1.innerText = d.err[i];
+		}
+		
+		for(i=0; i<d.ok.length; i++) {
+			e = err_table_box.insertRow(1);
+			e.style.color = '#6EA00A';
+			e.setAttribute('status', 'ok');
+			cell1 = e.insertCell(0);
+			cell1.setAttribute('align', 'right');
+			cell1.innerText='ok：';
+			cell1 = e.insertCell(1);
+			cell1.setAttribute('align', 'left');
+			cell1.innerText = d.ok[i];
+		}
+		var item = err_table_box.children[0].children[0].cells[1].children[0];
+		
+		count_err += d.err.length;
+		count_ok += d.ok.length;
+		
+		item.children[0].innerText = count_err;
+		item.children[1].innerText = count_ok;
+		item.children[2].innerText = d.res_all;
+		if((count_err + count_ok) < d.res_all )
+			setTimeout(getstatus, 1000);
+		else {
+			if(count_err > 0) {
+				alert('导入中有错误！请检查。');
+				var clickReturn = document.getElementById(\"clickReturn\");
+				var btn = document.createElement(\"input\");
+				btn.type=\"button\";
+				btn.value=\"点击返回上层页面\";
+				btn.onclick=function (btn) {
+					window.location.href=\"${myself}\";
+				};
+				clickReturn.appendChild(btn);
+				for(i = err_table_box.rows.length - 1;i > 0; i--) {
+					if(err_table_box.rows[i].getAttribute('status') == 'ok')
+						err_table_box.deleteRow(i);
+				}
+			} else {
+				alert('导入完成！');
+				window.location.href=\"${myself}\";
+			}
+		}
+	}});
+}
+function onloaddoc()
+{
+	ajxs({type: 'POST',
+				 url: '/cgi-bin/common/importstatus?s=${statustm}&o=${CGI_override}', 
+				 success: function(data){}
+	});
+	setTimeout(getstatus, 1000);
+}
+</script>
+<body onload=\"onloaddoc();\">
+"; 
+else
+
+echo -n "
+</script>
+<body>
+";
+fi
+
+echo -n "
+<br>
+";
+if [ "${CGI_action}" = "createaccts" ]; then
+	dbtype="本地帐号配置"
+	dbid=0
+	CGI_type=defualt
+elif [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}" pppoeman
+	# Get a clean directory
+	mkdir -p ${DATAPATH}/config
+	rm -rf ${DATAPATH}/config/*
+	# verify the file
+	if [ "${CGI_type}" = "" ]; then
+		CGI_type=defualt;
+	fi
+	
+	case "${CGI_type}" in
+		"dbhzz")
+			dbtype="海蜘蛛"
+			dbid=1
+			break
+		;;
+		"dbros")
+			dbtype="ROS"
+			dbid=2
+			break
+		;;
+		"dbwayos")
+			dbtype="维盟(wayos)"
+			dbid=3
+			break
+		;;
+		"dbbytevalue")
+			dbtype="百为(bytevalue)"
+			dbid=4
+			break
+		;;
+		"dbikuai")
+			dbtype="爱快(iKuai)"
+			dbid=5
+			break
+		;;
+		"dbbithighway")
+			dbtype="碧海威(bithighway)"
+			dbid=6
+			break
+		;;
+		"dbnatshell")
+			dbtype="蓝海计费(natshell)"
+			dbid=6
+			break
+		;;
+		*)
+			dbtype="本地帐号配置"
+			dbid=0
+			CGI_type=defualt
+		;;
+	esac
+	cfgfile="${CGI_cfgfile}.db"
+	cat ${CGI_cfgfile} | tr -ds '\r' '' > ${cfgfile} 
+	rm -rf ${CGI_cfgfile}
+	rm -rf /tmp/t.txt
+	filecontent=`${AIDE_PPPOECLIENTACCT} -f -db ${CGI_type} ${cfgfile} | sed "s/\([();']\)/\\\\\\\1/g" | awk '{a++;print $0;}END{exit a;}'`
+	count="$?"
+	if [ "${count}" = "0" ]; then
+		afm_dialog_msg "无法找到任何可导入的内容，请检查内容格式是否正确。"
+		# CGI_action=""
+	fi 
+	rm -rf ${cfgfile}
+fi
+if [ "${CGI_action}" = "import" ]; then
+	operator_check "${myself}" pppoeman
+	# waiting for 15 seconds for scheduler.
+	if [ "${CGI_import_data}" != "" ]; then
+		echo "<br><p style=\"color:#0000ff\">正在导入[${CGI_dbtype}]配置，请稍候...... <div id='clickReturn'></div></p>"
+		
+		if [ -d /tmp/status ]; then
+			find /tmp/status/* -mtime +1 -exec rm {} \;
+		else
+			mkdir -p /tmp/status
+		fi 
+		
+		resources_file="/tmp/status/ipmport_resources_${statustm}"
+		status_file="/tmp/status/ipmport_status_${statustm}"
+		
+		echo "${CGI_import_data}" | tr '+' ' '  | tr -ds '\r' '' > ${resources_file}
+		acctcount=`grep "[^ ]" ${resources_file} | wc -l`
+		acctcount=$((${acctcount}))
+		# ${AIDE_PPPOECLIENTACCT} -i -debug ${resources_file} > ${status_file} &
+
+echo -n "
+<table id='err_box' width=1080 border=0 cellspacing=1 cellpadding=1>
+	<tr id=row1>
+		<td width=50 align=left>需导入：</td>
+		<td width=* align=left><b><span style=\"color:#f00\">0</span> / <span style=\"color:#8CB932\">0</span> / <span style=\"color:#00f\">${acctcount}</span></b> [ err / ok / all ]</td>
+	</tr>
+</table><br>
+</body>
+</html>
+";
+		exit 0
+	else
+		afm_dialog_msg "导入数据不能为空。" 
+	fi 
+fi
+cgi_show_title "基本对象->帐号导入"
+if [ "${CGI_action}" = "upload" -o "${CGI_action}" = "createaccts" ]; then
+	operator_check "${myself}" pppoeman
+	ifnames=`${FLOWEYE} if list | grep -E " *.* outside " | awk '{printf $1" "}'`
+
+echo -n "
+<form method=post onsubmit=\"return ValidateImportData(this)\" action=\"${myself}\">
+	<input type=hidden name=dbtype id=dbtype value=\"${dbtype}\"/>
+	<input type=hidden name=import_data id=import_data value=\"\"/>
+	<input type=hidden name=action value=import />
+	<table style=\"width:100%; border-bottom:1px #787882 solid; font-size:12px; color:#ff0000\">
+		<tr><td align=left>
+			请点击此处<a style=\"color:#0000ff;font-bold:true;font-size:13px;\" href=\"javascript:void(0)\" onclick=\"onSubmitData(this)\"><b>应用当前所选的配置</b></a>，内容如下：
+			（<a style=\"color:#0000ff;font-bold:true;font-size:13px;\" href=\"javascript:onBacking_out()\"><b>不用了</b></a>）
+		</td></tr>
+		<tr><td align=left>
+			提醒：1. 可选的导入服务组：确认后帐号将被导入所选的服务组。
+		</td></tr>
+		<tr><td align=left>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 导入列表的单选框：单选框被选中的都将会导入，否则导入时将会被忽略。
+		</td></tr>
+	</table>
+	<br>
+	<table style=\"font:14px\" width=1080 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+	<tr id=row1>
+		<td width=115 align=left>被导入的数据来源：</td>
+		<td width=160 align=left id=\"dbid\" dbid=${dbid}><b>${dbtype}</b></td>
+	</tr>
+	<tr id=row1>
+		<td width=110 align=left style=\"line-height: 28px;\">可选的导入服务组：</td>
+		<td width=160 align=left>
+					<select id=poolid value=\"${CGI_poolid}\" style=\"width:150;height:21\" onchange=\"onChangeSrcdst(this)\">
+";
+					if [ "${CGI_poolid}" = "" ]; then
+						CGI_poolid=1
+					fi
+					pppoeippool_list=`${FLOWEYE} pppoeippool list`
+					while read gid name theothers
+					do
+							[ "${name}" = "NULL" ] && name="${gid}"
+							if [ "${gid}" = "${CGI_poolid}" ]; then
+									echo "<option value=${gid} selected>${name}</option>"
+							else
+									echo "<option value=${gid}>${name}</option>"
+							fi
+					done << EOF
+${pppoeippool_list}
+EOF
+
+echo -n "
+					</select>
+		</td>
+		<td width=40></td>
+		<td width=125 style=\"font:14px\">删除帐号时无需确认：</td>
+		<td width=32 style=\"font:14px\"><input type=checkbox style=\"color:#0000ff\" onclick=\"onDoNotChecke(this)\"/></td>
+		<td width=40></td>
+		<td width=125 style=\"font:14px\">导入存在时自动覆盖：</td>
+		<td width=* style=\"font:14px\"><input type=checkbox style=\"color:#0000ff\" name=\"override\"/></td>
+	</tr>
+	</table>
+	<br>
+	<table style=\"width:1080; font-bold:true;font-size:15px; color:#CE6C04;border-bottom:0px #787882 solid\">
+	<tr>
+			<td width=80 style=\"font:14px\"><b>导入列表：</b></td>
+			<td width=* style=\"font:14px\" align=right><a href=\"javascript:onAddProxy()\"></a></td>
+	</tr>
+	</table> 
+	<table width=1080 border=0 cellspacing=1 cellpadding=1> 
+		<tr id=tblhdr>
+			<td width=40 align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' checked onclick=\"onSelectItem(this)\"/></td>
+			<td width=40 align=center>序号</td>
+			<td width=100 align=center>帐号</td>
+			<td width=100 align=center>密码</td>
+			<td width=60 align=center>状态</td>
+			<td width=80 align=center>地址池</td>
+			<td width=80 align=center>最后有效期</td>
+			<td width=90 align=center>姓名</td>
+			<td width=140 align=center>身份证</td>
+			<td width=90 align=center>联系电话</td>
+			<td width=* align=center>备注</td>
+			<td width=72 align=center>
+				<a id=\"impPppoeAcct\" style=\"color:#0000ff;font-size:13px\" href=\"javascript:onaddacct()\">添加>></a>
+			</td>
+		</tr>
+";
+	idname="row1"
+	index=0
+	if [ "${count}" != "0" ]; then
+		disable=0
+		while read type line
+		do
+			index=$((${index}+1))
+			for key_node in ${line}
+			do
+				eval ${key_node}
+			done
+			[ "${birth}" != "" ] && birth="birth=\"${birth}\""
+			[ "${start}" != "" ] && start="start=\"${start}\""
+			[ "${bindip}" != "" ] && bindip="bindip=\"${bindip}\""
+			echo "bindip:${bindip}<br>"
+
+echo -n "
+		<tr ${start} ${birth} ${bindip}>
+			<td align=center><input type=checkbox style=\"color:#0000ff\" checked onclick=\"onSubSelectItem(this)\"/></td>
+			<td align=center>${index}</td>
+			<td align=center><input type=\"text\" style=\"width:100px\" onfocusout=\"onFocusoutRow(this)\" onfocusin=\"onFocusinRow(this)\" value=\"${name}\"  bindmac=\"${bindmac}\"></td>
+			<td align=right><input type=\"text\" style=\"width:100px\" value=\"${passwd}\"></td>
+			<td align=right>
+				<select value=\"${disable}\" >
+"; if [ "${disable}" = "1" ]; then 
+echo -n "
+					<option value=\"0\">启用</option>
+					<option value=\"1\" selected>禁用</option>
+"; else 
+echo -n "
+					<option value=\"0\" selected>启用</option>
+					<option value=\"1\">禁用</option>
+"; fi 
+echo -n "
+				</select>
+			</td>
+			<td align=right>
+";
+					if [ "${poolid}" = "0" -a "${poolname}" != "" ]; then
+						echo "			<select value='${poolid}' poolname='${poolname}'>"
+						echo "<option value=0 selected>${poolname}</option>"
+					else
+						echo "			<select value='${poolid}'>"
+					fi
+					while read gid name theothers
+					do
+							[ "${name}" = "NULL" ] && name="${gid}"
+							if [ "${gid}" = "${poolid}" ]; then
+									echo "<option value=${gid} selected>${name}</option>"
+							else
+									echo "<option value=${gid}>${name}</option>"
+							fi
+					done << EOF
+${pppoeippool_list}
+EOF
+
+echo -n "
+				</select>
+			</td>
+			<td align=right><input type=\"text\" style=\"width:80px\" value=\"${expire}\"></td>
+			<td align=right><input type=\"text\" style=\"width:90px\" value=\"${fullname}\"></td>
+			<td align=right><input type=\"text\" style=\"width:140px\" value=\"${identitycard}\"></td>
+			<td align=right><input type=\"text\" style=\"width:90px\" value=\"${telephone}\"></td>
+			<td align=right><input type=\"text\" style=\"width:98%;\" value=\"${remark}\"></td>
+			<td align=right><input type=\"button\" onclick=\"onDeleteRow(this)\" value=\"删除\"></td>
+		</tr>
+";
+			dns=""
+			if [ "${idname}" = "row1" ]; then
+				idname="row2"
+			else
+				idname="row1"
+			fi
+			poolid=1
+			disable=0
+			name=""
+			passwd=""
+			expire=""
+			fullname=""
+			bindmac=""
+			bindip=""
+			identitycard=""
+			telephone=""
+			remark=""
+		done << EOF
+${filecontent}
+EOF
+	fi
+
+echo -n "
+	</table>
+</form>
+<br><br>&nbsp;
+</body>
+</html>
+";
+exit 0
+fi
+
+echo -n "
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3 style=\"font-size:13px;font-bold:true;\">
+<tr>
+    <td width=20></td>
+    <td align=left>1. 第一步: 选择需要导入数据源文件</td>
+</tr>
+<tr>
+    <td></td>
+    <td align=left>2. 第二步: 上传配置文件，如果系统验证文件无误，会进入导入配置编辑确认页面
+</td>
+</tr>
+<tr>
+    <td></td>
+    <td align=left>
+	<form method=post action=\"${myself}\">
+		<input type=hidden name=action value=createaccts></input>
+		<span style=\"color: #f00;\">批量创建帐号: <a href=\"javascript:void(0);\" onclick=\"this.parentElement.parentElement.submit();\">点此直接进入帐号创建页面</a></span>
+	</form>
+	</td>
+</tr>
+</table>
+<br>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr>
+	<td width=20></td>
+	<td width=100 style=\"font-size:13px;font-bold:true;\" align=left>帐号数据源文件:</td>
+	<td width=400 class=cssTDArial align=left>
+		<input type=file name=cfgfile style=\"width:100%\">
+	</td>
+	<td width=80 class=cssTDArial align=left>
+				<select name=type value=\"defualt\" >
+					<option value=\"defualt\" selected>本地帐号配置</option>
+					<option value=\"dbhzz\" >海蜘蛛</option>
+					<option value=\"dbros\" >ROS</option>
+					<option value=\"dbwayos\" >维盟(wayos)</option>
+					<option value=\"dbbytevalue\" >百为(bytevalue)</option>
+					<option value=\"dbikuai\" >爱快(iKuai)</option>
+					<option value=\"dbbithighway\" >碧海威(bithighway)</option>
+					<option value=\"dbnatshell\" >蓝海计费(natshell)</option>
+				</select>
+	</td>
+	<td width=* align=right>
+		<input type=hidden name=action value=upload></input>
+		<input type=submit style=\"width:54px\" value=\"上传\"></input>
+	</td>
+</tr>
+</table>
+<br>
+</form>
+</body>
+</html>
+";

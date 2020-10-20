@@ -1,0 +1,186 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Pppoe/`basename $0`"
+rootpath="/cgi-bin/Pppoe"
+MOD_TAB_LIST="基本参数#/cgi-bin/Pppoe/pppoesvr_config 服务列表#/cgi-bin/Pppoe/pppoesvr_list"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onAddServer()
+{
+	window.location.href = \"${rootpath}/pppoesvr_add\";
+}
+function onDeleteServer(name)
+{
+	if (confirm(\"服务器被删除后，所有通过它连接的在线用户都将强制下线，确定要删除?\"))
+		window.location.href = \"${myself}?action=delete&name=\" + name; 
+}
+function showServer(name)
+{
+	var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + name;
+	ShowWindow(url, \"\", 620, 700);
+}
+function showIf(ifname)
+{
+	var url = \"/cgi-bin/Monitor/if_show?name=\" + ifname + \"&title=网络接口->\" + ifname;
+	ShowWindow(url, \"\", 720, 700);
+}
+function getstatus()
+{
+	var table = document.getElementsByTagName(\"table\")[1].rows;
+	var items = new Array();
+	var i;
+	
+	for(i = 1; i < table.length; i++)
+		items.push(table[i].getAttribute(\"name\"));
+	if(items.length <= 0)
+		return;
+	AJXS({type: 'POST', 
+				 url: '/cgi-bin/common/plan_action?action=remark&items=' + items.join(' '), 
+				 error: function(status){setTimeout(getstatus, 3000);},
+				 success: function(data){ 
+		// var d = JSON.parse(data);
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			setTimeout(getstatus, 1000);
+			return;
+		}
+		if(table.length == d.data.length) {
+			for(i=1; i < d.data.length; i++) {
+				table[i].cells[13].childNodes[0].innerHTML = d.data[i].remark;
+			}
+		}
+		else
+			setTimeout(getstatus, 2000);
+	}});
+}
+function onresize()
+{
+        if (document.body.clientWidth > 1280) 
+                document.getElementById(\"mytbl1\").style.width=\"100%\";
+        else 
+                document.getElementById(\"mytbl1\").style.width=\"1280\";
+}
+function onloaddoc()
+{
+	getstatus();
+	onresize();
+}
+function editIppool(id) 
+{
+	var url = \"/cgi-bin/Pppoe/ippool_edit?id=\" + id;
+	ShowWindow(url, \"\", 680, 300);
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} nat rmvproxy ${CGI_name}`
+	[ "$?" != "0" ] && afm_dialog_msg "操作失败:${errmsg}"
+fi
+
+echo -n "
+<body onload=\"onloaddoc();\">
+"; cgi_show_title "PPPOE认证->服务列表"
+for nameval in `${FLOWEYE} pppoesvr stat`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<table id=mytbl1 width=\"100%\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=100 align=left>&nbsp;名称</td>
+	<td width=50  align=right>网卡</td>
+	<td width=80  align=right>服务</td>
+	<td width=80  align=right>网关地址</td>
+	<td width=140 align=right>DNS</td>
+	<td width=50  align=right>VLAN</td>
+	<td width=50  align=right>MTU</td>
+	<td width=70  align=right>认证方式</td>
+	<td width=70  align=right>地址池</td>
+	<td width=80  align=right>RADIUS</td>
+	<td width=95  align=right>在线用户/最大</td>
+	<td width=95  align=right>流入速率</td>
+	<td width=95  align=right>流出速率</td>
+	<td width=*   align=right>备注</td>
+	<td width=80  align=right><a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddServer()\">添加>>&nbsp;</a></td>
+</tr>
+";
+natcount=0
+idname="row1"
+${FLOWEYE} nat listproxy type=posvrif | while read type id name linkup ifname addr vlan mtu service dns0 dns1 clntcnt \
+lastinbytes lastoutbytes inbps outbps poolid poolname maxclnt auth disabled radsvrid radsvrname theothers
+do 
+	[ "${service}" = "NULL" ] && service=""
+	[ "${vlan}" = "0" ] && vlan=""
+
+echo -n "
+    <tr id=${idname} name=\"${name}\">
+    <td align=left><a style=\"color:#0000ff\" href=\"javascript:showServer('${name}')\">&nbsp;${name}</a></td>
+    <td align=right><a style=\"color:#0000ff\" href=\"javascript:showIf('${ifname}')\">${ifname}&nbsp;</a></td>
+    <td align=right>${service}</td>
+    <td align=right>${addr}</td>
+    <td align=right>${dns0},${dns1}</td>
+    <td align=right>${vlan}</td>
+    <td align=right>${mtu}</td>
+";
+	case "${auth}" in
+		"local")
+			echo "<td align=right>本地认证</td>"
+			;;
+		"radius")
+			echo "<td align=right>RADIUS</td>"
+			;;
+		"localrad")
+			echo "<td align=right>先本地后RADIUS</td>"
+			;;
+		"free")
+			echo "<td align=right>免认证</td>"
+			;;
+		*)
+			echo "<td align=right>UNKNOWN</td>"
+			;;
+    esac
+
+echo -n "
+    <td align=right><a style=\"color:#0000ff\" href=\"javascript:editIppool('${poolid}')\">${poolname}</a></td>
+"; if [ "${auth}" = "radius" -o "${auth}" = "localrad" ]; then 
+echo -n "
+    <td align=right>${radsvrname}&nbsp;</td>
+"; else 
+echo -n "
+    <td align=right>&nbsp;</td>
+"; fi 
+echo -n "
+    <td align=right>${clntcnt}/${maxclnt}&nbsp;</td>
+    <td align=right>${inbps}</td> 
+    <td align=right>${outbps}</td> 
+    <td align=right><span style=\"width:180px;\"></span></td>
+    <td align=right>
+	<img style=\"margin-top:3px\" src=\"/img/delete.png\" title=\"删除服务器\" onclick=\"onDeleteServer('${name}')\" />&nbsp;
+    </td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done 
+
+echo -n "
+</table>
+</body>
+</html>
+";

@@ -1,0 +1,82 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function Validate(frm)
+{
+	frm.sysname.value  = TrimAll(frm.sysname.value);
+	if (frm.sysname.value == \"\") {
+		alert(\"请输入系统名称!\");
+		frm.sysname.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	# verify it
+	string_verify "${CGI_sysname}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "系统名称中包含非法字符，请重新输入!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	echo "SYSNAME=${CGI_sysname}" > ${PGETC}/sysname.conf
+	echo "${CGI_sysname}" > /usr/ramdisk/etc/sysname.inf
+	# Modify index.htm
+	tmpfile=/tmp/index.htm
+	indexfile=${PGPATH}/admin/index.htm
+	if [ ${PGPATH}/admin/index.htm ]; then
+		[ -f ${tmpfile} ] && rm -f ${tmpfile}
+		# create an empty file first
+		touch ${tmpfile}
+		cat ${indexfile} | while read line
+		do
+			istitle=`echo ${line} | grep "^<TITLE>"`
+			if [ "${istitle}" != "" ]; then
+				echo "<TITLE>${CGI_sysname}</TITLE>" >> ${tmpfile}
+			else
+				echo "${line}" >> ${tmpfile}
+			fi 
+		done
+		mv ${tmpfile} ${indexfile}
+	fi
+	afm_dialog_msg "操作成功,为了看到变化，请关闭当前IE窗口重新浏览!"
+	afm_load_page 0 "${myself}"
+else
+	CGI_sysname="${SYSNAME}"
+fi
+
+echo -n "
+<body> 
+"; cgi_show_title "系统管理->系统名称" 
+echo -n "
+<br>
+<table width=\"76%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=100 align=left>系统名称</td>
+	<td width=120 align=left>
+		<input type=text class=text name=sysname style=\"width:100%\" value=\"${CGI_sysname}\"></input>
+	</td>
+	<td align=right width=120px><input type=submit style=\"width:100\" value=\"提交\"></input></td>
+	<td width=*></td>
+</tr>
+</form>
+</table>
+</center>
+</body>
+</html>
+";

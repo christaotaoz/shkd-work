@@ -1,0 +1,67 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_ipaddr}->共享用户"
+. ../common/common.sh 
+[ "${CGI_sort}" = "" ] && CGI_sort="bytes"
+args="ipaddr=${CGI_ipaddr}&sort=${CGI_sort}"
+MOD_TAB_LIST="流量概况#/cgi-bin/Monitor/ipview_data?${args} 连接信息#/cgi-bin/Monitor/ipview_flow?${args} 虚拟身份#/cgi-bin/Monitor/ipview_account?${args} 共享用户#/cgi-bin/Monitor/ipview_lip?${args} 移动终端#/cgi-bin/Monitor/ipview_mobile?${args}"
+afm_load_page 30 "/cgi-bin/Monitor/ipview_lip?${args}"
+myself="/cgi-bin/Monitor/`basename $0`"
+urlpath="${myself}?ipaddr=${CGI_ipaddr}"
+
+echo -n "
+<body>
+";
+for nameval in `${FLOWEYE} ipobj get ${CGI_ipaddr}`
+do
+        tag=`echo ${nameval} | cut -d'=' -f1`
+        val=`echo ${nameval} | cut -d'=' -f2-`
+        export ${tag}="${val}"
+done
+if [ ${usertype} -ne 0 ]; then
+	MOD_TAB_LIST="${MOD_TAB_LIST} 账号信息#/cgi-bin/Monitor/ipview_usrinfo?${args}"
+fi
+cgi_show_ipobj_info 
+cgi_print_mod_header "共享用户" 800
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50  class=bgurl1 align=center>序号</td>
+	<td width=100 class=bgurl1 align=right>用户类型</td>
+	<td width=100 class=bgurl1 align=right>浏览器</td>
+	<td width=* class=bgurl1 align=right>最后检测时间</td>
+</tr>
+";
+idname="row1"
+acctno=1
+${FLOWEYE} appobj cookielist ip=${CGI_ipaddr} | \
+while read tag browser cookie ipaddr refcnt lastdate lasttime winver theothers
+do
+
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${acctno}</td>
+	<td align=right>${winver}</td>
+	<td align=right>${browser}</td>
+	<td align=right>${lastdate} ${lasttime}</td>
+	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+	acctno=$((${acctno} + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

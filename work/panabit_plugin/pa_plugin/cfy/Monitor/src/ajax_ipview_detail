@@ -1,0 +1,27 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+result="'ip':'${CGI_ip}'"
+printf "["
+taglist=`/usr/ramdisk/bin/floweye ipobj get ${CGI_ip}` 
+if [ "$?" != "0" ]; then
+	echo "]"
+	exit 0
+fi
+for nameval in ${taglist}
+do
+	tag=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	if [ "${tag}" != "ip" ]; then
+		result="${result},'${tag}':'${val}'"
+	fi
+done
+printf "{${result}}"
+echo "]"
+
+echo -n "
+";

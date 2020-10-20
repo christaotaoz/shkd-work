@@ -1,0 +1,277 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showProxy(type, proxyname)
+{
+        var url;
+	url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 360, 460);
+}
+function editProxy(type, name)
+{
+	window.location.href = \"/cgi-bin/Route/proxy_edit?proxyname=\" + name;
+}
+function onEditWG(id, name, type)
+{
+	window.location.href = \"/cgi-bin/Route/wg_edit?id=\" + id + 
+		\"&name=\" + name + \"&type=\" + type;
+}
+function onAddWGwan(id, name)
+{
+	window.location.href = \"/cgi-bin/Route/wg_addwan?id=\" + id + \"&name=\" + name;
+}
+function onEditWGwan(id, name, proxy, weight)
+{
+	window.location.href = \"/cgi-bin/Route/wg_editwan?id=\" + id + 
+		\"&name=\" + name + \"&proxy=\" + proxy + \"&weight=\" + weight;
+}
+function onRmvWGwan(id, proxy)
+{
+	if (confirm(\"确定要从WAN群组中删除线路?\"))
+		window.location.href = \"${myself}?action=rmvwgwan&id=\" + id + \"&proxy=\" + proxy;
+}
+function onBatchChgWGwan(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.rows;
+	var data = GetSelectItemValue(table);
+	
+	if(data.length > 0) 
+		window.location.href = \"/cgi-bin/Route/wg_modify?data=\" + data.join(',');
+}
+function onBatchRmvWGwan(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.rows;
+	var data = GetSelectItemValue(table);
+	
+	if(data.length > 0) {
+		if (confirm(\"确定要删除选中的线路吗?\") == false)
+			return ;
+		window.location.href = \"${myself}?action=batrmvwgwan&data=\" + data.join(',');
+	}
+}
+function isSelectItemAll(obj, index, cellnum)
+{
+	var i;
+	for(i = index;i < obj.length; i++) {
+		if(obj.item(i).cells[cellnum].children[0].checked == false)
+			return false;
+	}
+	return true;
+}
+function GetSelectItemValue(obj)
+{
+	var i, j, table, id, wan, weight, 
+		data = new Array();
+	
+	for(i = 1;i < obj.length; i++) {
+		table = obj.item(i).cells[6].children[0].rows
+		for(j = 0;j < table.length; j++) {
+			if(table.item(j).cells[0].children[0].checked) {
+				id = obj.item(i).cells[5].children[0].value;
+				wan = table.item(j).cells[0].children[0].value;
+				weight = table.item(j).cells[0].children[0].getAttribute('weight');
+				data.push(id + '|' + wan + '|' + weight);
+			}
+		}
+	}
+	return data;
+}
+function onSelectItemChack(obj)
+{
+	var i;
+	var tr, table = obj.parentElement.parentElement.parentElement.rows;
+	
+	tr = obj.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
+	tr.cells[5].children[0].checked = isSelectItemAll(table, 0, 0);
+	
+	table = tr.parentElement.parentElement.rows;
+	table.item(0).cells[5].children[0].checked = isSelectItemAll(table, 1, 5);
+}
+function checkeItem(obj, ischecked)
+{
+	var i;
+	
+	for(i = 0;i < obj.length; i++)
+		obj.item(i).cells[0].children[0].checked = ischecked;
+}
+function onSelectItemSub(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.lastElementChild.children.item(0).rows;
+	
+	checkeItem(table, obj.checked);
+	table = obj.parentElement.parentElement.parentElement.rows;
+	table.item(0).cells[5].children[0].checked = isSelectItemAll(table, 1, 5);
+}
+function onSelectItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.rows;
+	if(table.length > 1) {
+		for(i = 1;i < table.length; i++) {
+			table.item(i).cells[5].children[0].checked = obj.checked;
+			checkeItem(table.item(i).cells[6].children[0].rows, obj.checked);
+		}
+	} 
+}
+function onWGTrend(id, name)
+{
+	var url = \"/cgi-bin/Monitor/wg_graph?time=day&id=\" + id + \"&name=\" + name;
+        ShowWindow(url, \"\", 750, 600);
+}
+</script>
+";
+if [ "${CGI_action}" = "rmvwgwan" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} wangroup set id=${CGI_id} proxy=${CGI_proxy} weight=-1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+if [ "${CGI_action}" = "batrmvwgwan" ]; then
+	operator_check "${myself}"
+	for wan in `echo ${CGI_data} | sed 's/,/ /g'`
+	do
+		echo ${wan} | sed 's/|/ /g' | \
+		while read id wan weight othe
+		do
+			errmsg=`${FLOWEYE} wangroup set id=${id} proxy=${wan} weight=-1`
+			if [ "$?" != "0" ]; then
+				echo "删除“${wan}”操作失败:${errmsg}"
+				errbox=yes
+			fi
+		done
+	done
+	if [ "${errbox}" = "yes" ]; then
+		afm_dialog_msg "操作过程中有失败！请稍后再重试。"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "应用路由->对象->线路群组" 
+echo -n "
+<table width=1080 border=0 cellspacing=0 cellpadding=0> 
+<tr id=tblhdr>
+	<td width=60  align=center>编号</td>
+	<td width=120 align=right>群组名称</td>
+	<td width=100 align=right>负载类型</td>
+	<td width=100 align=right>流入速率</td>
+	<td width=100 align=right>流出速率</td>
+	<td width=30  align=center><input type=checkbox style=\"color:#0000ff\" onclick=\"onSelectItem(this)\"/></td>
+	<td width=*   align=center>
+	<table width=\"100%\" border=0 cellspacing=0 cellpadding=0> 
+	<tr height=19>
+		<td width=30  align=center></td>
+		<td width=100 align=left>线路</td>
+		<td width=80  align=right>带宽比重</td>
+		<td width=80  align=right>流入速率</td>
+		<td width=80  align=right>流出速率</td>
+		<td width=*   align=right>
+		<a style=\"color:#0000ff\" href=\"javascript:void(0);\" onclick=\"onBatchChgWGwan(this)\">修改群组</a>&nbsp;&nbsp;
+		<a style=\"color:#0000ff\" href=\"javascript:void(0);\" onclick=\"onBatchRmvWGwan(this)\">批量删除&nbsp;</a></td>
+	</tr>
+	</table>
+	</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} wangroup list | while read id name pxycnt type inbps outbps members
+do 
+echo -n "
+	<tr id=${idname} height=22>
+	<td align=center>${id}&nbsp;
+		<a style=\"color:#0000ff\" href=\"javascript:onAddWGwan('${id}', '${name}')\">[+]</a>&nbsp;
+		<img src=\"/img/trend.png\" onclick=\"onWGTrend('${id}', '${name}')\"  title=\"流量趋势\" />&nbsp;
+	</td>
+	"; if [ "${name}" = "undefined" ]; then 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:onEditWG('${id}', '${name}', '${type}')\">未定义&nbsp;</a></td>
+	"; else 
+echo -n "
+	<td align=right><a style=\"color:#0000ff\" href=\"javascript:onEditWG('${id}', '${name}', '${type}')\">${name}&nbsp;</a></td>
+	"; fi 
+echo -n "
+	";	
+	case "${type}" in
+	"srcdst")
+		echo "<td align=right>源+目&nbsp;</td>"
+		;;
+	"src")
+		echo "<td align=right>源地址&nbsp;</td>"
+		;;
+	"dst")
+		echo "<td align=right>目的地址&nbsp;</td>"
+		;;
+	"spdp")
+		echo "<td align=right>地址+端口&nbsp;</td>"
+		;;
+	"srcsport")
+		echo "<td align=right>源地址+源端口&nbsp;</td>"
+		;;
+	"dstdport")
+		echo "<td align=right>目的地址+目的端口&nbsp;</td>"
+		;;
+	*)
+		echo "<td align=center></td>"
+		;;
+	esac 
+	
+echo -n "
+    	<td align=right>${inbps}</td>
+    	<td align=right>${outbps}</td>
+	<td width=30 align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' onclick=\"onSelectItemSub(this)\"/></td>
+	<td align=left>
+	<table width=\"100%\" border=0 cellspacing=0 cellpadding=0> 
+	"; 
+	newidname="row1"
+	${FLOWEYE} wangroup get id=${id} | while read type pxytype wanid wanname status weight inbps outbps theothers; do 
+		[ "${type}" != "wan" ] && continue;
+	
+echo -n "
+	<tr id=row5>
+		<td width=30 align=center><input type=checkbox style=\"color:#0000ff\" value='${wanname}' weight='${weight}' onclick=\"onSelectItemChack(this)\"/></td>
+	"; if [ ${status} -eq 1 ]; then 
+echo -n "
+    	<td width=100 align=left><a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxytype}', '${wanname}')\">${wanname}&nbsp;</a></td>
+	"; else 
+echo -n "
+    	<td width=100 align=left><a style=\"color:#ff0000\" href=\"javascript:showProxy('${pxytype}', '${wanname}')\">${wanname}&nbsp;</a></td>
+	"; fi 
+echo -n "
+	<td width=80  align=right>${weight}</td>
+	<td width=80  align=right>${inbps}</td>
+	<td width=80  align=right>${outbps}</td>
+	<td width=*  align=right>
+		<img style=\"margin-top:2px\" src=\"/img/edit.png\" title=\"修改参数\" onclick=\"onEditWGwan('${id}', '${name}', '${wanname}', '${weight}')\" />&nbsp;
+		<img style=\"margin-top:2px\" src=\"/img/delete.png\" title=\"去掉线路\" onclick=\"onRmvWGwan('${id}', '${wanname}')\" />&nbsp;
+	</tr>
+	"; done 
+echo -n "
+	</table>
+	</td>
+	</tr>
+"; if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

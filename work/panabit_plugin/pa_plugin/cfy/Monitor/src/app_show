@@ -1,0 +1,26 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+apptype=`${FLOWEYE} app showtree all | awk '{print $3,$5}' | grep "^${CGI_appid} " | cut -d' ' -f2`
+case "${apptype}" in
+"usragp")
+	afm_load_page 0 "/cgi-bin/Protocol/usragp_edit?agpid=${CGI_appid}"
+	;;
+"sysapp")
+	afm_load_page 0 "/cgi-bin/Monitor/appview_graph?appid=${CGI_appid}&title=${CGI_title}"
+	;;
+"sysgrp")
+	afm_load_page 0 "/cgi-bin/Monitor/grpview?group=${CGI_appid}&title=${CGI_title}"
+	;;
+esac
+
+echo -n "
+<body>
+</body>
+</html>
+";

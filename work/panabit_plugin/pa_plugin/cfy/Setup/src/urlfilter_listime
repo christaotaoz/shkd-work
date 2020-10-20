@@ -1,0 +1,203 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function modifyTime(args)
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_settime?\" + args;
+}
+function onAddTime() 
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_addtime\";
+}
+function deleteTime(tid)
+{
+	if (confirm(\"确定要删除该时段?\")) 
+		window.location.href = \"/cgi-bin/Setup/urlfilter_listime?action=delete&id=\" + tid;
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "/cgi-bin/Setup/urlfilter_listime"
+	errmsg=`${FLOWEYE} urlfilter rmvtime id=${CGI_id}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+if [ "${CGI_action}" = "defgrp" ]; then
+	operator_check "/cgi-bin/Setup/urlfilter_listime"
+	errmsg=`${FLOWEYE} urlfilter setdefgrp name=${CGI_defgrp}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+
+echo -n "
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlpdefgrp\" style=\"display:none\">当没有匹配到时段列表中的任何时段时,系统使用缺省策略组</span>
+<span id=\"hlpactive\" style=\"display:none\">这是当前生效的时段</span>
+"; cgi_show_title "HTTP管控->策略调度" 
+echo -n "
+<br>
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td align=left style=\"color:#0000ff;font:13px\">1. 在任一时刻，只能有一个策略组生效</td>
+</tr>
+<tr id=row1>
+	<td align=left style=\"color:#0000ff;font:13px\">2. 系统先匹配策略调度表，如果没有匹配到表项，就使用缺省策略组</td>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:15px; color:#CE6C04\">
+<tr><td align=left>缺省策略组</td></tr>
+</table>
+<table width=\"800\" border=0 cellspacing=0 cellpadding=1>
+<tr id=tblhdr height=22>
+<form method=post action=\"${myself}\">
+	<td width=75><a onmouseover=\"TagToTip('hlpdefgrp')\" onmouseout=\"UnTip()\">缺省策略组</a></td>
+	<td width=* class=cssTDArial align=left>
+	"; CGI_defgrp=`${FLOWEYE} urlfilter getdefgrp | cut -d' ' -f1` 
+echo -n "
+        <select name=defgrp value=\"${CGI_defgrp}\" style=\"width:360;height:22\">
+        ";
+                ${FLOWEYE} urlfilter listgrp | while read pid name
+                do
+			selected=""
+			[ ${CGI_defgrp} -eq ${pid} ] && selected="selected"
+                        echo "<option value=\"${pid}\" ${selected}>${name}</option>"
+                done
+		if [ ${CGI_defgrp} -eq 0 ]; then
+                	echo "<option value=\"0\" selected>空策略组</option>"
+		else
+                	echo "<option value=\"0\">空策略组</option>"
+		fi
+        
+echo -n "
+        </select>
+	<input type=hidden name=action value=defgrp></input>&nbsp;
+        <input type=submit style=\"width:100;height:21\" value=\"修改缺省策略组\"></input>
+	</td>
+</form>
+</tr>
+</table>
+<br>
+<table style=\"width:800; font:bold 14px; color:#CE6C04\">
+<tr><td align=left>策略调度表</td></tr>
+</table>
+<table width=800 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=100 align=center>编号</td>
+	<td width=100 align=center>是否有效</td>
+	<td width=100 align=center>在线用户</td>
+	<td width=120 align=center>日期</td>
+	<td width=120 align=center>时刻</td>
+	<td width=120 align=center>策略组</td>
+	<td width=* align=center><a style=\"color:#0000ff\" href=\"javascript:onAddTime()\">添加时段>>></a></td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} urlfilter listtime | \
+while read id active disabled month startday endday starthour startmin startsec endhour endmin endsec polid polname ipmin ipmax theothers
+do
+	if [ "${active}" = "active" ]; then
+	    echo "<tr style=\"font:12px,bold;color:#0000ff\" onmouseover=\"TagToTip('hlpactive')\" onmouseout=\"UnTip()\">"
+	else
+	    echo "<tr id=${idname}>"
+	fi
+	sday="${startday}"
+	eday="${endday}"
+	echo "<td align=center>${id}</td>"
+	if [ "${disabled}" = "yes" ]; then
+		echo "<td align=center style=\"color:#ff0000\">无效</td>"
+	else
+		echo "<td align=center>有效</td>"
+	fi
+	if [ ${ipmin} -eq 0 -a ${ipmax} -eq 0 ]; then
+		echo "<td align=center>不限</td>"
+	else
+		echo "<td align=center>${ipmin}&nbsp;-&nbsp;${ipmax}</td>"
+	fi
+	if [ "${month}" = "0" ]; then
+		case "${startday}" in
+		"1")
+			startday="一"
+			;;
+		"2")
+			startday="二"
+			;;
+		"3")
+			startday="三"
+			;;
+		"4")
+			startday="四"
+			;;
+		"5")
+			startday="五"
+			;;
+		"6")
+			startday="六"
+			;;
+		"7")
+			startday="日"
+			;;
+		esac
+		case "${endday}" in
+		"1")
+			endday="一"
+			;;
+		"2")
+			endday="二"
+			;;
+		"3")
+			endday="三"
+			;;
+		"4")
+			endday="四"
+			;;
+		"5")
+			endday="五"
+			;;
+		"6")
+			endday="六"
+			;;
+		"7")
+			endday="日"
+			;;
+		esac
+		echo "<td align=center>每周:星期${startday}~星期${endday}</td>"
+	else
+		echo "<td align=center>${month}月${startday}号~${endday}号</td>"
+	fi
+	echo "<td align=center>${starthour}:${startmin}:${startsec} ~ ${endhour}:${endmin}:${endsec}</td>"
+	echo "<td align=center>${polname}</td>"
+	
+	echo "<td align=center>"
+	echo "<a href=\"javascript:modifyTime('status=${disabled}&schid=${id}&month=${month}&startday=${sday}&endday=${eday}&starthour=${starthour}&startmin=${startmin}&startsec=${startsec}&endhour=${endhour}&endmin=${endmin}&endsec=${endsec}&policygrp=${polid}&ipmin=${ipmin}&ipmax=${ipmax}')\">编辑&nbsp;</a>"
+	echo "<a href=\"javascript:deleteTime('${id}')\">&nbsp;&nbsp;删除&nbsp;&nbsp;</a></td>"
+	echo "</tr>"
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

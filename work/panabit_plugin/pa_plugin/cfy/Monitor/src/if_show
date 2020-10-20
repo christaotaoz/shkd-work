@@ -1,0 +1,202 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="${CGI_name}->当前状态"
+. ../common/common.sh 
+MOD_TAB_LIST="`cgi_show_iftablist ${CGI_name}`"
+afm_load_page 5 "/cgi-bin/Monitor/if_show?name=${CGI_name}"
+for nameval in `${FLOWEYE} if get ${CGI_name}`
+do
+	nameval=`echo ${nameval} | sed -e "s/-/_/g"`
+	eval "${nameval}"
+done
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function ifEdit(ifname)
+{
+        var url = \"/cgi-bin/Setup/if_edit?ifname=\" + ifname;
+        ShowWindow(url, \"\", 400, 200);
+}
+function ifDump(ifname)
+{
+        var url = \"/cgi-bin/Monitor/ifdump?ifname=\" + ifname;
+        ShowWindow(url, \"\", 550, 720);
+}
+function ifTop(ifname)
+{
+        var url = \"/cgi-bin/App/iftop/webmain?ifname=\" + ifname;
+        ShowWindow(url, \"\", 320, 620);
+}
+</script>
+</script>
+<body>
+"; cgi_print_mod_header  "当前状态"  700 
+echo -n "
+<br>
+<table class=bgurl width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=10></td>
+	<td align=left width=100>网卡名称</td>
+	<td align=left width=*><b>${CGI_name}</b>&nbsp;&nbsp;
+		<a href=\"javascript:ifEdit('${CGI_name}')\">修改参数</a>&nbsp;&nbsp;
+		<a href=\"javascript:ifDump('${CGI_name}')\">内部信息</a>&nbsp;&nbsp;
+		"; if [ "${zone}" != "inside" ]; then 
+echo -n "
+		<a href=\"javascript:ifTop('${CGI_name}')\">iftop</a>&nbsp;&nbsp;
+		"; fi 
+echo -n "
+	</td>
+</tr>	
+<tr id=row1>
+	<td></td>
+	<td align=left>应用模式</td>
+"; if [ "${mode}" = "0" ]; then 
+echo -n "
+	<td align=left>监控</td>
+"; else 
+echo -n "
+	<td align=left>网桥</td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>接入位置</td>
+"; if [ "${zone}" = "inside" ]; then 
+echo -n "
+	<td align=left>内网</td>
+"; else 
+echo -n "
+	<td align=left>外网</td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>驱动类型</td>
+"; if [ "${driver}" = "PANAOS" ]; then 
+echo -n "
+	<td align=left>增强型</td>
+"; else 
+echo -n "
+	<td align=left>${driver}</td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>对端接口</td>
+	"; [ "${peer}" = "none" ] && peer="" 
+echo -n "
+	<td align=left>${peer}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>网卡型号</td>
+	<td align=left>${ifdesc}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>网卡状态</td>
+"; if [ "${link_state}" = "up" ]; then 
+echo -n "
+	<td align=left><a style=\"color:#00ff00\">正常</a></td>
+"; else 
+echo -n "
+	<td align=left><a style=\"color:#ff0000\">未接线</a></td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>工作速率</td>
+";
+	case "${media}" in
+	"AUTO")
+		echo "<td align=left>自适应</td>"
+		;;
+	"100FD")
+		echo "<td align=left>100M全双工</td>"
+		;;
+	"1000FD")
+		echo "<td align=left>1000M全双工</td>"
+		;;
+	*)
+		echo "<td align=left>${media}</td>"
+		;;
+	esac
+
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>MTU</td>
+	<td align=left>${mtu}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>MAC地址</td>
+	<td align=left>${macaddr}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>最近掉线</td>
+"; if [ "${lastdowntime}" != "1970_01_01/08:00:00" ]; then 
+echo -n "
+	<td align=left>${lastdowntime}</td>
+"; else 
+echo -n "
+	<td align=left></td>
+"; fi 
+echo -n "
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>总流入速率</td>
+	<td align=left>${bps_in}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>TCP流入速率</td>
+	<td align=left>${bps_tcp_in}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>UDP流入速率</td>
+	<td align=left>${bps_udp_in}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>总流出速率</td>
+	<td align=left>${bps_out}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>TCP流出速率</td>
+	<td align=left>${bps_tcp_out}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>UDP流出速率</td>
+	<td align=left>${bps_udp_out}bps</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>流入PPS</td>
+	<td align=left>${pps_in}</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>流出PPS</td>
+	<td align=left>${pps_out}</td>
+</tr>
+</table>
+</body>
+</html>
+";

@@ -1,0 +1,87 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+afm_load_page 30 "${myself}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showProxy(type, proxyname)
+{
+        var url;
+	url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 400);
+}
+function editProxy(type, name)
+{
+	window.location.href = \"/cgi-bin/Route/proxy_edit?proxyname=\" + name;
+}
+function onEditWG(id, name, type)
+{
+	window.location.href = \"/cgi-bin/Route/wg_edit?id=\" + id + 
+		\"&name=\" + name + \"&type=\" + type;
+}
+function onAddWGwan(id, name)
+{
+	window.location.href = \"/cgi-bin/Route/wg_addwan?id=\" + id + \"&name=\" + name;
+}
+function onEditWGwan(id, name, proxy, weight)
+{
+	window.location.href = \"/cgi-bin/Route/wg_editwan?id=\" + id + 
+		\"&name=\" + name + \"&proxy=\" + proxy + \"&weight=\" + weight;
+}
+function onRmvWGwan(id, proxy)
+{
+	if (confirm(\"确定要从WAN群组中删除线路?\"))
+		window.location.href = \"${myself}?action=rmvwgwan&id=\" + id + \"&proxy=\" + proxy;
+}
+</script>
+";
+if [ "${CGI_action}" = "rmvwgwan" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} wangroup set id=${CGI_id} proxy=${CGI_proxy} weight=-1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "应用路由->线路群组->${CGI_name}" 
+echo -n "
+<br>
+<table width=500 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=100 align=right>线路名称</td>
+	<td width=80  align=right>线路权重</td>
+	<td width=*   align=right>组内速率(out/in)</td>
+</tr>
+";
+wgid=`${FLOWEYE} wangroup list | grep " ${CGI_name} " | awk '{print $1}'`
+idname="row1"
+${FLOWEYE} wangroup get id=${wgid} | while read type pxytype wanid wanname weight inbps outbps theothers; do 
+	[ "${type}" = "id" -o "${type}" = "name" -o "${type}" = "type" ] && continue;
+
+echo -n "
+<tr id=${idname} height=22>
+<td width=100 align=right><a style=\"color:#0000ff\" href=\"javascript:showProxy('${pxytype}', '${wanname}')\">${wanname}&nbsp;</a></td>
+<td width=80  align=right>${weight}&nbsp;</td>
+<td width=* align=right>${outbps}&nbsp;/&nbsp;${inbps}&nbsp;</td>
+"; if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

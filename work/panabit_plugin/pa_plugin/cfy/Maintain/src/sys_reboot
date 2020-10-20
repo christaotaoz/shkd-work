@@ -1,0 +1,101 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+case "${CGI_action}" in
+"reboot")
+	CGI_title="系统重启"
+	;;
+"halt")
+	CGI_title="系统关机"
+	;;
+esac
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function Validate(frm)
+{
+";
+	if [ "${CGI_action}" = "reboot" ]; then
+		echo "if (!confirm(\"确定要重启整个系统?\"))
+		return false;"
+	else
+		echo "if (!confirm(\"确定要关机?\"))
+		return false;"
+	fi
+
+echo -n "
+	frm.curpwd.value  = TrimAll(frm.curpwd.value);
+	if (frm.curpwd.value == \"\")
+	{
+		alert(\"请输入管理员密码!\");
+		frm.curpwd.select();
+		return false;
+	}
+	return true;
+}
+</script>
+";
+PASSWDFILE=${PGPATH}/admin/.htpasswd
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}?actiion=${CGI_action}"
+	if [ ! -f ${PASSWDFILE} ]; then
+		afm_dialog_msg "发现严重错误，系统密码文件毁坏!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	curpasswd=`cat ${PASSWDFILE} | grep "${ADMIN_NAME}:" | cut -d':' -f2-`
+	if [ "${curpasswd}" != "${CGI_curpwd}" ]; then
+		afm_dialog_msg "密码不正确,请输入正确的密码!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	case "${CGI_action}" in
+	"reboot")
+		afm_dialog_msg "系统正在重启，请您耐心等待......"
+		sync
+		sync
+		sleep 1
+		reboot
+		;;
+	"halt")
+		# save data
+		afm_dialog_msg "系统几秒钟后自动关机!"
+		${PGPATH}/bin/ipectrl stop datamon
+		sync
+		sync
+		sleep 1
+		halt -lp
+		;;
+	esac
+fi
+
+echo -n "
+<body> 
+"; cgi_show_title "系统管理->${CGI_title}" 
+echo -n "
+<br>
+<table width=\"76%\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>请输入管理员密码</td>
+	<td width=100 align=left>
+		<input type=password class=text name=curpwd style=\"width:100\"></input>
+		<input type=hidden name=action value=\"${CGI_action}\"></input>
+	</td>
+	<td align=right width=120px><input type=submit style=\"width:100\" value=\"${CGI_title}\"></input></td>
+	<td width=*></td>
+</tr>
+</form>
+</table>
+</center>
+</body>
+</html>
+";

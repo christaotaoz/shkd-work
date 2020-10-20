@@ -1,0 +1,88 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+cgipath="${myself}?type=${CGI_type}&name=${CGI_name}&cname=${CGI_cname}"
+[ "{CGI_refres}" = "" ] && CGI_refresh=60
+afm_load_page  ${CGI_refresh} "${cgipath}"
+
+echo -n "
+<body>
+";
+case "${CGI_type}" in
+"3day")
+	cgi_show_title "${CGI_cname}在线趋势3日对比"
+	;;
+"history")
+	cgi_show_title "${CGI_cname}在线历史趋势"
+	;;
+"*")
+	cgi_show_title "Unknown类型"
+	;;
+esac
+
+echo -n "
+<br>
+";
+if [ "${CGI_name}" = "total" ]; then
+	tags="mob_total"
+else
+	tags="mob_${CGI_name}"
+fi
+width=610
+showargs="width=600 height=260 tag=${tags} yname=count"
+if [ "${CGI_type}" = "3day" ]; then
+	png72=${CGI_name}_grp72_${CGI_type}.png
+	png48=${CGI_name}_grp48_${CGI_type}.png
+	png24=${CGI_name}_grp24_${CGI_type}.png
+	endtm=`date +%s`
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${png24} hours=24`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${png48} tmend=${endtm} hours=24`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${png72} tmend=${endtm} hours=24`
+	echo "<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近24小时趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png24}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>24小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png48}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>48小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png72}\"></img></td></tr></table>"
+fi
+if [ "${CGI_type}" = "history" ]; then
+	daypng=${CGI_name}_grpday_${CGI_type}.png
+	weekpng=${CGI_name}_grpweek_${CGI_type}.png
+	monpng=${CGI_name}_grpmon_${CGI_type}.png
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${daypng} hours=24`
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${weekpng} hours=168`
+	errmsg=`${FLOWEYE} chart show ${showargs} outimg=${TMPPATH}/${monpng} hours=720`
+	echo "<table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:${width}; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>"
+fi
+
+echo -n "
+</body>
+</html>
+";

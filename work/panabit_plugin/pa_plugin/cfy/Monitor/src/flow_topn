@@ -1,0 +1,134 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+width=800
+[ "${CGI_appid}" = "" ] && CGI_appid="any"
+[ "${CGI_topn}" = "" ] && CGI_topn=100
+[ "${CGI_type}" = "" ] && CGI_type="inner"
+CGI_appname=`${FLOWEYE} app name ${CGI_appid}`
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showip(ipaddr, online, ttl, outbyte, inbyte, outrate, inrate)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr +
+              \"&online=\" + online + \"&ttl=\" + ttl + \"&outbyte=\" + outbyte +
+              \"&inbyte=\" + inbyte + \"&outrate=\" + outrate + \"&inrate=\" + inrate;
+        ShowWindow(url, \"\", 650, 800);
+}
+function showOutip(ipaddr)
+{
+        var url;
+        url = \"/cgi-bin/Monitor/outip_flow?ipaddr=\" + ipaddr; 
+        ShowWindow(url, \"\", 650, 800);
+}
+function selectApp(appid)
+{
+        var url = \"/cgi-bin/Setup/app_select\";
+        var retval = ShowDialog(url, \"\", 400, 600);
+        if (retval == \"NONE\") return;
+        var ar = retval.split(\",\");
+        if (ar.length != 2) {
+                alert(\"无效的返回值\");
+                return;
+        }
+        var appid = document.getElementsByName(\"appid\")[0];
+        var appname = document.getElementsByName(\"appname\")[0];
+        appid.value = ar[0];
+        appname.value = ar[1];
+}
+</script>
+<body>
+"; [ "${CGI_browsertitle}" = "" ] && cgi_show_title "Top排名->Top连接" 
+echo -n "
+<br>
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<form method=post action=\"${myself}\">
+<tr id=tblhdr height=22>
+        <td width=* align=left><b>用户类型&nbsp;</b>
+        <select name=type value=\"${CGI_type}\" style=\"width:100;height:21\">
+        ";
+                if [ "${CGI_type}" = "inner" ]; then
+                        echo "<option value=inner selected>内网用户</option>"
+                        echo "<option value=outer>外网用户</option>"
+                else
+                        echo "<option value=inner>内网用户</option>"
+                        echo "<option value=outer selected>外网用户</option>"
+                fi
+        
+echo -n "
+        </select>&nbsp; 
+        <b>&nbsp;显示前&nbsp;</b>
+        <select name=topn value=\"${CGI_topn}\" style=\"width:70;height:21\">
+        ";
+                for tm in 10 20 30 50 100 0; do
+                        if [  ${tm} -eq 0 ]; then
+                                tmdesc="所有"
+                        else
+                                tmdesc="${tm}"
+                        fi
+                        if [ "${CGI_topn}" = "${tm}" ]; then
+                                echo "<option selected value=${tm}>${tmdesc}</option>"
+                        else
+                                echo "<option value=${tm}>${tmdesc}</option>"
+                        fi
+                done
+        
+echo -n "
+        </select>&nbsp;项
+        <b>&nbsp;应用协议
+	<input type=hidden name=appid value=\"${CGI_appid}\"></input>
+	<input type=text name=appname value=\"${CGI_appname}\" disabled style=\"width:120\">
+	<input type=button name=tmp value=\"选择协议...\" style=\"width:100px\" onclick=\"selectApp('${CGI_appid}')\"></input>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type=submit value=\"提  交\" style=\"width:70;height:21\"></input></td>
+</tr>
+</form>
+</table>
+"; wid=$((${width} / 2)) 
+echo -n "
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+        <td width=${wid} align=center><b>IP地址</b></td>
+        <td width=* align=center><b>连接数</b></td>
+</tr>
+";
+idname="row1"
+args="type=${CGI_type}"
+if [ "${CGI_type}" = "inner" ]; then
+	showip=1
+else
+	showip=0
+fi
+[ "${CGI_appid}" != "any" -a "${CGI_appid}" != "" ] && args="${args} app=${CGI_appid}"
+[ ${CGI_topn} -ne 0 ] && args="${args} topn=${CGI_topn}"
+${FLOWEYE} flow ipsort ${args} | while read ip count theothers
+do
+        echo "<tr id=${idname}>"
+	echo "<td align=left>"
+	if [ ${showip} -ne 0 ]; then
+        	echo "<a href=\"javascript:showip('${ip}', '${onlinesec}', '${ttl}', '${outbyte}', '${inbyte}', '${outrate}', '${inrate}')\">&nbsp;&nbsp;&nbsp;&nbsp;${ip}</a>"
+	else
+        	echo "<a href=\"javascript:showOutip('${ip}')\">&nbsp;&nbsp;&nbsp;&nbsp;${ip}</a></td>"
+	fi
+	echo "</td>"
+        echo "<td align=right>${count}</td>"
+        if [ "${idname}" = "row1" ]; then
+                idname="row2"
+        else
+                idname="row1"
+        fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

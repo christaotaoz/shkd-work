@@ -1,0 +1,73 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+imports:
+#  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml
+#    - plugin.yaml
+    - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+    - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+    policy_id:
+        type: string
+        description: >
+            The ID of Firewall Policy, range from 1 to 1000
+    internal_ip:
+        type: string
+        description: >
+            format of xxx.xxx.xxx.xxx-xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx/n, if mathing all, enter 'any'
+    internal_port:
+        type: string
+        description: >
+            Internal Network Port, enter 'any'
+    external_ip:
+        type: string
+        description: >
+            format of xxx.xxx.xxx.xxx-xxx.xxx.xxx.xxx or xxx.xxx.xxx.xxx/n, if mathing all, enter 'any'
+    external_port:
+        type: string
+        description: >
+            External Network Port, if mathing all, enter 'any'
+    protocol:
+        type: string
+        description: >
+            TCP , UDP or PPP, if mathing all, enter 'any'
+    direction:
+        type: string
+        description: >
+            The direction, the value should be in , out or both
+        default: both
+    action:
+        type: string
+        description: >
+            The action rule of firewall, permit or deny
+
+node_templates:
+    fire_wall_conf:
+        type: cloudify.pa.flow_control
+        properties:    
+            policy_number: { get_input: policy_id }
+            bridge: any
+            desc:
+            dir: { get_input: direction }
+            vlan: 0
+            intype:
+                data_sources: 0
+                data_value: { get_input: internal_ip }
+            iniptbl: 1
+            inport: { get_input: internal_port }
+            outtype: { get_input: external_ip }
+            outiptbl: 1
+            outport: { get_input: external_port }
+            proto: { get_input: protocol }
+            appid: any
+            natip: 0        
+            hasms: 0
+            qqcnt: 0
+            action: { get_input: action }
+            iprate: 0
+            tos: 0
+            matchact: stop
+
+
+#outputs
+ 

@@ -1,0 +1,23 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+firstelem=1
+printf "["
+/usr/ramdisk/bin/floweye app stat bridge=0 topn=10 sort=bps | \
+while read appid appname flow node aup adown all per1 lup ldown lall per2 rup rdown rall natupbps natdownbps theother
+do
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{'name':'${appid}',cname:'${appname}',flowcnt:'${flow}',upbps:'${rup}','downbps':'${rdown}'}"
+		firstelem=0
+	else
+		printf ",{'name':'${appid}',cname:'${appname}',flowcnt:'${flow}',upbps:'${rup}','downbps':'${rdown}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

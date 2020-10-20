@@ -1,0 +1,31 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<body>
+"; 
+cgi_show_title "Web认证->账号管理->导出文件" 
+exportfile="${PGPATH}/admin/tmp/usrinfo.txt"
+if [ -f ${PGETC}/usrinfo.conf ]; then
+	cp -f ${PGETC}/usrinfo.conf ${exportfile}
+else
+	[ -f ${exportfile} ] && rm -f ${exportfile}
+	touch ${exportfile}
+fi
+
+echo -n " 
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3>
+<tr>
+    <td width=20></td>
+    <td style=\"font:13px bold\" width=*><a href=\"/tmp/usrinfo.txt\">在此处<b style=\"font-size:14px;color:#ff0000;\">点击鼠标右键，选择\"另存为...\"</b>菜单导出当前配置文件</a></td>
+</tr>
+</table>
+<br>
+</body>
+</html>
+";

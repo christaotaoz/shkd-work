@@ -1,0 +1,24 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+firstelem=1
+FLOWEYE=/usr/ramdisk/bin/floweye
+printf "["
+${FLOWEYE} app rate link=${CGI_wan} sort=${CGI_sort} | while read name cname upbps downbps bps theothers
+do
+	[ "${bps}" = "0" ] && continue
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{ 'name':'${name}','cname':'${cname}','upbps': '${upbps}', 'downbps':'${downbps}','allbps':'${bps}'}"
+		firstelem=0
+	else
+		printf ", { 'name':'${name}','cname':'${cname}','upbps': '${upbps}', 'downbps':'${downbps}','allbps':'${bps}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

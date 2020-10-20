@@ -1,0 +1,75 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Route/`basename $0`"
+return_url="/cgi-bin/Route/proxy_list"
+AIDE_REMARKMAN="${PGPATH}/admin/cgi-bin/common/aide_remarkman"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_proxyname}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "线路名字中包含非法字符!"
+		#afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_vlan1}" = "" ] && CGI_vlan1="0"
+	[ "${CGI_pingip}" = "" ] && CGI_pingip="0.0.0.0"
+	[ "${CGI_pingip2}" = "" ] && CGI_pingip2="0.0.0.0"
+	[ "${CGI_clonemac}" = "" ] && CGI_clonemac="00:00:00:00:00:00"
+	natcmd="name=${CGI_proxyname} ifname=${CGI_ifname}"
+	if [ "${CGI_wantype}" = "static" ]; then
+		[ "${CGI_proxymtu}" = "" ] && CGI_proxymtu=1500
+		CGI_mtu=${CGI_proxymtu}
+	else
+		[ "${CGI_pppoemtu}" = "" ] && CGI_pppoemtu=1500
+		CGI_mtu=${CGI_pppoemtu}
+	fi
+	natcmd="${natcmd} mtu=${CGI_mtu} pingip=${CGI_pingip} pingip2=${CGI_pingip2}"
+	natcmd="${natcmd} clonemac=${CGI_clonemac}"
+	natcmd="${natcmd} vlan=${CGI_vlan} vlan1=${CGI_vlan1}"
+	if [ "${CGI_wantype}" = "static" ]; then
+		[ "${CGI_proxydns}" = "" ] && CGI_proxydns="0.0.0.0"
+		natcmd="nat addproxy ${natcmd} addr=${CGI_proxyaddr} gateway=${CGI_proxygw} dns=${CGI_proxydns}"
+		if [ "${CGI_natip}" != "" -a "${CGI_natip}" != "0.0.0.0" ]; then
+			natcmd="${natcmd} natip=${CGI_natip}"
+		fi
+	else
+		natcmd="nat addpppoe ${natcmd} username=${CGI_username} password=${CGI_password}"
+		[ "${CGI_service}" != "" ] && natcmd="${natcmd} service=${CGI_service}"
+		[ "${CGI_reqacname}" != "" ] && natcmd="${natcmd} acname=${CGI_reqacname}"
+		[ "${CGI_waitime}" != "" ] && natcmd="${natcmd} waitime=${CGI_waitime}"
+		[ "${CGI_pppoe_onlypap}" != "" ] && natcmd="${natcmd} pppoe_onlypap=${CGI_pppoe_onlypap}"
+	fi
+	[ "${CGI_ipidnormalize}" = "1" ] && natcmd="${natcmd} ipidnormalize=1"
+	
+	errmsg=`${FLOWEYE} ${natcmd}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		#afm_load_page 0 "${return_url}"
+		errmsg=`${AIDE_REMARKMAN} -c ${CGI_proxyname} ${CGI_remark}`
+		if [ "${errmsg}" != "" ]; then
+			errmsg=`${AIDE_REMARKMAN} -a ${CGI_proxyname} ${CGI_remark}`
+		fi
+		exit 0
+	fi
+else
+	CGI_proxydns="0.0.0.0"
+	CGI_vlan="0"
+	CGI_vlan1="0"
+	CGI_pingip="0.0.0.0"
+	CGI_pppoe_onlypap=0
+	[ "${CGI_wantype}" = "" ] && CGI_wantype="static"
+	[ "${CGI_waitime}" = "" ] && CGI_waitime="5"
+	CGI_remark="`${AIDE_REMARKMAN} -l | grep -E "^${CGI_proxyname} " | awk '{print $2}'`" 
+	[ "${CGI_ipidnormalize}" = "" ] && CGI_ipidnormalize=0
+	[ "${CGI_standby}" = "" ] && CGI_standby="NULL"
+fi
+

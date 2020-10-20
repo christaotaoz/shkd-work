@@ -1,0 +1,178 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+TMP_DIR=/usr/ramdisk/tmp
+DIFF_TXT=${TMP_DIR}/diff.txt
+EMPTY_LINE_TXT=${TMP_DIR}/empty_line.txt
+CFG_SHOW=/cgi-bin/Maintain/cfg_show
+[ ! -e ${EMPTY_LINE_TXT} ] && touch ${EMPTY_LINE_TXT}
+
+echo -n "
+<style type=\"text/css\">
+html, body {
+	color: #000000;
+	background-color: #ffffff;
+	font-family: 微软雅黑,Arial;
+	font-size:14px;
+}
+a:link { color: #0000ff;}
+a:visited { color: #880088;}
+a:active { color: #0000ff;}
+table.auto{
+	width:auto;
+}
+table {
+	width:100%;
+	margin:0;
+}
+tr,td,th { vertical-align: top;}
+th { white-space: nowrap;}
+.diff_header {
+	background-color:#ffffff;
+}
+.diff_empty {
+	background-color:#cccccc;
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_add {
+	background-color: #aaffaa;
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_remove {
+	background-color: #ffaaaa;
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_change {
+	background-color: #ffff77;
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_change_empty {
+	background-color: #eeee77;
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_nochange {
+	font-family: Arial;
+	font-size: smaller;
+}
+.diff_line_number {
+}
+</style>
+<body>
+";
+if [ ! -s ${DIFF_TXT} ]; then
+	echo "
+		<b>配置文件相同!</b>
+	</body>
+	</html>
+	";
+	exit 0
+fi
+
+echo -n "
+<table border=0 cellspacing=\"0\" cellpadding=\"0\">
+	<tbody>
+		<tr class=\"diff_header\">
+			<th style=\"width:2%;\"></th>
+			<th style=\"width:49%; vertical-align:top;font-size:13px\">
+			同步前配置
+			</th>
+			<th style=\"width:49%;veritcal-align:top;font-size:13px\">
+			同步后配置
+			</th>
+		</tr>
+";
+cat /dev/null > ${EMPTY_LINE_TXT}
+while read line
+do
+	line_add=`echo ${line} | grep '>'`
+	line_del=`echo ${line} | grep '<'`
+	line_chg=`echo ${line} | grep '|'`
+	if [ "${line_add}" != "" ]; then
+		line_num=`echo ${line_add} | cut -d ':' -f1`
+		ctn_add=`echo ${line_add} | cut -d '>' -f2`
+
+echo -n "
+		<tr>
+			<td class=\"diff_line_number\">
+				<a href=\"${CFG_SHOW}?action=indirect_show#${line_num}\" target=\"_blank\">${line_num}</a>
+			</td>
+			<td class=\"diff_empty\">&nbsp;</td>
+			<td class=\"diff_add\">${ctn_add}</td>
+		</tr>
+";
+	fi
+	if [ "${line_del}" != "" ]; then
+		line_num=`echo ${line_del} | cut -d ':' -f1`
+		echo "${line_num}" >> ${EMPTY_LINE_TXT}
+		ctn_del=`echo ${line_del} | cut -d '<' -f1`
+		ctn_del=${ctn_del#*:}
+
+echo -n "
+		<tr>
+			<td class=\"diff_line_number\">
+				<a href=\"${CFG_SHOW}?action=indirect_show#${line_num}\" target=\"_blank\">${line_num}</a>
+			</td>
+			<td class=\"diff_remove\">${ctn_del}</td>
+			<td class=\"diff_empty\">&nbsp;</td>
+		</tr>
+";
+	fi
+	if [ "${line_chg}" != "" ]; then
+		line_num=`echo ${line_chg} | cut -d ':' -f1`
+		ctn_old=`echo ${line_chg} | cut -d '|' -f1`
+		ctn_old=${ctn_old#*:}
+		ctn_new=`echo ${line_chg} | cut -d '|' -f2`
+
+echo -n "
+		<tr>
+			<td class=\"diff_line_number\">
+				<a href=\"${CFG_SHOW}?action=indirect_show#${line_num}\" target=\"_blank\">${line_num}</a>
+			</td>
+			<td class=\"diff_change\">${ctn_old}</td>
+			<td class=\"diff_change\">${ctn_new}</td>
+		</tr>
+";
+	fi
+done < ${DIFF_TXT}
+
+echo -n "
+	</tbody>
+</table>
+<hr style=\"margin-top:1em;\" />
+<table style=\"border:solid gray 1px;\" class=\"auto\">
+	<tbody>
+		<tr>
+			<td>
+				\"备注:\"<br>
+				<table cellspacing=\"0\" cellpadding=\"1\">
+					<tbody>
+						<tr>
+							<td style=\"text-align:center;\" class=\"diff_remove\">从同步前配置文件中删除的一行</td>
+							<td class=\"diff_empty\">&nbsp;</td>
+						</tr>
+						<tr>
+							<td style=\"text-align:center;\" colspan=\"2\" class=\"diff_change\">更改过的一行</td>
+						</tr>
+						<tr>
+							<td class=\"diff_empty\">&nbsp;</td>
+							<td style=\"text-align:center;\" class=\"diff_add\">在同步前配置文件中增加的一行</td>
+						</tr>
+					</tbody>
+				</table>
+			</td>
+		</tr>
+	</tbody>
+</table>
+						
+</body>
+</html>
+";

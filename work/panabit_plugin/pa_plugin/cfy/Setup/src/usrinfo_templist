@@ -1,0 +1,210 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddUser(ipgrp)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_tempadd\";
+}
+function deleteUser(name)
+{
+	if (confirm(\"确定要删除账号?\")) {
+		window.location.href = \"${myself}\" + \"?action=delete&name=\" + name;
+	}
+}
+function modifyPasswd(name)
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_setpasswd?usrname=\" + name;
+}
+function  enableUser(name)
+{
+	window.location.href = \"${myself}?action=enable&name=\" + name;
+}
+function  disableUser(name)
+{
+	window.location.href = \"${myself}?action=disable&name=\" + name;
+}
+function listOnline(name)
+{
+	var url = \"/cgi-bin/Setup/usrinfo_listonline?name=\" + name;
+	ShowWindow(url, \"\", 640, 700);
+}
+function showIp(ipaddr)
+{
+        var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+        ShowWindow(url, \"\", 650, 700);
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo config templogin_enable=${CGI_templogin_enable} tempuser_ttl0=${CGI_tempuser_ttl0} tempuser_ttl1=${CGI_tempuser_ttl1}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		errmsg=`${FLOWEYE} webauth config templogin_enable=${CGI_templogin_enable}` 
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo delete name=${CGI_name}` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo set name=${CGI_name} enable=1` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo set name=${CGI_name} enable=0` 
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; 
+cgi_show_title "Web认证->临时账号" 
+for nameval in `${FLOWEYE} usrinfo stat`
+do
+	eval "CGI_${nameval}"
+done
+CGI_group="${CGI_tempgroup}"
+for nameval in `${FLOWEYE} webauth stat | grep templogin`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"width:1000; border-bottom:1px #787882 dotted; color:#CE6C04\">
+<tr><td align=left style=\"font-size:14px\"><b>基本参数</b></td></tr>
+</table>
+<br>
+<table width=1000 border=0 cellspacing=1 cellpadding=1>
+<tr id=row1>
+        <td width=40></td>
+        <td width=120 align=left>临时账号登陆</td>
+        <td width=* align=left>
+		<select name=templogin_enable style=\"width:100\" value=${CGI_templogin_enable}>
+		";
+			if [ ${CGI_templogin_enable} -eq 0 ]; then
+				echo "<option value=1>允许登陆</option>"
+				echo "<option value=0 selected>不允许登陆</option>"
+			else
+				echo "<option value=1 selected>允许登陆</option>"
+				echo "<option value=0>不允许登陆</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+        <td width=40></td>
+        <td width=120 align=left>最大空闲时间</td>
+        <td width=* align=left>
+		<input type=text name=tempuser_ttl0 style=\"width:100\" value=${CGI_tempuser_ttl0}></input>&nbsp;(秒,账号创建后，最大的空闲时间，超过此时间后没有用户用就自动删除)
+	</td>
+</tr>
+<tr id=row1>
+        <td width=40></td>
+        <td width=120 align=left>最大使用时间
+        <td width=* align=left>
+		<input type=text name=tempuser_ttl1 style=\"width:100\" value=${CGI_tempuser_ttl1}></input>&nbsp;(秒,账号的最长在线时间，超过此时间，自动下线并删除)
+		&nbsp;&nbsp;&nbsp;<input type=submit style=\"width:80\" value=\"提交\" />
+	</td>
+</tr>
+</table>
+</form>
+<table style=\"width:1000; border-bottom:1px dotted; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td style=\"font-size:14px\" align=left><b>账号列表</b></td>
+</table>
+<table width=1000 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=60  align=center>编号</td>
+	<td width=100 align=right>账号名称</td>
+	<td width=100 align=right>登陆密码</td>
+	<td width=150 align=right>账号状态</td>
+	<td width=200 align=right>在线IP</td>
+	<td width=200 align=right>最近访问</td>
+        <td width=* align=right>
+		<a style=\"color:#0000ff;font-size:14px\" href=\"javascript:onAddUser('${CGI_group}')\">添加账号>></a>&nbsp;&nbsp;
+	</td>
+</tr>
+";
+no=1
+idname="row1"
+${FLOWEYE} usrinfo list group=${CGI_group} | while read group grpname name passwd refcnt enabled maxlogin ipaddr uid ltime theothers
+do 
+echo -n "
+	<tr id=\"${idname}\">
+	<td align=center>${no}</td>
+	<td align=right>${name}</td>
+	<td align=right>${passwd}</td>
+	"; if [ ${enabled} -eq 0 ]; then 
+echo -n "
+	<td align=right><img src=\"/img/no.png\" style=\"margin-right:5px;vertical-align:middle;\" title=\"账号被禁止使用\" /></td>
+	"; else 
+echo -n "
+	<td align=right><img src=\"/img/yes.png\" style=\"margin-right:5px;vertical-align: middle;\" title=\"账号可正常使用\" /></td>
+	"; fi 
+echo -n "
+	"; if [ "${ipaddr}" != "0.0.0.0" ]; then 
+echo -n "
+	<td align=right><a href=\"javascript:showIp('${ipaddr}')\">${ipaddr}</a></td>
+	"; else 
+echo -n "
+	<td align=right></td>
+	"; fi 
+echo -n "
+	<td align=right>${ltime}</td>
+	<td align=right>
+	<img src=\"/img/delete.png\" onclick=\"deleteUser('${name}')\" title=\"删除账号\" />&nbsp;
+        "; if [ ${enabled} -ne 0 ]; then 
+echo -n "
+	<img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"disableUser('${name}')\" title=\"禁止账号\" />&nbsp;
+        "; else 
+echo -n "
+	<img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"enableUser('${name}')\" title=\"启用账号\" />&nbsp;
+        "; fi 
+echo -n "&nbsp;
+	</td>
+	</tr>
+";
+	no=$((${no} + 1))
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done 
+echo -n "
+</table>
+</body>
+</html>
+";

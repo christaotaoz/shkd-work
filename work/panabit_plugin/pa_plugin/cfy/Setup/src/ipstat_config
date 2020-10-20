@@ -1,0 +1,82 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; . ../common/common.sh 
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var ttl = document.getElementsByName(\"ttl\")[0];
+	ttl.value = TrimAll(ttl.value);
+	if (ttl.value == \"\" || !IsDigit(ttl.value)) {
+		alert(\"请输入最大空闲时间!\");
+		ttl.select();
+		return false;
+	}
+	if (ttl.value < 60) {
+		alert(\"最大空闲时间不能小于60秒!\");
+		ttl.select();
+		return false;
+	}
+	return true;
+}
+</script>
+"; 
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Setup/ipstat_config"
+	errmsg=`${FLOWEYE} ipobj config enable=${CGI_enable} ttl=${CGI_ttl}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} ipobj stat`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "参数设置-->内网IP统计" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"/cgi-bin/Setup/ipstat_config\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=150 align=left>内网IP流量统计功能</td>
+	<td width=* align=left>
+		<select name=enable value=${CGI_enable} style=\"width:100\">
+		";
+			if [ ${CGI_enable} -eq 0 ]; then
+				echo "<option value=1>打开</option>"
+				echo "<option value=0 selected>关闭</option>"
+			else
+				echo "<option value=1 selected>打开</option>"
+				echo "<option value=0>关闭</option>"
+			fi
+		
+echo -n "
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>内网IP最大空闲时间</td>
+	<td width=* align=left><input type=text name=ttl style=\"width:100px\" value=\"${CGI_ttl}\"></input>&nbsp;(秒,系统自动删除空闲时间超过此值的IP)</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr><td align=right><input type=submit style=\"width:80\" value=\"提交\"></input></td></tr>
+</table>
+</form>
+</body>
+</html>
+";

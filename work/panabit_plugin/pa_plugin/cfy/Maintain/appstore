@@ -1,0 +1,165 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+CGI_browsertitle="应用商店"
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+approot=/usr/ramdisk/app
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function appConfig(app, width, height)
+{
+        var url = \"/cgi-bin/App/\" + app + \"/webmain\";
+        ShowWindow(url, \"\", width, height);
+}
+function appEnable(app)
+{
+        var url = \"${myself}?action=enable&app=\" + app;
+	window.location.href = url;
+}
+function appDisable(app)
+{
+        var url = \"${myself}?action=disable&app=\" + app;
+	window.location.href = url;
+}
+function appDelete(app)
+{
+	var url;
+	if (confirm(\"确定要卸载该APP?\")) {
+        	url = \"${myself}?action=delete&app=\" + app;
+		window.location.href = url;
+	}
+}
+function appAdd()
+{
+        var url = \"/cgi-bin/Maintain/appinstall\";
+	window.location.href = url;
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	if [ "${CGI_app}" = "" ]; then
+		afm_dialog_msg "APP不能为空!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	. /etc/PG.conf
+	apppath="${PGPATH}/app/${CGI_app}"
+	if [ ! -d ${apppath} ]; then
+		afm_dialog_msg "无效的APP!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ ! -e ${apppath}/app.inf ]; then
+		afm_dialog_msg "APP不存在!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	apptype=`cat ${apppath}/app.inf | grep "app_type=" | cut -d'=' -f2`
+	if [ "${apptype}" = "sys" ]; then
+		afm_dialog_msg "不能删除系统预装的APP!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	if [ -x ${apppath}/preuninstall ]; then
+		errmsg=`${apppath}/preuninstall`
+		if [ "$?" != "0" ]; then
+			afm_dialog_msg "${errmsg}"
+			afm_load_page 0 "${myself}"
+			exit 0
+		fi
+	fi
+	errmsg=`${apppath}/appctrl stop`
+	sleep 1
+	[ -x ${apppath}/afteruninstall ] && errmsg=`${apppath}/afteruninstall`
+	rm -rf /usr/ramdisk/app/${CGI_app}
+	rm -rf ${apppath}
+	afm_dialog_msg "APP成功从系统中删除!"
+	afm_load_page 0 "${myself}"
+	exit 0
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}"
+	appctrl="${approot}/${CGI_app}/appctrl"
+	if [ ! -e ${appctrl} ]; then
+		afm_dialog_msg "应用不存在!"
+	else
+		errmsg=`${appctrl} enable`
+		if [ "$?" != "0" ]; then
+			afm_dialog_msg "操作失败:${errmsg}"
+		fi
+	fi	
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}"
+	appctrl="${approot}/${CGI_app}/appctrl"
+	if [ ! -e ${appctrl} ]; then
+		afm_dialog_msg "应用不存在!"
+	else
+		errmsg=`${appctrl} disable`
+		if [ "$?" != "0" ]; then
+			afm_dialog_msg "操作失败:${errmsg}"
+		fi
+	fi	
+fi
+
+echo -n "
+<body style=\"padding:0px 0px\">
+<table id=mytbl width=\"100%\" border=0 cellspacing=1 cellpadding=0> 
+<tr id=tblhdr>
+	<td width=120 align=right>应用名称</td>
+	<td width=80  align=right>版本信息</td>
+	<td width=*   align=right>功能描述</td>
+	<td width=130 align=center>
+		<a style=\"color:#0000ff;font-weith:bold\" href=\"javascript:appAdd()\">应用安装升级...</a>
+	</td>
+</tr>
+";
+natcount=0
+idname="row1"
+for app in `ls ${approot}`
+do
+	appinf="${approot}/${app}/app.inf"
+	appctrl="${approot}/${app}/appctrl"
+	[ ! -e ${appinf} -o ! -e ${appctrl} ] && continue
+	. ${appinf}
+	[ "${app_width}" = "" ] && app_width=600
+	[ "${app_height}" = "" ] && app_height=400
+	app_status=`${appctrl} status`
+	[ "${app_status}" = "disable" ] && idname="row4"
+
+echo -n "
+    <tr id=${idname}>
+    <td align=right><a style=\"color:#0000ff\" href=\"javascript:appConfig('${app}', ${app_width}, ${app_height})\">${app_cname}&nbsp;</a></td>
+    <td align=right>${app_version}&nbsp;</td>
+    <td align=right>${app_desc}&nbsp;</td>
+    <td align=center>
+	<img src=\"/img/delete.png\" style=\"margin-top:3px\" onclick=\"appDelete('${app}')\"  title=\"卸载APP\" />&nbsp;&nbsp;
+	"; if [ "${app_status}" != "disable" ]; then 
+echo -n "
+                <img src=\"/img/disable.png\" style=\"margin-top: 3px\" onclick=\"appDisable('${app}')\" title=\"禁用APP\" />&nbsp;&nbsp;
+	"; else 
+echo -n "
+                <img src=\"/img/enable.png\" style=\"margin-top: 3px\" onclick=\"appEnable('${app}')\" title=\"启用APP\" />&nbsp;&nbsp;
+	"; fi 
+echo -n "
+    </td>
+    </tr>
+";
+    if [ "${idname}" = "row1" ]; then
+        idname="row2"
+    else
+        idname="row1"
+    fi
+done 
+
+echo -n "
+</table>
+</body>
+</html>
+";

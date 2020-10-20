@@ -1,0 +1,85 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_sort}" = "" ] && CGI_sort="bytes"
+myself="/cgi-bin/Monitor/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showProxy(proxyname)
+{
+        var url = \"/cgi-bin/Monitor/proxy_show?proxyname=\" + proxyname;
+        ShowWindow(url, \"\", 350, 400);
+}
+</script>
+<body>
+"; cgi_show_title "外网IP${CGI_ipaddr}连接信息" 
+echo -n "
+<br>
+<table width=613 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=70 class=bgurl1 align=center><a href=\"${myself}&sort=app\">应用名称</a></td>
+	<td width=30 class=bgurl1 align=center><a href=\"${myself}&sort=proto\">协议</a></td>
+	<td width=180 class=bgurl1 align=center><a href=\"${myself}&sort=conn\">连接</a></td>
+	<td width=70 class=bgurl1 align=center><a href=\"${myself}&sort=proxy\">WAN线路</a></td>
+	<td width=40 class=bgurl1 align=center><a href=\"${myself}&sort=time\">时长</a></td>
+	<td width=40 class=bgurl1 align=center>DSCP</td>
+	<td width=* class=bgurl1 align=center><a href=\"${myself}&sort=bytes\">流量(up/down)</a></td>
+</tr>
+";
+case "${CGI_sort}" in
+"bytes")
+	sortkey="-k8"
+	;;
+	
+"app")
+	sortkey="-k2"
+	;;
+"proto")
+	sortkey="-k3"
+	;;
+"conn")
+	sortkey="-k4"
+	;;
+"proxy")
+	sortkey="-k11"
+	;;
+*)
+	sortkey="-k8"
+	;;
+esac
+idname="row1"
+${FLOWEYE} flow list -ip ${CGI_ipaddr} | sort ${sortkey} | \
+while read life appname tcpudp conninfo bytes1 bytes2 ttl allbytes tos1 tos2 proxyname theothers
+do
+	[ "${proxyname}" = "NULL" ] && proxyname=""
+
+echo -n "
+	<tr id=${idname}>
+	<td align=left>&nbsp;${appname}</td>
+	<td align=center>${tcpudp}</td>
+	<td align=right>${conninfo}</td>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:showProxy('${proxyname}')\">${proxyname}</a></td>
+	<td align=right>${life}</td>
+	<td align=right>${tos1}/${tos2}</td>
+	<td align=right>${bytes1}/${bytes2}</td>
+	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

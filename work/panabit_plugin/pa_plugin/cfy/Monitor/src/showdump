@@ -1,0 +1,42 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="系统dump信息"
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+
+echo -n "
+<script language=\"javascript\">
+function clearDump()
+{
+	window.location.href = \"${myself}?action=cleardump\";
+}
+</script>
+";
+if [ "${CGI_action}" = "cleardump" ]; then
+	. /etc/PG.conf
+	rm -f ${DATAPATH}/panaos.core
+	rm -f /var/tmp/panaos.dump
+	afm_window_close
+fi
+
+echo -n "
+<body>
+<br>
+<textarea style=\"width:480;height:550\" rows=45 cols=40>
+"; 
+if [ -e /var/tmp/panaos.dump ]; then
+	cat /var/tmp/panaos.dump 
+fi
+
+echo -n "
+</textarea>
+<br>
+<a style=\"color:#0000ff\" href=\"javascript:clearDump()\"><b>清除dump信息</b></a>
+</body>
+</html>
+";

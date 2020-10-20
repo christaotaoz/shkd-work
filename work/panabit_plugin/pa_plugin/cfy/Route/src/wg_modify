@@ -1,0 +1,112 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+returl="/cgi-bin/Route/wg_list"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onCancel() 
+{
+	window.location.href = \"${returl}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	
+	if [ "${CGI_data}" != "" ]; then
+		for wan in `echo ${CGI_data} | sed 's/,/ /g'`
+		do
+			wancfg=`echo ${wan} | sed 's/|/ /g'`
+			while read id wan weight othe
+			do
+				if [ "${CGI_id}" != ${id} ]; then
+					errmsg=`${FLOWEYE} wangroup set id=${id} proxy=${wan} weight=-1`
+					if [ "$?" != "0" ]; then
+						echo "转移“${wan}”前操作失败:${errmsg}<br>"
+						errbox=yes
+					else 
+						errmsg=`${FLOWEYE} wangroup set id=${CGI_id} proxy=${wan} weight=${weight}`
+						if [ "$?" != "0" ]; then
+							echo "转移“${wan}”后操作失败:${errmsg}<br>"
+							errbox=yes
+						fi
+					fi
+				fi
+			done << EOF
+${wancfg}
+EOF
+		done
+		if [ "${errbox}" = "yes" ]; then
+			afm_dialog_msg "操作过程中有失败！请稍后再重试。"
+		fi
+		afm_load_page 0 "${returl}"
+		exit 0
+	else
+		afm_dialog_msg "没有需要转移的线路，请确认操作后重试!"
+	fi
+fi
+[ "${CGI_id}" = "" ] && CGI_id=1
+
+echo -n "
+<body>
+";
+cgi_show_title "接口线路->线路群组->修改群组"
+
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table style=\"font:14px\" width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td align=left>新的群组</td>
+        <td align=left>
+		<select name=id value=\"${CGI_id}\" style=\"width:150;height:21\">
+";
+		${FLOWEYE} wangroup list | while read id name pxycnt type ttl inbps outbps members
+		do
+			[ "${name}" = "NULL" ] && name="${gid}"
+			if [ "${id}" = "${CGI_id}" ]; then
+				echo "<option value=${id} selected>${name}</option>"
+			else
+				echo "<option value=${id}>${name}</option>"
+			fi
+		done
+		
+		wancount=`echo ${CGI_data} | awk -F',' '{print NF;}'`
+
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=100 align=left>被转移的线路量</td>
+	<td width=* align=left>
+		<b>${wancount}</b>
+	</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=hidden name=data value=\"${CGI_data}\" /> 
+		<input type=submit style=\"width:80\" value=\"提交\" />
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\" />
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

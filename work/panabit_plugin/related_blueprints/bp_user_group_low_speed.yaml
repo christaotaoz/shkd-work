@@ -1,0 +1,61 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+  user_group_name:
+    description: >
+      The name of the user group to be created
+    default:
+
+node_templates:
+  new_user_group:
+    type: cloudify.pa.user_group
+    properties:
+      user_group_name:
+        get_input: user_group_name
+      start_ip: 0
+      final_ip: 0
+      max_uplink_rate: 256
+      max_downlink_rate: 256
+      dns_server: 114.114.114.114,8.8.8.8
+      max_online_time: 0
+      allow_for_overdue_account: reject
+      dialing_interface: 'NULL'
+      
+      group_en_name:
+        get_input: user_group_name
+      group_cn_name:
+        get_input: user_group_name
+      applist: httpdown,httppost,httpdns,ipsearch,speedtestx,topweb,webmusic,webmail,
+               yunservice,otherweb,email,terminal,filetransf,netmgmt,proxy,security,
+               viruskill,icmp,ospf,igmp,arp,bgp,teredo,netbarclient,httpsgrp,netpay,
+               netad,wtp,tracert,bitcoin,capwap,im,stock,voip,database,mobile
+
+      desc:
+        get_input: user_group_name
+      bridge: any
+      dir: both
+      vlan: 0
+      intype: 
+        data_sources: 1
+        data_value:
+          get_input: user_group_name
+      iniptbl: 1
+      inport: 0
+      outtype: any
+      outiptbl: 1
+      outport: 0
+      proto: any
+      appid:
+        get_input: user_group_name
+      natip: 0
+      hasms: 0
+      qqcnt: 0
+      action: permit
+      iprate: 0
+      tos: 0
+      matchact: stop
+
+

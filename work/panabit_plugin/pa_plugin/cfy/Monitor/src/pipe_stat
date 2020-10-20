@@ -1,0 +1,107 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+CGI_browsertitle="数据通道->${CGI_pname}"
+. ../common/common.sh 
+afm_load_page 8 "/cgi-bin/Monitor/pipe_stat?pname=${CGI_pname}"
+all_namevalues=`${FLOWEYE} policy getbwo ${CGI_pname}`
+if [ "$?" != "0" ]; then
+	sleep 1
+	all_namevalues=`${FLOWEYE} policy getbwo ${CGI_pname}`
+	[ "$?" != "0" ] && all_namevalues=""
+fi
+for nameval in ${all_namevalues}
+do
+	eval "${nameval}"
+done
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function editPipe()
+{
+	var url = \"/cgi-bin/Setup/pipe_edit?pname=${CGI_pname}\"
+        ShowWindow(url, \"\", 460, 420);
+}
+</script>
+<body>
+<br>
+<table width=\"570\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50 align=center>编号</td>
+	<td width=95 align=right>通道带宽(kbps)</td>
+	<td width=95 align=right>排队中(Bytes)</td>
+	<td width=95 align=right>发送速率(bps)</td>
+	<td width=95 align=right>丢弃速率(bps)</td>
+	<td width=*  align=right>队列长度(Bytes)</td>
+</tr>
+<tr id=row1>
+	<td align=center>${id}</td>
+	<td align=right>${rate}</td>
+	<td align=right>${bytes}</td>
+	<td align=right><a style=\"color:#0000ff\">${outbps}</a></td>
+"; if [ "${dropbps}" = "0" ]; then 
+echo -n "
+	<td align=right>${dropbps}</td>
+"; else 
+echo -n "
+	<td align=right><a style=\"color:#ff0000\">${dropbps}</a></td>
+"; fi 
+echo -n "
+	<td align=right>${qsize}</td>
+</tr>
+</table>
+<br>
+<table width=\"570\" border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50 align=center>优先级</td>
+	<td width=95 align=right>保证带宽(kbps)</td>
+	<td width=95 align=right>排队中(Bytes)</td>
+	<td width=95 align=right>发送速率(bps)</td>
+	<td width=95 align=right>丢弃速率(bps)</td>
+	<td width=*  align=right>备注</td>
+</tr>
+";
+idname="row1"
+no=1
+${FLOWEYE} policy gethtb ${CGI_pname} | while read pri gbw bytes outbps dropbps desc theothers
+do 
+	[ "${pri}" = "pri" ] && continue
+
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${pri}</td>
+	<td align=right>${gbw}</td>
+	<td align=right>${bytes}</td>
+	<td align=right><a style=\"color:#0000ff\">${outbps}</a></td>
+"; if [ "${dropbps}" = "0" ]; then 
+echo -n "
+	<td align=right>${dropbps}</td>
+"; else 
+echo -n "
+	<td align=right><a style=\"color:#ff0000\">${dropbps}</a></td>
+"; fi 
+echo -n "
+	<td align=right>${desc}</td>
+	</tr>
+";
+	if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</table>
+<br>
+<table width=\"570\" border=0 cellspacing=1 cellpadding=1> 
+<td align=right width=*><a style=\"color:#0000ff;font-size:13px;\" href=\"javascript:editPipe()\"><b>修改通道...</b></a></td>
+</table>
+</body>
+</html>
+";

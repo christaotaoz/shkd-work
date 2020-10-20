@@ -1,0 +1,189 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onModify(mac) 
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_set?mac=\" + mac; 
+}
+function onAddMac() 
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_add\"; 
+}
+function onDelete(mac)
+{
+	if (confirm(\"确定要删除?\"))
+		window.location.href = \"/cgi-bin/Setup/l2bypass_config?action=delete&mac=\" + mac;
+}
+function beforeSubmit(frm)
+{
+	var service = frm.elements.service;
+	var vlan = frm.elements.vlan;
+	service.value = TrimAll(service.value);
+	vlan.value = TrimAll(vlan.value);
+	return true;
+}
+function showMac(id)
+{
+        var url = \"/cgi-bin/Setup/l2bypass_listmac?id=\" + id;
+        ShowWindow(url, \"\", 780, 500);
+}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} l2route remove mac=${CGI_mac}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "config" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} l2route config enable=${CGI_enable} nedeny=${CGI_nedeny}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "set" ]; then
+	operator_check "${myself}"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	if [ "${CGI_service}" != "" ]; then
+		if [ "${CGI_ifname}" != "" ]; then
+			cmdargs="id=${CGI_sid} service=${CGI_service} vlan=${CGI_vlan} if=${CGI_ifname}"
+			errmsg=`${FLOWEYE} l2route set ${cmdargs}`
+			[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+		fi
+	else
+		cmdargs="id=${CGI_sid}" 
+		errmsg=`${FLOWEYE} l2route set ${cmdargs}`
+		[ "$?" != "0" ] && afm_dialog_msg "${errmsg}"
+	fi
+fi
+for nameval in `${FLOWEYE} l2route stat`
+do
+	eval "CGI_${nameval}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "PPPOE旁路->参数设置" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=1000 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=10></td>
+	<td width=80 align=left><b>用户旁路控制</b></td>
+	<td width=100 align=left>
+		<select name=enable value=${CGI_enable} style=\"width:100%\">
+		";
+			if [ ${CGI_enable} -eq 0 ]; then
+				echo "<option value=1>启用</option>"
+				echo "<option value=0 selected>不启用</option>" 
+			else 
+				echo "<option value=1 selected>启用</option>"
+				echo "<option value=0>不启用</option>" 
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=65 align=right><b>账号控制&nbsp;</b></td>
+	<td width=130 align=left>
+		<select name=nedeny value=${CGI_nedeny} style=\"width:100%\">
+		";
+			if [ ${CGI_nedeny} -eq 0 ]; then
+				echo "<option value=1>只允许列表里账号登录</option>"
+				echo "<option value=0 selected>所有账号都可登录</option>"
+			else 
+				echo "<option value=1 selected>只允许列表里账号登录</option>"
+				echo "<option value=0>所有账号都可登录</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>&nbsp;
+		<input type=submit style=\"width:90\" value=\"提交\" />&nbsp;&nbsp;
+		<input type=hidden name=action value=\"config\" />
+	</td>
+</tr>
+</table>
+</form>
+<br>
+<table style=\"width:1000; font-bold:true;font-size:15px; color:#CE6C04;border-bottom:0px #787882 solid\">
+<tr>
+    <td style=\"font:14px\"><b>PPPOE旁路服务</b></td>
+    <td width=*></td>
+</tr>
+</table>
+<table width=1000 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr>
+	<td width=50  align=center>编号</td>
+        <td width=150 align=center>服务名称</td>
+	<td width=100  align=center>VLAN</td>
+	<td width=100  align=center>外出网卡</td>
+	<td width=100  align=center>在线用户#</td>
+	<td width=120 align=center>用户总上行</td>
+	<td width=120 align=center>用户总下行</td>
+	<td width=*   align=center>操作</td>
+</tr>
+";
+idname="row1"
+${FLOWEYE} l2route list |  \
+while read id service ifname vlan refcnt bpsin bpsout theothers 
+do 
+	echo "<form method=post onsubmit=\"return beforeSubmit(this)\" action=\"${myself}\">"
+	[ "${service}" = "NULL" ] && service=""
+	[ "${ifname}"  = "NULL" ] && ifname=""
+
+echo -n "
+	<tr id=${idname}>
+	<td align=center>${id}</td>
+	<td align=center><input type=text name=service style=\"width:150\" value=\"${service}\" /></td>
+	<td align=center><input type=text name=vlan style=\"width:100\" value=\"${vlan}\" /></td>
+	<td align=center>
+	<select name=ifname style=\"width:100\" value=\"${ifname}\" />
+	";
+	for intf in `${FLOWEYE} if list | grep outside | awk '{print $1}'`
+	do
+		if [ "${ifname}" = "${intf}" ]; then
+			echo "<option value=\"${intf}\" selected>${intf}</option>"
+		else
+			echo "<option value=\"${intf}\">${intf}</option>"
+		fi
+	done
+	
+echo -n "
+	</select>
+	</td>
+	<td align=center>${refcnt}</td>
+	<td align=right>${bpsin}&nbsp;</td>
+	<td align=right>${bpsout}&nbsp;</td>
+	
+       	<td align=right>
+		<input type=hidden name=sid value=\"${id}\" />
+		<input type=hidden name=action value=\"set\" />
+		<input type=submit value=\"提交\" style=\"width:70\" />&nbsp;&nbsp;
+		<a style=\"color:#0000ff\" href=\"javascript:showMac('${id}')\">在线用户</a>&nbsp;&nbsp;
+	</td>
+	</tr>
+	</form>
+	"; if [ "${idname}" = "row1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+done
+
+echo -n "
+</body>
+</html>
+";

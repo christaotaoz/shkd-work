@@ -1,0 +1,117 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=0
+[ "${CGI_topn}" = "" ] && CGI_topn="20"
+[ "${CGI_appid}" = "" ] && CGI_appid="http"
+[ "${CGI_statype}" = "" ] && CGI_statype="all"
+[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+cgipath="/cgi-bin/Monitor/`basename $0`"
+cgiargs="refresh=${CGI_refresh}&statype=${CGI_statype}&appid=${CGI_appid}&topn=${CGI_topn}&appname=${CGI_appname}&bridge=${CGI_bridge}"
+cgiurl="${cgipath}?${cgiargs}"
+[ "${width}" = "" ] && width=700
+MOD_TAB_LIST="协议配置#/cgi-bin/Protocol/sysapp_config?appid=${CGI_appid}&appname=${CGI_appname} \
+趋势图表#/cgi-bin/Monitor/appview_graph?${cgiargs} \
+在线用户#/cgi-bin/Monitor/appview_topip?${cgiargs} \
+连接排名#/cgi-bin/Monitor/appview_topflowip?${cgiargs} \
+有关策略#/cgi-bin/Monitor/appview_policy?${cgiargs}"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showIP(ipaddr)
+{
+        var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+        ShowWindow(url, \"\", 800, 750);
+}
+var g_sort = \"all\";
+var g_apid = \"${CGI_appid}\";
+function setSort(s)
+{
+	g_sort = s;
+}
+function appTopIP()
+{
+        AJXS({
+            type: 'POST',
+            url: '/cgi-bin/Monitor/ajax_appview_topip?apid=' + g_apid + '&sort=' + g_sort,
+            error: function(status){setTimeout(appTopIP, 400);},
+            success: function(data){
+                var d;
+                try {
+                        d = eval('('+data+')');
+                }catch(e) {
+                        d = undefined;
+                }
+                if(typeof(d) == \"undefined\") {
+                        setTimeout(appTopIP, 1000);
+                        return;
+                }
+                var e, i;
+                var cname, upbps, downbps, allbps;
+                var iplist = document.getElementById(\"iplist\");
+		while (iplist.rows.length > 0)
+			iplist.deleteRow(0);
+                for(i = 0; i < d.length; i++) {
+                        e = iplist.insertRow(-1);
+			e.id = \"row1\";
+                        col = e.insertCell(0);
+                        col.setAttribute('align', 'left');
+			col.setAttribute('width', '150');
+			col.innerHTML = \"&nbsp;<a href=javascript:showIP(\" +
+				\"'\" + d[i].ip+ \"')\" + \">\" + d[i].ip + \"</a>\";
+			col = e.insertCell(1);
+                        col.setAttribute('align', 'right');
+			col.setAttribute('width', '200');
+			col.innerHTML = d[i].account;
+			col = e.insertCell(2);
+                        col.setAttribute('align', 'right');
+			col.setAttribute('width', '120');
+			col.innerHTML = d[i].inbps;
+			col= e.insertCell(3);
+                        col.setAttribute('align', 'right');
+			col.setAttribute('width', '120');
+			col.innerHTML = d[i].outbps;
+			col = e.insertCell(4);
+                        col.setAttribute('align', 'right');
+			col.setAttribute('width', '*');
+			col.innerHTML = d[i].all;
+                }
+                setTimeout(appTopIP, 4000);
+        }});
+}
+function onloaddoc()
+{
+	appTopIP();
+}
+</script>
+<body onload=\"onloaddoc()\">
+"; cgi_show_title "应用协议->`${FLOWEYE} app name ${CGI_appid}`档案" ${width} 
+echo -n "
+"; cgi_show_app_info ${CGI_appid} ${width} 
+echo -n "
+<br>
+"; cgi_print_mod_header "在线用户" ${width} 
+echo -n "
+"; wid=$((${width} / 5)) 
+echo -n "
+<table width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+<tr style=\"font-size:12px\">
+        <td width=150 align=left>&nbsp;IP地址</td>
+        <td width=200 align=right>账号</td>
+	<td width=120 align=right>流入速率</td>
+	<td width=120 align=right>流出速率</td>
+        <td width=* align=right>总速率</td>
+</tr>
+</table>
+<table id=iplist width=\"${width}\" border=0 cellspacing=1 cellpadding=1> 
+</table>
+</table>
+</body>
+</html>
+";

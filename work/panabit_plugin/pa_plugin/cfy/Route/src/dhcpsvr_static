@@ -1,0 +1,192 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+[ "${CGI_sort}" = "" ] && CGI_sort="ip"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+	function showip(ipaddr) {
+		var url = \"/cgi-bin/Monitor/ipview_data?ipaddr=\" + ipaddr;
+		ShowWindow(url, \"\", 650, 700);
+	}
+	function onSelect(obj) {
+		var ipmacopts = document.getElementsByName(\"IPMACOPT\");
+		for (var i = 0; i < ipmacopts.length; i++) 
+			ipmacopts[i].checked = obj.checked;
+		if (ipmacopts.length > 0) {
+			var btn = document.getElementsByName(\"btnDel\")[0];
+			btn.disabled = !obj.checked;
+		}
+	}
+	function onCheck(obj) {
+		var count = 0;
+		var ipmacopts = document.getElementsByName(\"IPMACOPT\");
+		for (var i = 0; i < ipmacopts.length; i++) {
+			if (ipmacopts[i].checked) count++;
+		}
+		var btn = document.getElementsByName(\"btnDel\")[0];
+		if (count > 0)
+			btn.disabled = false;
+		else
+			btn.disabled = true;
+	}
+	function beforeDelAll() {
+		var ipmacopts;
+		var macaddrs;
+		var ipmaclist = \"\";
+		if (!confirm(\"确定要删除所选表项?\"))
+			return false;
+		ipmacopts = document.getElementsByName(\"IPMACOPT\");
+		macaddrs  = document.getElementsByName(\"MACADDR\");
+		for (var i = 0; i < ipmacopts.length; i++) {
+			if (ipmacopts[i].checked) {
+				if (ipmaclist == \"\")
+					ipmaclist = macaddrs[i].value;
+				else
+					ipmaclist += \",\" + macaddrs[i].value;
+			}
+		}
+		if (ipmaclist == \"\") {
+			alert(\"请选择要删除的静态分配!\");
+			return false;
+		}
+		var dellist = document.getElementsByName(\"DELIST\")[0];
+		dellist.value = ipmaclist;
+		return true;
+	}
+	function onManual() {
+		window.location.href = \"/cgi-bin/Route/dhcpsvr_addstatic\";
+	}
+	function onFile() {
+		window.location.href = \"/cgi-bin/Route/dhcpsvr_loadstatic\";
+	}
+	function onExport() {
+		window.location.href = \"/cgi-bin/Route/dhcpsvr_exportstatic\";
+	}
+	function static_edit(mac) {
+		window.location.href = \"/cgi-bin/Route/dhcpsvr_editstatic?mac=\" + mac;
+	}
+	
+	function static_del(mac) {
+		if (confirm(\"确定要删除\" + mac + \"?\")) {
+			window.location.href = \"${myself}?action=delete&DELIST=\" + mac;
+		}
+	}
+	function onQuery() {
+		var filter = document.getElementsByName(\"filter\")[0];
+		filter.value = TrimAll(filter.value);
+		window.location.href = \"${myself}?sort=${CGI_sort}&filter=\" + filter.value;
+	}
+</script>
+";
+if [ "${CGI_action}" = "delete" ]; then
+	operator_check "$myself"
+	cmdargs=""
+	maclist=`echo ${CGI_DELIST} | sed -e "s/,/ /g"`
+	for mac in ${maclist}
+	do
+		cmdargs="${cmdargs} mac=${mac}"
+	done
+	if [ "${cmdargs}" != "" ]; then	
+		errmsg=`${FLOWEYE} dhcpsta remove ${cmdargs}`
+		if [ "$?" != "0" ]; then
+			afm_dialog_msg "操作失败:${errmsg}"
+		fi
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "DHCP->静态分配" 
+echo -n "
+<br>
+<table width=900 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row5>
+	<form method=post onsubmit=\"beforeDelAll()\" action=\"${myself}\">
+	<td width=120 align=left>
+		<input type=hidden name=action value=\"delete\" />
+		<input type=hidden name=DELIST value=\"\" />
+		<input type=submit style=\"width:90;height:22\" name=btnDel value=\"删除选中\" disabled/>
+	<td>
+	</form>
+	<td width=* align=right>
+		<input type=button style=\"width:100;height:22\" value=\"手工添加>>\" onclick=\"onManual()\"/>
+		&nbsp;&nbsp;
+		<input type=button style=\"width:100;height:22\" value=\"从文件导入>>\" onclick=\"onFile()\"/>
+		&nbsp;&nbsp;
+		<input type=button style=\"width:100;height:22\" value=\"导出到文件>>\" onclick=\"onExport()\"/>
+		&nbsp;&nbsp;查询条件
+		<input type=text style=\"width:210\" name=filter value=\"${CGI_filter}\" />
+		&nbsp;&nbsp;
+		<input type=button style=\"width:80;height:22\" value=\"查询\" onclick=\"onQuery()\"/>
+	</td>
+</tr>
+</table>
+<table width=900 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr>
+	<td width=80  align=center>
+		<input type=checkbox onclick=\"onSelect(this)\"/>&nbsp;
+	</td>
+	<td width=80  align=center>ID</td>
+	<td width=130 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=mac\">MAC地址</a></td>
+	<td width=110 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=ip\">静态IP</a></td>
+	<td width=120 align=right><a style=\"color:#0000ff\" href=\"${myself}?sort=name\">备注</a></td>
+	<td width=110 align=right>操作</td>
+</tr>
+";
+case "${CGI_sort}" in
+"mac")
+	sortargs="-k1"
+	;;
+"ip")
+	sortargs="-k3"
+	;;
+"name")
+	sortargs="-k4"
+	;;
+*)
+	sortargs="-k1"
+	;;
+esac
+idname="row1"
+count=1
+${FLOWEYE} dhcpsta list | grep "${CGI_filter}" | sort ${sortargs} | \
+while read mac ip ipn desc theothers
+do
+
+echo -n "
+	<tr id=${idname}>
+		<td align=center>
+			<input type=checkbox name=IPMACOPT onclick=\"onCheck(this)\" />&nbsp;
+			<input type=hidden name=MACADDR value=\"$mac\" />
+		</td>
+		<td align=center>$count</td>
+		<td align=right>$mac</td>
+		<td align=right><a href=\"javascript:showip('${ip}')\">&nbsp;$ip</a></td>
+		<td align=right>$desc</td>
+		<td align=right>
+			<img src=\"/img/edit.png\" style=\"margin-top:3px\" title=\"修改配置\" onclick=\"static_edit('${mac}')\" />&nbsp;
+			<img src=\"/img/delete.png\" style=\"margin-top:3px\" title=\"删除配置\" onclick=\"static_del('${mac}')\" />&nbsp;
+		</td>
+	</tr>
+";
+	if [ "X$idname" = "Xrow1" ]; then
+		idname="row2"
+	else
+		idname="row1"
+	fi
+	count=$(($count + 1))
+done
+
+echo -n "
+</table>
+</body>
+</html>
+";

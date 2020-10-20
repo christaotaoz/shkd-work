@@ -1,0 +1,30 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+FLOWEYE=${PGPATH}/bin/floweye
+firstelem=1
+printf "["
+${FLOWEYE} policy listbwo | while read id pname prate pbytes psize outbps dropbps active theothers
+do
+	[ "${active}" = "0" -o "${id}" = "id" ] && continue
+	if [ ${firstelem} -eq 1 ]; then
+		printf "{ 'id':'${id}','outbps':'${outbps}','dropbps': '${dropbps}'}"
+		firstelem=0
+	else
+		printf ",{ 'id':'${id}','outbps':'${outbps}','dropbps': '${dropbps}'}"
+	fi
+done
+echo "]"
+
+echo -n "
+";

@@ -1,0 +1,94 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+if [ "${REQUEST_METHOD}" = "GET" ]; then
+  operator_check "${myself}"
+  if [ "$CGI_pid" != "" ]; then
+      kill $CGI_pid 2 > /dev/null
+      if [ $? -ne 0 ]; then
+          afm_dialog_msg "出现错误:$?" 
+      fi
+  fi
+fi
+
+echo -n "
+<style type=\"text/css\">
+<!-
+ ul {width:300px; margin:50px auto;}
+ li {width:300px; line-height:20px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;}
+-->
+</style>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function onkillprocess(pid)
+{
+	window.location.href = \"/cgi-bin/Maintain/sys_currprocess?pid=\" + pid;
+}
+</script>
+<body>
+"; cgi_show_title "高级功能->进程列表" 
+echo -n "
+<br>
+<form method=post action=\"${myself}\">
+<table width=1080 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=22>
+	<td width=60 align=center>USER</td>
+	<td width=50 align=center>%CPU</td>
+	<td width=55 align=center>%MEM</td>
+	<td width=70 align=center>VSZ</td>
+	<td width=70 align=center>RSS</td>
+	<td width=70 align=center>TT</td>
+	<td width=50 align=center>STAT</td>
+  <td width=70 align=center>STARTED</td>
+  <td width=90 align=center>TIME</td>
+  <td width=*   align=center>COMMAND</td>
+  <td width=50 align=center>操作</td>
+</tr>
+";
+tblid="row1"
+ps auxw | grep -Ev "ps auxw|grep|sys_currprocess" | \
+while read user pid cpu mem vsz rss tt stat started time command;
+do 
+	[ "${vsz}" = "VSZ" ] && continue
+
+echo -n "
+	<tr id=${tblid}>
+	<td align=center>${user}</td>
+	<td align=center>${cpu}</td>
+	<td align=center>${mem}</td>
+	<td align=center>${vsz}</td>
+	<td align=center>${rss}</td>
+	<td align=center>${tt}</td>
+	<td align=center>${stat}</td>
+	<td align=center>${started}</td>
+	<td align=center>${time}</td>
+	<td align=left><ul><li title=\"${command}\">${command}</li></ul></td>
+	<td align=center><a style=\"color:#0000ff\" href=\"javascript:onkillprocess('${pid}')\">杀死</a></td>
+	</tr>
+";
+	if [ "${tblid}" = "row1" ]; then
+		tblid="row2"
+	else
+		tblid="row1"
+	fi
+done
+
+echo -n "
+</table>
+<table style=\"width:1080; border-top:1px #787882 solid; color:#0000ff; margin-top: 8px;\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"刷新\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

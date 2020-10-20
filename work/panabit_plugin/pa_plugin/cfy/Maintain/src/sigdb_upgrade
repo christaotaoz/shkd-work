@@ -1,0 +1,180 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"sigdbfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请输入特征库路经!\");
+		return false;
+	}
+	if (confirm(\"确定要上传特征库?\"))
+		return true;
+	else
+		return false;
+}
+</script>
+";
+for nameval in `${FLOWEYE} jflow stat`
+do
+	eval "${nameval}"
+done
+CGI_curver="${jflow_ipe_version}"
+if [ -f ${RAMDISK}/PG.conf ]; then
+	SYSPKGROOT="${RAMDISK}"
+else
+	SYSPKGROOT="${DATAPATH}"
+fi
+if [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}"
+	# Get a clean directory
+	mkdir -p ${SYSPKGROOT}/upgrade
+	rm -rf ${SYSPKGROOT}/upgrade/*
+	# Mv the file to the directory
+	mv ${CGI_sigdbfile} ${SYSPKGROOT}/upgrade/sigdb.tar.gz
+	cd ${SYSPKGROOT}/upgrade
+	errmsg=`tar zxf sigdb.tar.gz 2>&1`
+	if [ "$?" != "0" ]; then
+		cd -
+		rm -rf ${SYSPKGROOT}/upgrade/*
+		afm_dialog_msg "解包特征库时出现错误!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	rm -f ${SYSPKGROOT}/upgrade/sigdb.tar.gz
+	version=`find ./ -name version`
+	if [ "${version}" = "" ]; then
+		cd -
+		rm -rf ${SYSPKGROOT}/upgrade/*
+		afm_dialog_msg "无效的特征库:无版本信息!"
+		afm_dialog_msg "温馨提示：您是否是在升级特征库界面上执行升级系统操作?"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	mv ${version} ${SYSPKGROOT}/upgrade/version
+	panaos=`find ./ -name panaos`
+	if [ "${panaos}" = "" ]; then
+		cd -
+		rm -rf ${SYSPKGROOT}/upgrade/*
+		afm_dialog_msg "无效的特征库:特征代码文件不存在！"
+		afm_dialog_msg "温馨提示：您是否是在升级特征库界面上执行升级系统操作?"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	mv ${panaos} ${SYSPKGROOT}/upgrade/panaos
+	chmod +x ${SYSPKGROOT}/upgrade/panaos
+	datamon=`find ./ -name ipe_datamon`
+	if [ "${datamon}" = "" ]; then
+		cd -
+		rm -rf ${SYSPKGROOT}/upgrade/*
+		afm_dialog_msg "无效的特征库:数据采集服务不存在!"
+		afm_dialog_msg "温馨提示：您是否是在升级特征库界面上执行升级系统操作?"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	mv ${datamon} ${SYSPKGROOT}/upgrade/ipe_datamon
+	chmod +x ${SYSPKGROOT}/upgrade/ipe_datamon
+	floweye=`find ./ -name floweye`
+	if [ "${floweye}" != "" ]; then
+		mv ${floweye} ${SYSPKGROOT}/upgrade/floweye
+		chmod +x ${SYSPKGROOT}/upgrade/floweye		
+	fi
+	afm_dialog_msg "上传成功!"
+fi
+if [ "${CGI_action}" = "upgrade" ]; then
+	# waiting for 10 seconds for scheduler.
+	mkdir -p ${SYSPKGROOT}/tmp
+	rm -f ${SYSPKGROOT}/tmp/sigdb_up_success
+	echo "<br><p style=\"color:#0000ff\">正在升级，需要15秒钟左右时间，请耐心等待 ......</p></br>"
+	sleep 1
+	# Let monitor upgrade the system
+	echo "upgrade_sigdb yes" >> ${EVENTFILE}
+	count=15
+	while [ ${count} -ge 0 ]; do
+		sleep 1
+		if [ -f ${SYSPKGROOT}/tmp/sigdb_up_success ]; then
+			rm -f ${SYSPKGROOT}/tmp/sigdb_up_success
+			afm_dialog_msg "升级成功!"
+			rm -rf ${SYSPKGROOT}/upgrade/*
+			afm_load_page 0 "${myself}"
+			sync
+			exit 0
+		fi
+		count=$((${count} - 1))
+	done
+	afm_dialog_msg "升级失败!"
+	afm_load_page 0 "${myself}"
+	exit 0
+fi
+if [ "${CGI_action}" = "return" ]; then
+	rm -rf ${SYSPKGROOT}/upgrade/*
+fi
+freebsdver=`uname -r | cut -d'-' -f1`
+
+echo -n "
+<body>
+"; 
+[ "${CGI_browsertitle}" = "" ] && cgi_show_title "系统升级-->特征库升级"
+if [ "${CGI_action}" = "upload" ]; then
+	CGI_upgradever=`cat ${SYSPKGROOT}/upgrade/version`
+	echo "<table style=\"width:100%; border-bottom:1px #787882 solid; font:12px; color:#ff0000\">"
+	echo "<tr><td align=left>您上传的特征库版本为 ${CGI_upgradever}，请点击此处<a style=\"color:#0000ff;font:bold 黑体 13px;\" href=\"${myself}?action=upgrade\"><b>进行升级</b></a>(注意，升级过程会中断网络几秒钟)</td></tr>"
+	echo "<tr><td align=left>如果不想升级，请点击此处<a style=\"color:#0000ff;font:bold 黑体 13px;\" href=\"${myself}?action=return\"><b>删除</b></a>刚才上传的特征库，以免占用宝贵的flash空间</td></tr>"
+	echo "</table>"
+fi
+for nameval in `${FLOWEYE} key info`; do
+	eval "${nameval}"
+done
+if [ "${cantupgrade}" = "1" ]; then
+	echo "<br><p style=\"color:#ff0000;font-size:15px\">无效的升级期限，请联系厂家获取升级License!</p></br>"
+	exit 0
+fi
+
+echo -n "
+<br>
+<table style=\"width:700; border-bottom:1px #787882 solid; font:14px bold 黑体; color:#0000ff\">
+<tr>
+	<td ><b>操作说明</b></td>
+	<td align=right><b>当前的特征库版本是: ${CGI_curver}<a style=\"color:#ff0000\">[${freebsdver}]</a></td>
+</tr>
+</table>
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3>
+<tr>
+    <td width=40></td>
+    <td style=\"font:13px bold\" width=*>(1) 第一步: 上传特征库，如果系统上传成功，系统会提示升级</td>
+</tr>
+<tr>
+    <td></td>
+    <td style=\"font:13px bold\" width=*>(2) 第二步: 升级，升级过程会花费几秒时间，在此期间内，网络会中断，因此请事先做好准备
+</td>
+</tr>
+</table>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr height=22>
+	<td width=20></td>
+	<td width=140 style=\"font:14px bold\" align=left><b>请输入特征库路径:</b></td>
+	<td width=* class=cssTDArial align=left>
+		<input type=file name=sigdbfile style=\"width:450px\">
+	</td>
+	<td align=right>
+		<input type=hidden name=action value=upload></input>
+		<input type=submit style=\"width:90\" value=\"上传特征库\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

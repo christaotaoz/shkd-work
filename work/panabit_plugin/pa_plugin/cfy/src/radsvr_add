@@ -1,0 +1,185 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Pppoe/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var rad_desc = document.getElementsByName(\"desc\")[0];
+	var rad_ip = document.getElementsByName(\"ip\")[0];
+	var rad_authport = document.getElementsByName(\"authport\")[0];
+	var rad_acctport = document.getElementsByName(\"acctport\")[0];
+	var rad_secret = document.getElementsByName(\"secret\")[0];
+	rad_desc.value = TrimAll(rad_desc.value);
+	if (rad_desc.value == \"\") {
+		alert(\"名称不能为空!\");
+		rad_desc.select();
+		return false;
+	}
+	rad_ip.value = TrimAll(rad_ip.value);
+	if (rad_ip.value == \"\" || rad_ip.value == \"0.0.0.0\") {
+		alert(\"IP地址不能为空!\");
+		rad_ip.select();
+		return false;
+	}
+	rad_authport.value = TrimAll(rad_authport.value);
+	if (rad_authport.value == \"\") {
+		alert(\"认证端口不能为空!\");
+		rad_authport.select();
+		return false;
+	}
+	rad_acctport.value = TrimAll(rad_acctport.value);
+	if (rad_acctport.value == \"\") {
+		alert(\"计费端口不能为空!\");
+		rad_acctport.select();
+		return false;
+	}
+	rad_secret.value = TrimAll(rad_secret.value);
+	if (rad_secret.value == \"\") {
+		alert(\"共享密钥不能为空!\");
+		rad_secret.select();
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Pppoe/radsvr_list\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+        operator_check "${myself}"
+        string_verify "${CGI_desc}"
+        if [ "$?" = "0" ]; then
+                afm_dialog_msg "名称中包含特殊字符!"
+                adm_load_page 0 "${myself}"
+                exit 0
+        fi
+	[ "${CGI_authport}" = "" ] && CGI_authport=1812
+	[ "${CGI_acctport}" = "" ] && CGI_acctport=1813
+	[ "${CGI_discport}" = "" ] && CGI_discport=3799
+	[ "${CGI_secret}" = "" ] && CGI_secret="panabit"
+	[ "${CGI_proxy}" = "" ] && CGI_proxy="NULL"
+	[ "${CGI_proxy2}" = "" ] && CGI_proxy2="NULL"
+	cmdargs="ip=${CGI_ip} authport=${CGI_authport} acctport=${CGI_acctport}"
+	cmdargs="${cmdargs} secret=${CGI_secret}"
+	cmdargs="${cmdargs} proxy=${CGI_proxy}"
+	cmdargs="${cmdargs} proxy2=${CGI_proxy2}"
+	cmdargs="${cmdargs} desc=${CGI_desc}"
+	errmsg=`${FLOWEYE} radsvr add ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Pppoe/radsvr_list"
+		exit 0
+	fi
+else
+	[ "${CGI_authport}" = "" ] && CGI_authport=1812
+	[ "${CGI_acctport}" = "" ] && CGI_acctport=1813
+	[ "${CGI_discport}" = "" ] && CGI_discport=3799
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "RADIUS服务->添加服务器" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=650 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>服务器名</td>
+	<td width=* align=left><input type=text name=desc style=\"width:100\" value=${CGI_desc}></input></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>服务器IP</td>
+	<td width=* align=left><input type=text name=ip style=\"width:100\" value=${CGI_ip}></input></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>认证端口</td>
+	<td width=* align=left><input type=text name=authport style=\"width:100\" value=${CGI_authport}></input></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>计费端口</td>
+	<td width=* align=left><input type=text name=acctport style=\"width:100\" value=${CGI_acctport}></input></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+	<td width=120 align=left>共享密钥</td>
+	<td width=* align=left><input type=text name=secret style=\"width:100\" value=${CGI_secret}></input>&nbsp;(最大不超过30个英文字符或15个中文字符)</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=120 align=left>主路由线路</td>
+        <td width=*>
+		<select name=proxy value=\"${CGI_proxy}\" style=\"width:100\">
+		";
+			${FLOWEYE} nat listproxy type=proxy.pppoe.routerif | while read type id name theothers
+			do
+				if [ "${CGI_proxy}" = "${name}" ]; then
+					echo "<option value=\"${name}\" selected>${name}</option>"
+				else
+					echo "<option value=\"${name}\">${name}</option>"
+				fi
+			done
+			if [ "${CGI_proxy}" = "NULL" ]; then
+				echo "<option value=\"NULL\" selected>空线路</option>"
+			else
+				echo "<option value=\"NULL\">空线路</option>"
+			fi
+		
+echo -n "
+		</select><a style=\"color:#0000ff\">&nbsp;(通过此线路和RADIUS服务器通信)</a>
+	</td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=120 align=left>备份线路</td>
+        <td width=*>
+		<select name=proxy2 value=\"${CGI_proxy2}\" style=\"width:100\">
+		";
+			${FLOWEYE} nat listproxy type=proxy.pppoe.routerif | while read type id name theothers
+			do
+				if [ "${CGI_proxy2}" = "${name}" ]; then
+					echo "<option value=\"${name}\" selected>${name}</option>"
+				else
+					echo "<option value=\"${name}\">${name}</option>"
+				fi
+			done
+			if [ "${CGI_proxy2}" = "NULL" ]; then
+				echo "<option value=\"NULL\" selected>空线路</option>"
+			else
+				echo "<option value=\"NULL\">空线路</option>"
+			fi
+		
+echo -n "
+		</select><a style=\"color:#0000ff\">&nbsp;(当主线路不通时，使用备份线路和RADIUS通信)</a>
+	</td>
+</tr>
+</table>
+<table style=\"width:650; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:650\"> 
+<tr>
+	<td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\" />
+		<input type=button value=\"取消\" style=\"width:80\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

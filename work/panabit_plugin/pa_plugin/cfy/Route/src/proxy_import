@@ -1,0 +1,456 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh
+myself="/cgi-bin/Route/`basename $0`"
+AIDE_NATPROXY=${PGPATH}/admin/cgi-bin/common/aide_natproxy
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=\"javascript\">
+function Validate(frm)
+{
+	var dbfile = document.getElementsByName(\"cfgfile\")[0];
+	if (dbfile.value == \"\") {
+		alert(\"请输入配置文件路径!\");
+		return false;
+	}
+	if (confirm(\"确定要上传配置文件?\"))
+		return true;
+	else
+		return false;
+}
+function onBacking_out()
+{
+	window.location.href = \"${myself}\";
+}
+function GetFileType(file)
+{
+	var i = file.lastIndexOf(\".\");  
+	if(i > 0)
+		document.getElementById(\"cfgtype\").value = file.substr(i + 1, file.length - i);
+}
+function ValidateImportData()
+{
+	var i;
+	var items = \"\";
+	var data = document.getElementById(\"import_data\");
+	var table = document.getElementsByTagName(\"table\")[3].rows;
+	var proxyname;
+	var proxyaddr;
+	var proxygw ;
+	var proxydns;
+	var ifname;
+	var mtu;
+	var vlan;
+	var pingip ;
+	var wantype;
+	var username;
+	var password;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked) {
+			wantype = table[i].getAttribute(\"type\");
+			proxyname = table[i].cells[2].children[0];
+			ifname = table[i].cells[3].children[0];
+			mtu = table[i].cells[4].children[0];
+			vlan = table[i].cells[5].children[0];
+			pingip = table[i].cells[6].children[0];
+			username = proxyaddr = table[i].cells[7].children[0];
+			password = proxygw = table[i].cells[8].children[0];
+			proxydns = table[i].cells[9].children[0];
+			
+			proxyname.value = TrimAll(proxyname.value);
+			if (!IsName(proxyname.value)) {
+				alert(\"第“\"+i+\"”行中，名称中不能有&等特殊字符!\");
+				proxyname.select();
+				return false;
+			}
+			
+			if (ifname.value == \"\") {
+				alert(\"第“\"+i+\"”行中，请选择网卡!\");
+				ifname.select();
+				return false;
+			}
+			vlan.value = TrimAll(vlan.value);
+			if (!IsDigitIn(vlan.value, 0, 65535)) {
+				alert(\"第“\"+i+\"”行中，VLAN TAG不对!\");
+				vlan.select();
+				return false;
+			}
+			pingip.value = TrimAll(pingip.value);
+			if (pingip.value != \"\" && !IsIPAddr(pingip.value)) {
+				alert(\"第“\"+i+\"”行中，请输入正确的IP地址!\n\");
+				pingip.select();
+				return false;
+			}
+			if(wantype == \"natproxy\") {
+				proxyaddr.value = TrimAll(proxyaddr.value);
+				if (!IsIPAddr(proxyaddr.value)) {
+					alert(\"第“\"+i+\"”行中，请输入线路的IP地址!\");
+					proxyaddr.select();
+					return false;
+				}
+				proxygw.value = TrimAll(proxygw.value);
+				if (!IsIPAddr(proxygw.value)) {
+					alert(\"第“\"+i+\"”行中，请输入网关地址!\");
+					proxygw.select();
+					return false;
+				}
+				proxydns.value = TrimAll(proxydns.value);
+				if (proxydns.value != \"\" && !IsIPAddr(proxydns.value)) {
+					alert(\"第“\"+i+\"”行中，请输入正确的DNS服务器地址!\");
+					proxydns.select();
+					return false;
+				}
+			} else {
+				username.value = TrimAll(username.value);
+				if (username.value == \"\") {
+					alert(\"第“\"+i+\"”行中，请输入PPPOE账号!\");
+					username.select();
+					return false;
+				}
+				password.value = TrimAll(password.value);
+				if (password.value == \"\") {
+					alert(\"第“\"+i+\"”行中，请输入PPPOE密码!\");
+					password.select();
+					return false;
+				}
+			}
+			
+			items += wantype;
+			items += \" name=\" + proxyname.value;
+			items += \" ifname=\" + ifname.value;
+			items += \" mtu=\" + mtu.value;
+			items += \" vlan=\" + vlan.value;
+			items += \" pingip=\" + pingip.value;
+			if(proxyname.getAttribute('clonemac') != \"\")
+				items += \" clonemac=\" + proxyname.getAttribute('clonemac');
+				
+			if(wantype == \"natproxy\") {
+				items += \" addr=\" + proxyaddr.value;
+				items += \" gateway=\" + proxygw.value;
+				items += \" dns=\" + proxydns.value;
+			} else {
+				items += \" username=\" + username.value;
+				items += \" password=\" + password.value;
+			}
+			items += \"\n\";
+		}
+	}
+	data.value = items;
+	return table.length > 0;
+}
+function onSubmitData(obj)
+{
+	var form = obj.parentElement.parentElement.parentElement.parentElement.parentElement;
+	if(ValidateImportData())
+		form.submit();
+}
+function onSelectItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	for(i = 1;i < table.length; i++){
+		table.item(i).cells[0].children[0].checked = obj.checked;
+		for(j = 2; j < table.item(i).cells.length; j++)
+			table.item(i).cells[j].children[0].disabled = !obj.checked;
+	}
+}
+function onSubSelectItem(obj)
+{
+	var table = obj.parentElement.parentElement.parentElement.children;
+	var rowItems = obj.parentElement.parentElement.children;
+	var count = 0;
+	var i;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked)
+			count++;
+	}
+	if(obj.checked) {
+		table.item(0).cells[0].children[0].checked = (count == table.length - 1);
+	} else {
+		table.item(0).cells[0].children[0].checked = false;
+	}
+	for(i = 2; i < rowItems.length; i++)
+		rowItems[i].children[0].disabled = !obj.checked;
+}
+function onChangedVlanItem(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	var rowItems = obj.parentElement.parentElement.children;
+	var value = Math.abs(obj.value) + 1;
+	
+	if(table.item(0).cells[5].children[0].checked) {
+		for(i = Math.abs(rowItems[1].innerText)+1;i < table.length; i++) {
+			if(table.item(i).cells[0].children[0].checked)
+				table.item(i).cells[5].children[0].value = value++;
+		}
+	}
+}
+function onChangeifname(obj)
+{
+	var i;
+	var table = obj.parentElement.parentElement.parentElement.children;
+	
+	for(i = 1;i < table.length; i++) {
+		if(table.item(i).cells[0].children[0].checked)
+			table.item(i).cells[3].children[0].value = obj.value;
+	}
+}
+</script>
+";
+if [ "${CGI_action}" = "upload" ]; then
+	operator_check "${myself}"
+	# Get a clean directory
+	mkdir -p ${DATAPATH}/config
+	rm -rf ${DATAPATH}/config/*
+	# verify the file
+	if [ "${CGI_cfgtype}" = "" ]; then
+		afm_dialog_msg "文件类型不对!目前仅支持 .rsc，.text，.conf 文件类型"
+	else
+		cfgfile="${CGI_cfgfile}.${CGI_cfgtype}"
+		cat ${CGI_cfgfile} | tr -ds '\r' '' > ${cfgfile} 
+		rm -rf ${CGI_cfgfile}
+		filecontent=`${AIDE_NATPROXY} -f ${cfgfile} | awk '{a++;print $0;}END{exit a;}'`
+		count="$?"
+		if [ "${count}" = "0" ]; then
+			afm_dialog_msg "无法找到任何可导入的内容，请检查内容格式是否正确。"
+			CGI_action=""
+		fi
+		rm -rf ${cfgfile}
+	fi
+fi
+
+echo -n "
+<body>
+";
+if [ "${CGI_action}" = "import" ]; then
+	operator_check "${myself}"
+	# waiting for 15 seconds for scheduler.
+	if [ "${CGI_import_data}" != "" ]; then
+		echo "<br><p style=\"color:#0000ff\">正在导入配置，请稍候......</p>"
+		ipmport_file="/tmp/ipmport_proxy_`date +%s`.conf"
+		echo "${CGI_import_data}" | tr '+' ' '  | tr -ds '\r' '' > ${ipmport_file}
+		errmsg=`${AIDE_NATPROXY} -i ${ipmport_file}`
+		#rm -rf ${ipmport_file}
+		echo "<script languate=\"javascript\">document.body.innerHTML=\"\";</script>"
+		if [ "${errmsg}" != "" ]; then
+			echo "<span style=\"color:#ff0000;\"><br>"
+			while read line
+			do
+				echo "	${line}<br>"
+			done << EOF
+${errmsg}
+EOF
+			echo "</span><br>"
+			afm_dialog_msg "导入中有错误！"
+		else
+			echo "<script languate=\"javascript\">document.body.innerHTML=\"\";</script>"
+			afm_dialog_msg "导入完成！"
+		fi
+	else
+		afm_dialog_msg "导入数据不能为空。"
+	fi
+	CGI_action="" 
+fi
+if [ "${CGI_action}" = "" ]; then
+	if [ -e ${PGETC}/panabit.conf ]; then
+		cp -f ${PGETC}/panabit.conf ${TMPPATH}/current.conf
+	else
+		echo "ENDCONFIG" > ${TMPPATH}/current.conf
+	fi
+fi
+cgi_show_title "接口线路->导入线路"
+if [ "${CGI_action}" = "upload" ]; then
+	ifnames=`${FLOWEYE} if list | grep -E " *.* outside " | awk '{printf $1" "}'`
+
+echo -n "
+<form method=post onsubmit=\"return ValidateImportData(this)\" action=\"${myself}\">
+	<table style=\"width:100%; border-bottom:1px #787882 solid; font-size:12px; color:#ff0000\">
+		<tr><td align=left>
+			请点击此处<a style=\"color:#0000ff;font-bold:true;font-size:13px;\" href=\"javascript:void(0)\" onclick=\"onSubmitData(this)\"><b>应用当前导入的配置</b></a>，内容如下：
+			（<a style=\"color:#0000ff;font-bold:true;font-size:13px;\" href=\"javascript:onBacking_out()\"><b>不用了</b></a>）
+		</td></tr>
+		<tr><td align=left>
+			提醒：1. VLAN关联修改：勾选后VLAN值会随从当前的值以升序的方式向后修改，每次修改的值会自动加“<span style=\"color:#0000ff;font-bold:true;\">1</span>”。
+		</td></tr>
+		<tr><td align=left>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 网卡关联修改：标题的网卡被选中后，所有选中项目中绑定的“物理网卡”值都会一同跟随修改。
+		</td></tr>
+	</table>
+	<br>
+	<table style=\"width:1080; font-bold:true;font-size:15px; color:#CE6C04;border-bottom:0px #787882 solid\">
+	<tr>
+			<td style=\"font:14px\"><b>导入列表：</b></td>
+			<td width=* style=\"font:14px\" align=right><a href=\"javascript:onAddProxy()\"></a></td>
+	</tr>
+	</table>
+	<table width=1080 border=0 cellspacing=1 cellpadding=1> 
+		<tr id=tblhdr>
+			<td width=40 align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' checked onclick=\"onSelectItem(this)\"/></td>
+			<td width=40 align=center>序号</td>
+			<td width=124 align=center>线路名称</td>
+			<td width=100 align=right title=\"该选项被修改后，所有选中项目中绑定的“物理网卡”值都会一同跟随修改。\">网卡
+				<select style=\"width:65\" value=\"\" onchange=\"onChangeifname(this)\">
+					<option value=\"\" selected>请选择</option>
+";
+			for key_node in ${ifnames}
+			do
+				echo "					<option value=\"${key_node}\">${key_node}</option>"
+			done
+
+echo -n "
+				</select>
+			</td>
+			<td width=60 align=center>MTU</td>
+			<td width=65  align=center title=\"关联修改：勾选后VLAN值会随从当前的值以升序的方式向后修改，每次修改的值会自动加1。\">VLAN&nbsp;
+				<input type=\"checkbox\" value=\"\" style=\"color:#0000ff\">
+			</td>
+			<td width=100 align=center>心跳服务器IP</td>
+			<td width=190 align=center>PPPOE帐号/IP地址</td>
+			<td width=140 align=center>PPPOE密码/网关地址</td>
+			<td width=100 align=center>DNS</td>
+		</tr>
+";
+	idname="row1"
+	index=0 
+	if [ "${count}" != "0" ]; then
+		while read type line
+		do
+			index=$((${index}+1))
+			for key_node in ${line}
+			do
+				eval ${key_node}
+			done
+
+echo -n "
+		<tr id=${idname} type=\"${type}\">
+			<td align=center><input type=checkbox style=\"color:#0000ff\" value='${id}' checked onclick=\"onSubSelectItem(this)\"/></td>
+			<td align=center>${index}</td>
+			<td align=center><input type=\"text\" style=\"width:124px\" value=\"${name}\" clonemac=\"${clonemac}\"></td>
+			<td align=right>
+				<select style=\"width:65px\" value=\"${ifname}\" >
+";
+			for key_node in ${ifnames}
+			do
+				if [ "${key_node}" = "${ifname}" ]; then
+					echo "					<option value=\"${key_node}\" selected>${key_node}</option>"
+				else
+					echo "					<option value=\"${key_node}\" >${key_node}</option>"
+				fi
+			done
+						
+			if [ "${type}" = "natproxy" ]; then
+				username=${addr}
+				password=${gateway}
+			else
+				dnsstatus=" display: none;"
+			fi
+
+echo -n "
+				</select>
+			</td>
+			<td align=right><input type=\"text\" style=\"width:50px\" value=\"${mtu}\"></td>
+			<td align=right><input type=\"text\" style=\"width:50px\" value=\"${vlan}\" onchange=\"onChangedVlanItem(this)\"></td>
+			<td align=right><input type=\"text\" style=\"width:100px\" value=\"${pingip}\"></td>
+			<td align=right><input type=\"text\" style=\"width:190px\" value=\"${username}\"></td>
+			<td align=right><input type=\"text\" style=\"width:120px\" value=\"${password}\"></td>
+			<td align=right><input type=\"text\" style=\"width:100px;${dnsstatus}\" value=\"${dns}\"></td>
+		</tr>
+";
+			clonemac=""
+			dnsstatus=""
+			dns=""
+			if [ "${idname}" = "row1" ]; then
+				idname="row2"
+			else
+				idname="row1"
+			fi
+		done << EOF
+${filecontent}
+EOF
+	fi
+
+echo -n "
+	</table>
+	<input type=hidden name=import_data id=import_data value=\"\"/>
+	<input type=hidden name=action value=import />
+</form>
+<br><br>&nbsp;
+</body>
+</html>
+";
+exit 0
+fi
+
+echo -n "
+<br>
+<table width=\"700\" border=0 cellspacing=1 cellpadding=3 style=\"font-size:13px;font-bold:true;\">
+<tr>
+    <td width=20></td>
+    <td align=left>1. 第一步: 上传配置文件，如果系统验证文件无误，会提示导入配置</td>
+</tr>
+<tr>
+    <td></td>
+    <td align=left>2. 第二步: 导入配置并让其生效，此过程会花费几秒时间，但不会中断网络。
+</td>
+</tr>
+<tr>
+    <td width=20></td>
+    <td align=left>3. 本操作导入时不会将原有的线路删除，所以导入前请自我检查(PPPOE)线路会重复加入的问题（静态IP不受引响）。</td>
+</tr>
+<tr>
+    <td width=20></td>
+    <td align=left>4. 导入的配置文件支持 .rsc，.txt，.conf 的文件类型，其内容格式分别为如下所示：<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.rsc : ROS 导出脚本<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ros_export content format, follows:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/interface pppoe-client<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add add-default-route=yes disabled=no interface=vrrp1 name=pppoe-out1 \<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;password=123456 service-name=Quidway user=XXXXX1153245814@16900.gd<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.txt : 普通配置文件，支持两种内容格式，A格式（PPPOE），与B格式（静态IP）<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# A my text content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# pppoe_user_name password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XXXXX1183845834@16900.gd 123456<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XXXXX1613845894@16901.gd 123456<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# B my text content<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ip netmask gateway [dns]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200.11.22.33 255.255.255.248 200.11.22.34 [8.8.8.8]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200.11.22.31 255.255.255.248 200.11.22.34 [8.8.8.8]<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.conf : 完整配置文件，支持两种内容格式，同上<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# A my pppoe line<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pppoeif name=11 ifname=em1 vlan=10 mtu=1480 pingip=0.0.0.0 username=test password=110<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# B my proxy line<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;natproxy name=ctc ifname=em1 addr=1.1.1.2 gateway=2.2.2.3 dns=0.0.0.0 vlan=0 mtu=1500 pingip=0.0.0.0<br>
+	</td>
+</tr>
+</table>
+<br>
+<form method=post onsubmit=\"return Validate(this)\" action=\"${myself}\" enctype=\"multipart/form-data\">
+<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr>
+	<td width=20></td>
+	<td width=130 style=\"font-size:13px;font-bold:true;\" align=left>请输入配置文件路径:</td>
+	<td width=460 class=cssTDArial align=left>
+		<input type=file name=cfgfile style=\"width:100%\" accept=\"text/rsc, text/txt, text/conf\" onChange=\"GetFileType(this.value)\"/>
+		<input type=hidden name=cfgtype id=cfgtype value=\"\" />
+	</td>
+	<td width=* align=right>
+		<input type=hidden name=action value=upload onChange=\"\"></input>
+		<input type=submit style=\"width:90\" value=\"上传配置文件\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

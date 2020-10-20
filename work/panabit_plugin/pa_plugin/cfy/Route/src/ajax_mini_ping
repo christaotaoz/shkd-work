@@ -1,0 +1,22 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";        
+FLOWEYE=/usr/ramdisk/bin/floweye
+echo "{ v:[ "
+if [ "${CGI_ip}" != "" ]; then
+	errmsg=`${FLOWEYE} ping if=${CGI_wan} ip=${CGI_ip} seq=${CGI_seq} count=1 | awk '{print tag"\""$0"\"";if(++i>=2)exit;tag=","}'`
+	if [ "${errmsg}" = "" ]; then
+		echo "\"ping err: ${CGI_ip}\""
+	else
+		echo "${errmsg}"
+	fi
+	#ping -c 1 ${CGI_ip} | awk '{print tag"\""$0"\"";if(++i>=2)exit;tag=","}'
+fi
+echo " ], seq: ${CGI_seq}}"
+
+echo -n "
+";

@@ -1,0 +1,84 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+wanname=`/usr/ramdisk/bin/floweye nat getproxy name=${CGI_wan} | grep "^name=" | cut -d'=' -f2`
+CGI_browsertitle="PING->${CGI_ip}[${wanname}]" 
+. ../common/common.sh 
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script>
+var g_seq = 0;
+function cmdping()
+{
+	AJXS({
+	    type: 'POST', 
+	    url: '/cgi-bin/Route/ajax_mini_ping?ip=${CGI_ip}&wan=${CGI_wan}&seq=' + g_seq, 
+	    error: function(status){setTimeout(cmdping, 3000);},
+	    success: function(data){ 
+		var d;
+		try {
+			d = eval('('+data+')');
+		}catch(e) {
+			d = undefined;
+		}
+		if(typeof(d) == \"undefined\") {
+			setTimeout(cmdping, 1000);
+			return;
+		}
+		lastnum = d.v.count;
+		var e;
+		var cell1;
+		var i = 0;
+		var pingbox = document.getElementById(\"pingbox\");
+		var wrapper = document.getElementById(\"wrapper\");
+		var len = pingbox.rows.length;
+		
+		for(; i < d.v.length; i++) {
+			if(pingbox.rows.length >= 200)
+				pingbox.deleteRow(1);
+			
+			if(d.v[i].indexOf('${CGI_ip}') == -1 && d.v[i].indexOf(\"err\") != -1)
+				break;
+			e = pingbox.insertRow(-1);
+			e.style.color = \"#00F\";
+			e.style.fontSize = \"13px\";
+			cell1 = e.insertCell(0);
+			cell1.style.width = 20;
+			cell1.setAttribute('align', 'right');
+			cell1 = e.insertCell(1);
+			cell1.setAttribute('align', 'left');
+			cell1.innerText = d.v[i];
+			if(d.v[i].indexOf(\"err\") != -1) {
+				e.style.backgroundColor = \"#FFC1B5\";
+			}
+			wrapper.scrollTop = wrapper.scrollHeight;
+		}
+		
+		setTimeout(cmdping, 1000);
+	}});
+	
+	g_seq++;
+}
+function onLoad()
+{
+	cmdping();
+}
+</script>
+<body onload=\"onLoad()\">
+"; cgi_show_title "${CGI_ip}->${wanname}" 
+echo -n "
+<br>
+<div id=\"boxtop\" style=\"border-radius:0px; border:1px solidred; padding:0px;width:480px;\"> 
+<div id=\"wrapper\" style=\"min-height:0px; overflow-y:auto; max-height:460px;\"> 
+<table width=450 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\" style=\"font-size:12px\" id=pingbox>
+</table>
+</div> 
+</div>  
+</body>
+</html>
+";

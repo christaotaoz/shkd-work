@@ -1,0 +1,68 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+  qos_rule_name:
+    description: >
+      The name of the qos rule
+  wan_line:
+    description: >
+      The wan connection that need to limit the rate
+    default:
+  direction:
+    description: >
+      The direction that needs to limit the rate
+  ip_rate:
+    description: >
+      Maximum speed rate of the internal network
+  max_tcp_session:
+    description: >
+      Maximum number of TCP session per IP
+  max_udp_session:
+    description: >
+      Maximum number of UDP session per IP
+  max_total_session:
+    description: >
+      Maximum number of total session per IP
+
+
+node_templates:
+  new_qos_rule:
+    type: cloudify.pa.qos
+    properties:
+      qos_rule_name:
+        get_input: qos_rule_name
+      policy_number:
+      desc:
+      bridge:
+        get_input: wan_line
+      dir:
+        get_input: direction
+      vlan: 0
+      intype:
+        data_sources: 0
+        data_value: any
+      iniptbl: 1
+      inport: 0
+      outtype: any
+      outiptbl: 1
+      outport: 0
+      proto: any
+      appid: any
+      natip: 0
+      hasms: 0
+      qqcnt: 0
+      action: permit
+      iprate: 
+        get_input: ip_rate
+      tos: 0
+      matchact:  stop
+      maxtflow:
+        get_input: max_tcp_session
+      maxuflow:
+        get_input: max_udp_session
+      maxflow:
+        get_input: max_total_session
+

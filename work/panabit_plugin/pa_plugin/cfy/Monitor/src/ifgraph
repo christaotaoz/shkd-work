@@ -1,0 +1,104 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+[ "${CGI_refresh}" = "" ] && CGI_refresh=60
+if [ "${CGI_time}" = "3day" ]; then
+	desc1="最近3日"
+	desc2="对比"
+else
+	desc1=""
+	desc2=""
+fi
+if [ "${CGI_type}" = "all" ]; then
+	desc3="流量"
+elif [ "${CGI_type}" = "pps" ]; then
+	desc3="PPS"
+elif [ "${CGI_type}" = "tcpudp" ]; then
+	desc3="TCP/UDP流量"
+elif [ "${CGI_type}" = "tcpudppps" ]; then
+	desc3="TCP/UDP PPS"
+fi
+CGI_title="${CGI_ifname}${desc1}${desc3}${desc2}"
+cgipath="/cgi-bin/Monitor/ifgraph?type=${CGI_type}&time=${CGI_time}&ifname=${CGI_ifname}"
+afm_load_page  ${CGI_refresh} "${cgipath}"
+
+echo -n "
+<body>
+"; cgi_show_title "${CGI_title}" 630 
+echo -n "
+<br>
+";
+TMPPATH=${PGPATH}/admin/tmp
+case "${CGI_type}" in
+"all")
+	datasrc="tag=${CGI_ifname}.bpsin tag=${CGI_ifname}.bpsout"
+	;;
+"tcpudp")
+	datasrc="tag=${CGI_ifname}.bpstcpin tag=${CGI_ifname}.bpsudpin tag=${CGI_ifname}.bpstcpout tag=${CGI_ifname}.bpsudpout"
+	;;
+"pps")
+	datasrc="tag=${CGI_ifname}.ppsin tag=${CGI_ifname}.ppsout yname=packets/s"
+	;;
+"tcpudppps")
+	datasrc="tag=${CGI_ifname}.ppstcpin tag=${CGI_ifname}.ppsudpin tag=${CGI_ifname}.ppstcpout tag=${CGI_ifname}.ppsudpout yname=packets/s"
+	;;
+"*")
+	datasrc=""
+esac
+if [ "${CGI_time}" = "3day" ]; then
+	png72=${CGI_ifname}72_${CGI_type}.png
+	png48=${CGI_ifname}48_${CGI_type}.png
+	png24=${CGI_ifname}24_${CGI_type}.png
+	command="${FLOWEYE} chart show width=640 height=300 hours=24 ${datasrc}"
+	endtm=`date +%s`
+	errmsg=`${command} outimg=${TMPPATH}/${png24} tmend=${endtm}`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${command} outimg=${TMPPATH}/${png48} tmend=${endtm}`
+	endtm=$((${endtm} - 86400))
+	errmsg=`${command} outimg=${TMPPATH}/${png72} tmend=${endtm}`
+	echo "<table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近24小时趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png24}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>24小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png48}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>48小时前趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png72}\"></img></td></tr></table>"
+fi
+if [ "${CGI_time}" = "mon" ]; then
+	command="${FLOWEYE} chart show width=640 height=300 ${datasrc}"
+	daypng=${CGI_ifname}day_${CGI_type}.png
+	weekpng=${CGI_ifname}week_${CGI_type}.png
+	monpng=${CGI_ifname}mon_${CGI_type}.png
+	errmsg=`${command} outimg=${TMPPATH}/${daypng} hours=24`
+	errmsg=`${command} outimg=${TMPPATH}/${weekpng} hours=168`
+	errmsg=`${command} outimg=${TMPPATH}/${monpng} hours=720`
+	echo "<table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>"
+	
+	echo "<br><table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>"
+	echo "<br><table style=\"width:700; font:bold 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>"
+	echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>"
+fi
+
+echo -n "
+</body>
+</html>
+";

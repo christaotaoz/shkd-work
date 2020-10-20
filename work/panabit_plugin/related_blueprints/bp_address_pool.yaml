@@ -1,0 +1,41 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  allow_for_overdue_account: null
+  dns: null
+  final_ip: null
+  name: null
+  start_ip: null
+node_templates:
+  New_address_pool_1:
+    type: cloudify.pa.address_pool
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      allow_for_overdue_account: null
+      connection_config:
+        host: 192.168.4.39
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+      dns:
+        get_input: dns
+      final_ip:
+        get_input: final_ip
+      name:
+        get_input: name
+      start_ip:
+        get_input: start_ip

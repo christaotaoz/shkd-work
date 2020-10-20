@@ -1,0 +1,128 @@
+#!/bin/sh
+# 作用：管理线路备注
+# 功能：支持WAN线路备注，支持PPPOE服务器备注
+
+RAMDISK="/usr/ramdisk"
+if [ -f ${RAMDISK}/PG.conf ]; then
+        . ${RAMDISK}/PG.conf
+        PGPATH="${RAMDISK}"
+else
+        . /etc/PG.conf
+fi
+
+PGBIN=${PGPATH}/bin
+FLOWEYE=${PGBIN}/floweye
+EVENTFILE=${PGETC}/log/pending_events
+
+remark_dir="${PGETC}/remark" 
+remark_list="${remark_dir}/remark_list.conf"
+remark_mem_list="${PGPATH}/remark_list.conf"
+
+[ ! -d ${remark_dir} ] && mkdir -p ${remark_dir}
+[ ! -f ${remark_list} ] && touch ${remark_list}
+
+cleanInvalid()
+{
+		proxy="`${FLOWEYE} nat listproxy type=proxy.pppoe.posvrif | awk '{printf $3" |"}END{print "SD_END"}'`"
+		[ "${proxy}" = "SD_END" ] && return
+		grep -E "^(${proxy})" ${remark_list} > ${remark_mem_list}
+		mv ${remark_mem_list} ${remark_list}
+}
+
+cfg_list()
+{
+        grep -E "^.+ " ${remark_list}
+}
+
+cfg_add()
+{
+        local name="${1}"
+        local remark="${2}"
+
+		errarg=`echo ${*} | grep -E "^.+ "`
+        if [ "${errarg}" = "" ]; then
+                echo "arg err."
+                exit 1
+        fi
+		
+        local tmp="`cfg_list | grep "^${name} "`"
+
+        if [ "${tmp}" != "" ]; then
+                echo "exist."
+                exit 1
+        fi
+
+        echo "${name} ${remark}" >> ${remark_list}
+}
+
+cfg_del()
+{ 
+        local name="${1}"
+
+        if [ "${name}" = "" ]; then
+                echo "arg err."
+                exit 1
+        fi
+
+        men=`grep -v "^${name} " ${remark_list}`
+        echo "${men}" > ${remark_list}
+}
+
+cfg_chang()
+{
+        local name="${1}"
+        local remark="${2}"
+
+        if [ "${name}" = "" ]; then
+                echo "arg err."
+                exit 1
+        fi
+
+        local tmp="`cfg_list | grep "^${name} "`"
+        
+        if [ "${tmp}" = "" ]; then
+                echo "not exist."
+                exit 1
+        fi
+
+        men=`grep -v "^${name} " ${remark_list}`
+        echo "${men}" > ${remark_list}
+        echo "${name} ${remark}" >> ${remark_list}
+}
+
+help()
+{
+        printf "usage:\t -l|--list\n"
+        printf "      \t -a|--add name remark\n"
+        printf "      \t -d|--del name\n"
+        printf "      \t -c|--chang name remark\n"
+        printf "      \t -r|--removeinvalid\n"
+}
+
+case ${1} in
+        "-l"|"--list")
+                shift
+                cfg_list $*
+        ;;
+        "-a"|"--add")
+                shift
+                cfg_add $*
+        ;;
+        "-d"|"--del")
+                shift
+                cfg_del $*
+        ;;
+        "-c"|"--chang")
+                shift
+                cfg_chang $*
+        ;;
+		"-r"|"--removeinvalid")
+				shift
+				cleanInvalid $*
+		;;
+        *)
+                help
+        ;;
+esac
+
+

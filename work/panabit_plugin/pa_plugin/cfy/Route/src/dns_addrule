@@ -1,0 +1,439 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddRule(frm)
+{
+	var rngs;
+	var polno   = document.getElementsByName(\"polno\")[0];
+	var intype  = document.getElementsByName(\"intype\")[0];
+	var inipnet = document.getElementsByName(\"inipnet\")[0];
+	var iniprng = document.getElementsByName(\"iniprng\")[0];
+	var outtype  = document.getElementsByName(\"outtype\")[0];
+	var outipnet = document.getElementsByName(\"outipnet\")[0];
+	var outiprng = document.getElementsByName(\"outiprng\")[0];
+	var action   = document.getElementsByName(\"action\")[0];
+	var actip = document.getElementsByName(\"actip\")[0];
+	var actproxy = document.getElementsByName(\"actproxy\")[0];
+	var vlan = document.getElementsByName(\"vlan\")[0];
+	polno.value = TrimAll(polno.value);
+	if (!IsDigitIn(polno.value, 1, 65535)) {
+		alert(\"规则序号必须是介于1和65535之间的一个整数!\");
+		polno.select();
+		return false;
+	}
+	inipnet.value = TrimAll(inipnet.value);
+	iniprng.value = TrimAll(iniprng.value);
+	if (intype.value == \"net\") {
+		if (!IsIPAddr(inipnet.value)) {
+			alert(\"请输入正确的IP地址，格式为x.x.x.x/n\");
+			inipnet.select();
+			return false;
+		}
+	}
+	else
+	if (intype.value == \"range\") {
+		rngs = iniprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"请输入正确的IP段，格式为x.x.x.x-y.y.y.y\");
+			iniprng.select();
+			return false;
+		}
+	}
+	outipnet.value = TrimAll(outipnet.value);
+	outiprng.value = TrimAll(outiprng.value);
+	if (outtype.value == \"net\") {
+		if (!IsIPAddr(outipnet.value)) {
+			alert(\"请输入正确的IP地址，格式为x.x.x.x/n\");
+			outipnet.select();
+			return false;
+		}
+	}
+	else
+	if (outtype.value == \"range\") {
+		rngs = outiprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"请输入正确的IP段，格式为x.x.x.x-y.y.y.y\");
+			outiprng.select();
+			return false;
+		}
+	}
+	if (action.value == \"reply\") {
+		actip.value = TrimAll(actip.value);
+		if (!IsIPAddr(actip.value)) {
+			alert(\"请输入IP地址!\");
+			actip.select();
+			return false;
+		}
+	}
+	else
+	if (action.value == \"rdr\") {
+		actproxy.value = TrimAll(actproxy.value);
+		if (actproxy.value == \"\") {
+			alert(\"请选择流量代理!\");
+			actproxy.select();
+			return false;
+		}
+	}
+	vlan.value = TrimAll(vlan.value);
+	return true;
+}
+function onCancel()
+{
+	window.location.href = \"/cgi-bin/Route/dns_listrule\";
+}
+function onIntypeChanged(obj)
+{
+	var net = document.getElementsByName(\"inipnet\")[0];
+	var rng = document.getElementsByName(\"iniprng\")[0];
+	var tbl = document.getElementsByName(\"iniptbl\")[0];
+	if (obj.value == \"any\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"net\") {
+		net.style.display = \"block\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"range\") {
+		net.style.display = \"none\";
+		rng.style.display = \"block\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"table\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"block\";
+	}
+}
+function onOuttypeChanged(obj)
+{
+	var net = document.getElementsByName(\"outipnet\")[0];
+	var rng = document.getElementsByName(\"outiprng\")[0];
+	var tbl = document.getElementsByName(\"outiptbl\")[0];
+	if (obj.value == \"any\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"net\") {
+		net.style.display = \"block\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"range\") {
+		net.style.display = \"none\";
+		rng.style.display = \"block\";
+		tbl.style.display = \"none\";
+	}
+	else
+	if (obj.value == \"table\") {
+		net.style.display = \"none\";
+		rng.style.display = \"none\";
+		tbl.style.display = \"block\";
+	}
+}
+function onActionChanged(obj)
+{
+	var actip = document.getElementsByName(\"actip\")[0];
+	var actproxy = document.getElementsByName(\"actproxy\")[0];
+	if (obj.value == \"rdr\") {
+		actip.style.display = \"none\";
+		actproxy.style.display = \"block\";
+	}
+	else
+	if (obj.value == \"reply\") {
+		actip.style.display = \"block\";
+		actproxy.style.display = \"none\";
+	}
+	else {
+		actip.style.display = \"none\";
+		actproxy.style.display = \"none\";
+	}
+}
+function onInit()
+{
+	var act = document.getElementsByName(\"action\")[0];
+	onActionChanged(act);
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Route/dns_listrule"
+	case "${CGI_intype}" in
+	"any")
+		CGI_inip="any"
+		;;
+	"net")
+		CGI_inip="${CGI_inipnet}"
+		;;
+	"range")
+		CGI_inip="${CGI_iniprng}"
+		;;
+	"table")
+		CGI_inip="${CGI_iniptbl}"
+		;;
+	esac
+	case "${CGI_outtype}" in
+	"any")
+		CGI_outip="any"
+		;;
+	"net")
+		CGI_outip="${CGI_outipnet}"
+		;;
+	"range")
+		CGI_outip="${CGI_outiprng}"
+		;;
+	"table")
+		CGI_outip="${CGI_outiptbl}"
+		;;
+	esac
+	if [ "${CGI_action}" = "rdr" ]; then
+		CGI_actarg="${CGI_actproxy}"
+	elif [ "${CGI_action}" = "reply" ]; then
+		CGI_actarg="${CGI_actip}"
+	else
+		CGI_actarg="null"
+	fi
+	cmdargs="id=${CGI_polno} inip=${CGI_inip} outip=${CGI_outip} dns=${CGI_dns}"
+	[ "${CGI_vlan}" != "" ] && cmdargs="${cmdargs} vlan=${CGI_vlan}"
+	[ "${CGI_inif}" != "" ] && cmdargs="${cmdargs} inif=${CGI_inif}"
+	cmdargs="${cmdargs} bridge=${CGI_bridge} action=${CGI_action} actarg=${CGI_actarg}"
+	errmsg=`${FLOWEYE} dns addrule ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		WEB_LOGGER "添加DNS管控策略" "id=${CGI_polno}"
+		afm_load_page 0 "/cgi-bin/Route/dns_listrule"
+		exit 0
+	fi
+else
+	[ "${CGI_bridge}" = "" ] && CGI_bridge="0"
+fi
+
+echo -n "
+<body onload=\"onInit()\">
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlpno\" style=\"display:none\">编号范围为1~65535,序号小的规则优先匹配</span>
+"; 
+cgi_show_title "应用路由->策略->DNS管控->添加策略"
+tblexists=`${FLOWEYE} table list`
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddRule(this)\" action=\"${myself}\">
+<table width=700 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=50></td>
+        <td width=100 align=left>策略标识</td>
+	<td width=140 align=left><input align=right type=text name=polno style=\"width:100%\" value=\"${CGI_polno}\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\" onmouseover=\"TagToTip('hlpno')\" onmouseout=\"UnTip()\">(1~65535)</a></td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>路径</td>
+	<td align=left>
+		<select name=bridge style=\"width:140\" value=\"${CGI_bridge}\"> 
+		";
+			for bdg in 0 `${FLOWEYE} bridge list`; do
+				selit=""
+				[ "${CGI_bridge}" = "$bdg" ] && selit="selected"
+				if [ $bdg -eq 0 ]; then
+					echo "<option value=$bdg ${selit}>任意路径</option>"
+				else
+					echo "<option value=$bdg ${selit}>网桥$bdg</option>"
+				fi
+			done
+		
+echo -n "
+		</select>
+	</td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>VLAN</td>
+        <td><input type=text name=vlan value=\"${CGI_vlan}\" style=\"width:140\"></input></td>
+	<td width=* align=left><a style=\"color:#0000ff\">10或10-20,0表示忽略此条件</td>
+</tr>
+<tr id=row1>
+	<td></td>
+	<td align=left>源接口</td>
+	<td align=left>
+		<select name=inif style=\"width:140\" value=\"${CGI_inif}\"> 
+		";
+			if [ "${CGI_inif}" = "any" ]; then
+				echo "<option value=any selected>任意接口</option>"
+			else
+				echo "<option value=any>任意接口</option>"
+			fi
+			${FLOWEYE} if list | while read inif mode zone theothers
+			do
+				[ "${zone}" != "inside" ] && continue
+				if [ "${CGI_inif}" = "${inif}" ]; then
+					echo "<option value=${inif} selected}>${inif}</option>"
+				else
+					echo "<option value=${inif}>${inif}</option>"
+				fi
+			done
+			for proxy in `${FLOWEYE} nat listproxy type=routerif | awk '{print $3}'`
+			do
+				if [ "${CGI_inif}" = "${proxy}" ]; then
+					echo "<option value=${proxy} selected}>${proxy}</option>"
+				else
+					echo "<option value=${proxy}>${proxy}</option>"
+				fi
+			done
+		
+echo -n "
+		</select>
+	</td>
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>源地址</td>
+        <td align=left>
+		<select name=intype style=\"width:140\" value=\"any\" onchange=\"onIntypeChanged(this)\">
+			<option value=\"any\" selected>任意地址</option>
+			<option value=\"net\">xxx.xxx.xxx.xxx/nn</option>
+			<option value=\"range\">n.n.n.n-m.m.m.m</option>
+		";
+			if [ "${tblexists}" != "" ]; then
+				echo "<option value=\"table\">IP群组</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+		<input type=text name=inipnet style=\"width:150px;display:none\"></input>
+		<input type=text name=iniprng style=\"width:150px;display:none\"></input>
+		<select name=iniptbl style=\"width:160px;display:none\">
+		";
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>DNS服务器</td>
+        <td align=left>
+		<select name=outtype style=\"width:140\" value=\"any\" onchange=\"onOuttypeChanged(this)\">
+			<option value=\"any\" selected>任意服务器</option>
+			<option value=\"net\">xxx.xxx.xxx.xxx/nn</option>
+			<option value=\"range\">n.n.n.n-m.m.m.m</option>
+		";
+			if [ "${tblexists}" != "" ]; then
+				echo "<option value=\"table\">IP群组</option>"
+			fi
+		
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+		<input type=text name=outipnet style=\"width:150px;display:none\"></input>
+		<input type=text name=outiprng style=\"width:150px;display:none\"></input>
+		<select name=outiptbl style=\"width:160px;display:none\">
+		";
+			${FLOWEYE} table list | while read tblid tblname
+			do
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>访问域名</td>
+        <td><select name=dns style=\"width:140\">
+		<option value=0>任意域名</option>
+	";
+		${FLOWEYE} dns listgrp | while read type id name theothers
+		do
+			if [ "${type}" = "usr" ]; then
+				echo "<option value=${id}>${name}</option>"
+			else
+				echo "<option value=${id}>*${name}</option>"
+			fi
+		done
+	
+echo -n "
+	</select></td> 
+	<td width=*></td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>执行动作</td>
+        <td align=left>
+		<select name=action style=\"width:140\" value=\"pass\" onchange=\"onActionChanged(this)\">
+			<option value=\"pass\" selected>允许</option>
+			<option value=\"deny\">丢弃请求</option>
+			<option value=\"rdr\">重定向至</option>
+			<option value=\"reply\">劫持为IP</option>
+		</select>
+	</td>
+	<td width=* align=left>
+		<input type=text name=actip style=\"width:160px;display:none\"></input>
+		<select name=actproxy style=\"width:160px;display:none\">
+		";
+			${FLOWEYE} nat listproxy type=proxy_pppoe | while read type id name theothers
+			do
+				if [ "${CGI_actproxy}" = "${name}" ]; then
+					echo "<option value=\"${name}\" selected>${name}</option>"
+				else
+					echo "<option value=\"${name}\">${name}</option>"
+				fi
+			done
+			${FLOWEYE} wangroup list | while read id name pxycnt theothers
+			do
+				[ ${pxycnt} -eq 0 ] && continue
+				if [ "${CGI_actproxy}" = "_wg.${name}" ]; then
+					echo "<option value=\"_wg.${name}\" selected>${name}</option>"
+				else
+					echo "<option value=\"_wg.${name}\">${name}</option>"
+				fi
+			done
+		
+echo -n "
+	</td>
+</tr>
+</table>
+<table style=\"width:700; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:700\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn style=\"width:80\" value=\"提交\"></input>
+		<input type=button id=newbtn style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,924 @@
+##################################################################################
+# Cloudify Panabit built in types and plugins definitions.
+##################################################################################
+
+
+plugins:
+  # Name could be anything, this name is what appears on the beginning of operation
+  # mappings.
+  #plugin_name:
+    # Could be 'central_deployment_agent' or 'host_agent'.
+    # If 'central_deployment_agent', this plugin will be executed on the
+    # deployment dedicated agent, other wise it will be executed on the host agent.
+    # executor: host_agent
+
+    # URL to archive containing the plugin or name of directory containing
+    # the plugin if it is included in the the blueprint directory under the
+    # "plugins" directory.
+   # source: https://github.com/cloudify-cosmo/cloudify-plugin-template/archive/master.zip
+  pa:
+    executor: central_deployment_agent
+    package_name: pa-plugin
+    package_version: '1.0'
+
+data_types:
+    cloudify.datatypes.pa.config:
+        properties:
+            host:
+                description: >
+                    panabit hostname or IP address.
+                type: string
+                required: true
+            login_name:
+                description: >
+                    panabit web login username.
+                type: string
+                required: true
+            login_password:
+                description: >
+                    panabit web login password.
+                type: string
+                required: true
+    cloudify.datatypes.pa.source:
+        properties:
+            data_sources:
+                description: >
+                    sources of the data,there are two options:
+                    0:from_input 
+                    1:from_iptoollist
+                type: string
+                required: true
+            data_value:
+                description: >
+                    If data_sources is 1,that is default.So,there is the default value.
+                    If data_sources is 0,that is get_input.Specify input source.
+                type: string
+                required: true
+            
+                    
+node_types:
+    cloudify.pa.pa_get_equipment_statu:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              implementation: pa.pa_plugin_task.pa_get_equipment_statu.update
+
+    cloudify.pa.pa_get_gateway_interface:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              implementation: pa.pa_plugin_task.pa_get_gateway_interface.update
+
+    cloudify.pa.pa_get_interface_search:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+              implementation: pa.pa_plugin_task.pa_get_interface_search.update
+
+    cloudify.pa.pa_get_policy_route:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+          cloudify.interfaces.lifecycle:
+            create:
+             implementation: pa.pa_plugin_task.pa_get_policy_route.update
+
+    cloudify.pa.manager_network:
+        derived_from: cloudify.nodes.Root
+        properties:
+            ip:
+                description: >
+                    ip for the manager network
+                type: string
+                required: false
+            interface:
+                description: > 
+                    the physical interface for manager network
+                type: string
+                required: false
+            netmask: 
+                description: >
+                    netmask for the manager network
+                type: string
+                default: 255.255.255.0
+                required: true
+            gateway:
+                description: > 
+                    gateway for the gateway network
+                type: string
+                required: false
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+            new_login_name:
+                description: 
+                type: string
+            new_login_password:
+                description:
+                type: string
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.manager_network.update
+                    inputs: {}
+
+
+    cloudify.pa.data_network:
+        derived_from: cloudify.nodes.Root
+        properties:
+            interface:
+                description: >
+                    the physcial interface 
+                    e.g: 'em1,em2,em3...'
+                type: string
+                required: false
+            type:
+                description: >
+                    the valid vaule are:
+                    *outside        
+                    *inside
+                type: string
+                required: false
+            application_mode:
+                description: >
+                    *0 for the mode which apply for monitor
+                    *N for the which one that bridge use
+                type: integer
+                required: false
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.data_network.update
+                    inputs: {}
+
+                    
+    cloudify.pa.route:
+        derived_from: cloudify.nodes.Root
+        properties:
+            route_name:
+                description: >
+                    the name for route
+                type: string
+                required: false
+            route_type:
+                description: >
+                    choose the route is for the WAN or LAN
+                type: string
+                required: false
+            interface:
+                description: >
+                    the physcial interface for this route
+                type: string
+                required: false
+            ip:
+                description: >
+                    the ip for this route 
+                type: string
+                required: false
+            gateway: 
+                description: >
+                    the gateway for this route
+                type: string
+                required: false
+            heart_server:
+                description: >
+                    use this server to test whether this route is healthy
+                type: string
+                required: false
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.route.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.route.delete
+                    inputs: {}
+
+    cloudify.pa.policy_route:
+        derived_from: cloudify.nodes.Root
+        properties:
+            number:
+                description: >
+                    number for the policy_route
+                type: string
+                required: false
+            source_interface:
+                description: >
+                    config the source interface for this policy_route
+                type: string
+                required: false
+            pool_name:
+                description: >
+                    if the type of source interface is belong to pppoe,
+                    so need the ip pool for this policy route
+                type: string
+                required: false
+            nat_route:
+                description: >
+                    you need to choose a route that can link to the Ethernet
+                type: string
+                required: false
+            action:
+                description: >
+                    valid value are:
+                    *nat
+                    *bridge
+                type: string
+                default: 'nat'
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.policy_route.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.policy_route.delete
+                    inputs: {}
+
+    cloudify.pa.flow_control:
+        derived_from: cloudify.nodes.Root
+        properties:
+            policy_number:
+              description: >
+                Policy number
+              type: string
+              required: true
+            desc:
+              description:
+              type: string
+              required: false
+            bridge:
+              description:
+              type: string
+              required: false
+            dir:
+              description:
+              type: string
+              required: false
+            vlan:
+              description:
+              type: string
+              required: false
+            intype:
+              description:
+              type: cloudify.datatypes.pa.source
+              required: false
+            iniptbl:
+              description:
+              type: string
+              required: false
+            inport:
+              description:
+              type: string
+              required: false
+            outtype:
+              description:
+              type: string
+              required: false
+            outiptbl:
+              description:
+              type: string
+              required: false
+            outport:
+              description:
+              type: string
+              required: false
+            proto:
+              description:
+              type: string
+              required: false
+            appid:
+              description:
+              type: string
+              required: false
+            natip:
+              description:
+              type: string
+              required: false
+            hasms:
+              description:
+              type: string
+              required: false
+            qqcnt:
+              description:
+              type: string
+              required: false
+            action:
+              description:
+              type: string
+              required: false
+            iprate:
+              description:
+              type: string
+              required: false
+            tos:
+              description:
+              type: string
+              required: false
+            matchact: 
+              description:
+              type: string
+              required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.flow_control.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.flow_control.delete
+                    inputs: {}
+                show:
+                    implementation: pa.pa_plugin_task.flow_control.show
+                    inputs: {}
+
+    cloudify.pa.address_pool:
+        derived_from: cloudify.nodes.Root
+        properties:
+            user_group_name:
+                description: >
+                    name of the address_pool
+                type: string
+                required: true
+            start_ip:
+                description: >
+                    the start ip for the address_pool range
+                type: string
+                required: false
+            final_ip:
+                description: >
+                    the final ip for the address_pool range
+                type: string
+                required: false
+            max_uplink_rate:
+                description: >
+                  Maximum uplink rate for users
+                type: string
+                required: false
+            max_downlink_rate:
+                description: >
+                  Maximum downlink rate for users
+                type: string
+                required: false
+            dns_server:
+                description: >
+                    e.g: '114.114.114.114,8.8.8.8'
+                type: string
+                default: '114.114.114.114,8.8.8.8'
+                required: false
+            max_online_time:
+                description: >
+                  When the online time exceeds, 
+                  the system will actively kick the user offline,
+                  0 means no control
+                type: string
+                required: false
+            allow_for_overdue_account:
+                description: >
+                    whether the Pppoe client can use the overdue account
+                    valid value are:
+                    *pass
+                    *reject
+                type: string
+                required: false
+            dialing_interface:
+                description: >
+                    Generation of dial control
+                type: string
+                required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.address_pool.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.address_pool.delete
+                    inputs: {}
+
+    cloudify.pa.protocol_group:
+        derived_from: cloudify.nodes.Root
+        properties:
+            group_en_name:
+                description: >
+                     English name of the protocol group
+                type: string
+                required: false
+            group_cn_name:
+                description: >
+                    Chinese name of the protocol group,described in pinyin
+                type: string
+                required: false
+            applist:
+                description: >
+                    List of permitted protocols
+                type: string
+                required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.protocol_group.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.protocol_group.delete
+                    inputs: {}
+
+    cloudify.pa.local_account:
+        derived_from: cloudify.nodes.Root
+        properties:
+            address_pool_name:
+                description: >
+                    Which address pool to use
+                type: string 
+                required: false
+            username:
+                description: >
+                     the username for Pppoe client
+                type: string
+            password:
+                description: >
+                    the password for Pppoe client 
+                type: string
+            start_time:
+                description: >
+                    the first boot time for this account
+                type: string
+                required: false
+            end_time:
+                description:
+                    the overdue time for this account 
+                type: string
+                required: false
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.local_account.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.local_account.delete
+                    inputs: {}
+
+    cloudify.pa.pppoe_server:
+        derived_from: cloudify.nodes.Root 
+        properties:
+            name:
+                description: >
+                    Pppoe server name
+                type: string
+                required: false
+            interface:
+                description: >
+                    the physcial interface for Pppoe server 
+                type: string
+                required: false
+            gateway:
+                description: >
+                    the gateway for the Pppoe server
+                type: string
+                required: false
+            first_dns:
+                description: >
+                    first dns for the Pppoe server
+                type: string
+                required: false
+            second_dns:
+                description: >
+                    second dns for the Pppoe server
+                type: string
+                required: false
+            authentication_mode:
+                description: >
+                    choose the mode of local authentication or radius authentication
+                    valid value are:
+                    *local
+                    *radius
+                    *local/radius
+                type: string
+            radius_name:
+                description: >
+                    if the authentication_mode is radius,
+                    so we need radius name to connect
+            address_pool_name:
+                description: >
+                     choose thr address pool for this Pppoe server
+                type: string
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.pppoe_server.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.pppoe_server.delete
+                    inputs: {}
+
+    cloudify.pa.radius_server:
+        derived_from: cloudify.nodes.Root
+        properties:
+            name:
+                description: >
+                    the name for the radius_server
+                type: string
+            radius_ip:
+                description: >
+                    ip for the radius server
+                type: string
+            secret_key:
+                description: >
+                    the share secret key between radius server and pppoe server
+                type: string
+            nas:
+                description: >
+                    the nas for the pppoe server
+                type: string
+            route_name:
+                description: >
+                    choose the route can link to radius server
+                type: string
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.radius_server.link
+                delete:
+                    implementation: pa.pa_plugin_task.radius_server.unlink
+
+    cloudify.pa.init_manager:
+        derived_from: cloudify.nodes.Root
+        properties:
+            ip:
+                description: >
+                    ip for the manager network
+                type: string
+                required: true
+            lan:
+                description: >
+                    ip for the lan network
+                type: string
+                required: true
+            interface:
+                description: >
+                    the physical interface for manager network
+                type: string
+                required: false
+            netmask: 
+                description: >
+                    netmask for the manager network
+                type: string
+                default: 255.255.255.0
+                required: true
+            gateway:
+                description: >
+                    gateway for the gateway network
+                type: string
+                required: false
+            connection_config:
+                default: {}
+                type: cloudify.datatypes.pa.config
+            new_login_password:
+                description:
+                type: string
+            inside_nic_number:
+                description:
+                type: string
+            outside_nic_number:
+                description:
+                type: string
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.init_manager.update
+                    inputs: {}
+
+
+    cloudify.pa.user_group:
+        derived_from: cloudify.nodes.Root
+        properties:
+            user_group_name:
+                description: >
+                    name of the address_pool
+                type: string
+                required: true
+            start_ip:
+                description: >
+                    the start ip for the address_pool range
+                type: string
+                required: false
+            final_ip:
+                description: >
+                    the final ip for the address_pool range
+                type: string
+                required: false
+            max_uplink_rate:
+                description: >
+                  Maximum uplink rate for users
+                type: string
+                required: false
+            max_downlink_rate:
+                description: >
+                  Maximum downlink rate for users
+                type: string
+                required: false
+            dns_server:
+                description: >
+                    e.g: '114.114.114.114,8.8.8.8'
+                type: string
+                default: '114.114.114.114,8.8.8.8'
+                required: false
+            max_online_time:
+                description: >
+                  When the online time exceeds, 
+                  the system will actively kick the user offline,
+                  0 means no control
+                type: string
+                required: false
+            allow_for_overdue_account:
+                description: >
+                    whether the Pppoe client can use the overdue account
+                    valid value are:
+                    *pass
+                    *reject
+                type: string
+                required: false
+            dialing_interface:
+                description: >
+                    Generation of dial control
+                type: string
+                required: false
+            group_en_name:
+                description: >
+                     English name of the protocol group
+                type: string
+                required: false
+            group_cn_name:
+                description: >
+                    Chinese name of the protocol group,described in pinyin
+                type: string
+                required: false
+            applist:
+                description: >
+                    List of permitted protocols
+                type: string
+                required: false
+            desc:
+              description:
+              type: string
+              required: false
+            bridge:
+              description:
+              type: string
+              required: false
+            dir:
+              description:
+              type: string
+              required: false
+            vlan:
+              description:
+              type: string
+              required: false
+            intype:
+              description:
+              type: cloudify.datatypes.pa.source
+              required: false
+            iniptbl:
+              description:
+              type: string
+              required: false
+            inport:
+              description:
+              type: string
+              required: false
+            outtype:
+              description:
+              type: string
+              required: false
+            outiptbl:
+              description:
+              type: string
+              required: false
+            outport:
+              description:
+              type: string
+              required: false
+            proto:
+              description:
+              type: string
+              required: false
+            appid:
+              description:
+              type: string
+              required: false
+            natip:
+              description:
+              type: string
+              required: false
+            hasms:
+              description:
+              type: string
+              required: false
+            qqcnt:
+              description:
+              type: string
+              required: false
+            action:
+              description:
+              type: string
+              required: false
+            iprate:
+              description:
+              type: string
+              required: false
+            tos:
+              description:
+              type: string
+              required: false
+            matchact: 
+              description:
+              type: string
+              required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.user_group.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.user_group.delete
+                    inputs: {}
+    
+
+
+
+    cloudify.pa.line_query:
+        derived_from: cloudify.nodes.Root
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.line_query.update
+                    inputs: {} 
+
+    cloudify.pa.web_app_firewall:
+        derived_from: cloudify.nodes.Root
+        properties:
+            url:
+                description: >
+                    target url to close pop windows
+                type: string
+                required: true
+            close_popup_windows:
+                description: >
+                    close popup windows or not, input true or false
+                type: string
+                required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.web_app_firewall.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.web_app_firewall.delete
+                    inputs: {}
+
+    cloudify.pa.interface_line:
+        derived_from: cloudify.nodes.Root
+        properties:
+            wan_mtu:
+              description: >
+                WAN interface MTU
+              type: string
+              required: true
+            lan_mtu:
+              description: >
+                LAN interface MTU
+              type: string
+              required: true
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.interface_line.update
+                    inputs: {}
+
+    cloudify.pa.qos:
+        derived_from: cloudify.nodes.Root
+        properties:
+            qos_rule_name:
+                type: string
+                required: true
+            policy_number:
+              description: >
+                Policy number
+              type: string
+              required: true
+            desc:
+              description:
+              type: string
+              required: false
+            bridge:
+              description:
+              type: string
+              required: false
+            dir:
+              description:
+              type: string
+              required: false
+            vlan:
+              description:
+              type: string
+              required: false
+            intype:
+              description:
+              type: cloudify.datatypes.pa.source
+              required: false
+            iniptbl:
+              description:
+              type: string
+              required: false
+            inport:
+              description:
+              type: string
+              required: false
+            outtype:
+              description:
+              type: string
+              required: false
+            outiptbl:
+              description:
+              type: string
+              required: false
+            outport:
+              description:
+              type: string
+              required: false
+            proto:
+              description:
+              type: string
+              required: false
+            appid:
+              description:
+              type: string
+              required: false
+            natip:
+              description:
+              type: string
+              required: false
+            hasms:
+              description:
+              type: string
+              required: false
+            qqcnt:
+              description:
+              type: string
+              required: false
+            action:
+              description:
+              type: string
+              required: false
+            iprate:
+              description:
+              type: string
+              required: false
+            tos:
+              description:
+              type: string
+              required: false
+            matchact:
+              description:
+              type: string
+              required: false
+            maxtflow:
+              description: >
+                Maximum number of TCP session per IP
+              type: string
+              required: false
+            maxuflow:
+              description: >
+                Maximum number of UDP session per IP
+              type: string
+              required: false
+            maxflow:
+              description: >
+                Maximum number of session per IP
+              type: string
+              required: false
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: pa.pa_plugin_task.qos.create
+                    inputs: {}
+                delete:
+                    implementation: pa.pa_plugin_task.qos.delete
+                    inputs: {}

@@ -1,0 +1,53 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/cfy/Pppoe/`basename $0`"
+return_url="/cgi-bin/Pppoe/pppoesvr_list"
+AIDE_REMARKMAN="${PGPATH}/admin/cgi-bin/common/aide_remarkman"
+
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_svrname}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "服务名称中包含特殊字符!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	[ "${CGI_mtu}" = "" ] && CGI_mtu="1492"
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_maxclnt}" = "" ] && CGI_maxclnt="0"
+	cmdargs="name=${CGI_svrname} ifname=${CGI_ifname} addr=${CGI_addr}"
+	cmdargs="${cmdargs} dns0=${CGI_dns0} dns1=${CGI_dns1} vlan=${CGI_vlan} mtu=${CGI_mtu}"
+	[ "${CGI_service}" != "" ] && cmdargs="${cmdargs} service=${CGI_service}"
+	cmdargs="${cmdargs} auth=${CGI_auth} pool=${CGI_pool} maxclnt=${CGI_maxclnt}"
+	[ "${CGI_radsvr}" = "" ] && CGI_radsvr=0
+	cmdargs="${cmdargs} radsvr=${CGI_radsvr}"
+	
+	errmsg=`${FLOWEYE} nat addposvrif ${cmdargs}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		#afm_load_page 0 "${return_url}"
+		errmsg=`${AIDE_REMARKMAN} -c ${CGI_svrname} ${CGI_remark}`
+		if [ "${errmsg}" != "" ]; then
+			errmsg=`${AIDE_REMARKMAN} -a ${CGI_svrname} ${CGI_remark}`
+		fi
+		exit 0
+	fi
+else
+	CGI_dns0="114.114.114.114"
+	CGI_dns1="8.8.8.8"
+	CGI_vlan=0
+	CGI_mtu=1492
+	CGI_auth="local"
+	CGI_pool=0
+	CGI_maxclnt=0
+	CGI_remark="`${AIDE_REMARKMAN} -l | grep -E "^${CGI_svrname} " | awk '{print $2}'`"
+	CGI_radsvr=0
+fi
+

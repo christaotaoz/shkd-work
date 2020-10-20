@@ -1,0 +1,325 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Monitor/`basename $0`"
+[ "${CGI_ifname}" = "" ] && CGI_ifname="any"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddVlink(frm)
+{
+	var rngs;
+	var intype = document.getElementsByName(\"intype\")[0];
+	var outtype = document.getElementsByName(\"outtype\")[0];
+	var inipnet  = document.getElementsByName(\"inipnet\")[0];
+	var iniprng  = document.getElementsByName(\"iniprng\")[0];
+	var outipnet  = document.getElementsByName(\"outipnet\")[0];
+	var outiprng  = document.getElementsByName(\"outiprng\")[0];
+	var vlinkname = document.getElementsByName(\"vlinkname\")[0];
+	vlinkname.value = TrimAll(vlinkname.value);
+	if (vlinkname.value == \"\") {
+		alert(\"ÇëÊäÈëÕýÈ·µÄÁ´Â·Ãû³Æ!\");
+		vlinkname.select();
+		return false;
+	}
+	inipnet.value = TrimAll(inipnet.value);
+	iniprng.value = TrimAll(iniprng.value);
+	if (intype.value == \"net\") {
+		if (!IsIPAddr(inipnet.value)) {
+			alert(\"ÇëÊäÈëÕýÈ·µÄIPµØÖ·£¬¸ñÊ½Îªx.x.x.x/n\");
+			inipnet.select();
+			return false;
+		}
+	}
+	else
+	if (intype.value == \"range\") {
+		rngs = iniprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"ÇëÊäÈëÕýÈ·µÄIP¶Î£¬¸ñÊ½Îªx.x.x.x-y.y.y.y\");
+			iniprng.select();
+			return false;
+		}
+	}
+	outipnet.value = TrimAll(outipnet.value);
+	outiprng.value = TrimAll(outiprng.value);
+	if (outtype.value == \"net\") {
+		if (!IsIPAddr(outipnet.value)) {
+			alert(\"ÇëÊäÈëÕýÈ·µÄIPµØÖ·£¬¸ñÊ½Îªx.x.x.x/n\");
+			outipnet.select();
+			return false;
+		}
+	}
+	else
+	if (outtype.value == \"range\") {
+		rngs = outiprng.value.split(\"-\");
+		if (rngs.length != 2 || !IsIPAddr(rngs[0]) || !IsIPAddr(rngs[1])) {
+			alert(\"ÇëÊäÈëÕýÈ·µÄIP¶Î£¬¸ñÊ½Îªx.x.x.x-y.y.y.y\");
+			outiprng.select();
+			return false;
+		}
+	}
+		
+	return true;
+}
+function OnCancel()
+{
+	window.location.href = \"/cgi-bin/Monitor/vlink_list\";
+}
+function onIntypeChanged(obj)
+{
+	var net = document.getElementsByName(\"inipnet\")[0];
+	var rng = document.getElementsByName(\"iniprng\")[0];
+	var tbl = document.getElementsByName(\"iniptbl\")[0];
+	net.style.display = \"none\";
+	rng.style.display = \"none\";
+	tbl.style.display = \"none\";
+	if (obj.value == \"net\") 
+		net.style.display = \"block\";
+	else
+	if (obj.value == \"range\") 
+		rng.style.display = \"block\";
+	else
+	if (obj.value == \"table\") 
+		tbl.style.display = \"block\";
+}
+function onOuttypeChanged(obj)
+{
+	var net = document.getElementsByName(\"outipnet\")[0];
+	var rng = document.getElementsByName(\"outiprng\")[0];
+	var tbl = document.getElementsByName(\"outiptbl\")[0];
+	net.style.display = \"none\";
+	rng.style.display = \"none\";
+	tbl.style.display = \"none\";
+	if (obj.value == \"net\") 
+		net.style.display = \"block\";
+	else
+	if (obj.value == \"range\") 
+		rng.style.display = \"block\";
+	else
+	if (obj.value == \"table\") 
+		tbl.style.display = \"block\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "/cgi-bin/Monitor/vlink_list"
+	case "${CGI_intype}" in
+	"any")
+		CGI_inip="any"
+		;;
+	"net")
+		CGI_inip="${CGI_inipnet}"
+		;;
+	"range")
+		CGI_inip="${CGI_iniprng}"
+		;;
+	"table")
+		CGI_inip="${CGI_iniptbl}"
+		;;
+	esac
+	case "${CGI_outtype}" in
+	"any")
+		CGI_outip="any"
+		;;
+	"net")
+		CGI_outip="${CGI_outipnet}"
+		;;
+	"range")
+		CGI_outip="${CGI_outiprng}"
+		;;
+	"table")
+		CGI_outip="${CGI_outiptbl}"
+		;;
+	esac
+	errmsg=`${FLOWEYE} vlink set id=${CGI_vlinkid} name=${CGI_vlinkname} inip=${CGI_inip} outip=${CGI_outip} ifname=${CGI_ifname}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "³öÏÖ´íÎó:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Monitor/vlink_list"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; 
+tblexists=`${FLOWEYE} table list`
+cgi_show_iptype()
+{
+	local anyselect=""
+	local netselect=""
+	local rngselect=""
+	case "$1" in
+	"any")
+		anyselect="selected"
+		;;
+	"net")
+		netselect="selected"
+		;;
+	"iprange")
+		rngselect="selected"
+		;;
+	esac
+	echo "<option value=\"any\" ${anyselect}>ÈÎÒâµØÖ·</option>"
+	echo "<option value=\"net\" ${netselect}>xxx.xxx.xxx.xxx/nn</option>"
+	echo "<option value=\"range\" ${rngselect}>n.n.n.n-m.m.m.m</option>"
+	if [ "${tblexists}" != "" ]; then
+		if [ "$1" = "table" ]; then
+			echo "<option value=\"table\" selected>IPÈº×é</option>"
+		else
+			echo "<option value=\"table\">IPÈº×é</option>"
+		fi
+	fi
+}
+cgi_show_title "ÏµÍ³¸Å¿ö-ó->ÐéÄâÁ´Â·->±à¼­"
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddVlink(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=70></td>
+        <td width=120 align=left>Á´Â·±êÊ¶</td>
+	<td width=130 align=left><b>${CGI_vlinkid}</b></td>
+	<td width=* align=left></td>
+</tr>
+<tr id=row1>
+	<td width=70></td>
+        <td width=120 align=left>Á´Â·Ãû³Æ</td>
+	<td width=130 align=left><input type=text name=vlinkname value=\"${CGI_vlinkname}\"></input></td>
+	<td width=* align=left></td>
+</tr>
+<tr id=row1>
+	<td width=70></td>
+        <td width=120 align=left>Á÷ÈëÍø¿Ú</td>
+	<td width=130 align=left>
+		<select name=ifname style=\"width:100%\" value=\"${CGI_ifname}\">
+		";
+			for ifname in any `${FLOWEYE} if list | awk '{print $1}'`
+			do
+				if [ "${ifname}" = "any" ]; then
+					ifnamedesc="ÈÎÒâ½Ó¿Ú"
+				else
+					ifnamedesc="${ifname}"
+				fi
+				if [ "${ifname}" = "${CGI_ifname}" ]; then
+					echo "<option value=\"${ifname}\" selected>${ifnamedesc}</option>"
+				else
+					echo "<option value=\"${ifname}\">${ifnamedesc}</option>"
+				fi
+			done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>ÄÚÍøIP</td>
+        <td align=left>
+		<select name=intype style=\"width:100%\" value=\"${CGI_intype}\" onchange=\"onIntypeChanged(this)\">
+		"; cgi_show_iptype "${CGI_intype}" 
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+	";
+		rngdisplay="none"
+		netdisplay="none"
+		tbldisplay="none"
+		case "${CGI_intype}" in
+		"net")
+			netdisplay="block"
+			;;
+		"iprange")
+			rngdisplay="block"
+			;;
+		"table")
+			tbldisplay="block"
+			;;
+		esac
+		inipval="${CGI_inip}"
+		[ "${CGI_inip}" = "any" ] && inipval=""
+		echo "<input type=text name=inipnet value=\"${inipval}\" style=\"width:120px;display:${netdisplay}\"></input>"
+		echo "<input type=text name=iniprng value=\"${inipval}\" style=\"width:160px;display:${rngdisplay}\"></input>"
+		echo "<select name=iniptbl value=\"${inipval}\" style=\"width:120px;display:${tbldisplay}\">"
+		${FLOWEYE} table list | while read tblid tblname
+		do
+			if [ "${CGI_inip}" = "${tblid}" -o "${CGI_inip}" = "${tblname}" ]; then
+				echo "<option value=\"${tblid}\" selected>${tblname}</option>"
+			else
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			fi
+		done
+		echo "</select>"
+	
+echo -n "
+	
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>ÍâÍøµØÖ·</td>
+        <td align=left>
+		<select name=outtype style=\"width:100%\" value=\"${CGI_outtype}\" onchange=\"onOuttypeChanged(this)\">
+		"; cgi_show_iptype "${CGI_outtype}" 
+echo -n "
+		</select>
+	</td>
+	<td width=* align=left>
+	";
+		rngdisplay="none"
+		netdisplay="none"
+		tbldisplay="none"
+		case "${CGI_outtype}" in
+		"net")
+			netdisplay="block"
+			;;
+		"iprange")
+			rngdisplay="block"
+			;;
+		"table")
+			tbldisplay="block"
+			;;
+		esac
+		outipval="${CGI_outip}"
+		[ "${CGI_outip}" = "any" ] && outipval=""
+		echo "<input type=text name=outipnet value=\"${outipval}\" style=\"width:120px;display:${netdisplay}\"></input>"
+		echo "<input type=text name=outiprng value=\"${outipval}\" style=\"width:160px;display:${rngdisplay}\"></input>"
+		echo "<select name=outiptbl value=\"${outipval}\" style=\"width:120px;display:${tbldisplay}\">"
+		${FLOWEYE} table list | while read tblid tblname
+		do
+			if [ "${CGI_outip}" = "${tblid}" -o "${CGI_outip}" = "${tblname}" ]; then
+				echo "<option value=\"${tblid}\" selected>${tblname}</option>"
+			else
+				echo "<option value=\"${tblid}\">${tblname}</option>"
+			fi
+		done
+		echo "</select>"
+	
+echo -n "
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"Ìá½»\"></input>
+		<input type=button style=\"width:80\" value=\"È¡Ïû\" onclick=\"OnCancel()\"></input>
+		<input type=hidden name=vlinkid value=\"${CGI_vlinkid}\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

@@ -1,0 +1,144 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+[ "${width}" = "" ] && width=580
+if [ "${CGI_type}" = "bpsin" ]; then
+	textstr="流入速率"
+elif [ "${CGI_type}" = "bpsout" ]; then
+	textstr="流出速率"
+elif [ "${CGI_type}" = "ppsin" ]; then
+	textstr="流入PPS"
+elif [ "${CGI_type}" = "ppsout" ]; then
+	textstr="流出PPS"
+fi
+title1="最近24小时趋势"
+tmend1=`date +%s`
+hours1=24
+type1="${CGI_type}"
+title2="24小时前趋势"
+tmend2=$((${tmend1} - 86400))
+hours2=24
+type2="${CGI_type}"
+title3="48小时前趋势"
+tmend3=$((${tmend2} - 86400))
+hours3=24
+type3="${CGI_type}"
+CGI_browsertitle="${CGI_name}->${textstr}历史趋势"
+. ../common/common.sh 
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/jq.js\"></script>
+<script type=\"text/javascript\" src=\"/img/highcharts.js\"></script>
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function createChart(chartdiv, charttitle, charttype, charttmend, charthours)
+{
+	var options_chart = ({
+		chart: {
+			type: 'area',
+			renderTo:chartdiv
+		},
+		title: {
+			enabled: false,
+			text:'',
+			x: -20
+		},
+		xAxis: {
+			type: 'datetime',
+                	tickPixelInterval: 50,
+			labels: {
+				style: {
+					font: 'normal 9px Arial',
+					fontSize:'10px'
+				}
+			}
+        	},
+        	yAxis: {
+			min: 0,
+			tickPixelInterval:30,
+			labels: {
+				style: {
+					font: 'normal 9px Arial'
+				}
+			},
+            		title: {
+                		text: charttitle
+            		},
+           	 	plotLines: [{ value: 0, width: 1, color: \"#808080\" }]
+        	},
+		plotOptions:{
+			area:{stacking:false,lineWidth:1,marker:{enabled:false}},
+			spline:{
+				marker:{
+					radius:0,
+					lineWidth:1
+				},
+				lineWidth:1
+			}
+		},
+		tooltip: {
+			formatter:function(){
+				var dd = new Date(this.x);
+				var str = \"时间：\"+dd.getDate()+'/'+dd.getHours()+':'+dd.getMinutes();
+				return str+'<br>'+this.series.name+' '+ (this.y);
+			}
+        	},
+		legend: {
+			enabled:false,
+			layout: \"vertical\",
+			align: \"right\",
+			verticalAlign: \"middle\",
+			borderWidth: 0
+		},
+		credits:{enabled: false},
+		series: [{name:charttitle, type: 'spline', color:'#9CC6F0', data: []}]
+    });
+	
+	$.ajax({
+		url: 'ajax_if_graph',
+		type:'post',
+		dataType:'json',
+		data: {type:charttype,hours:charthours,tmend:charttmend,name:'${CGI_name}'},
+		success:function(json){
+			options_chart.series[0].data = json.rows;
+			new Highcharts.Chart(options_chart);
+		}
+    });
+}
+function onloaddoc()
+{
+	Highcharts.setOptions({ global: { useUTC: false } });
+	createChart(\"chart1\", \"${textstr}\", \"${type1}\", \"${tmend1}\", ${hours1});
+	createChart(\"chart2\", \"${textstr}\", \"${type2}\", \"${tmend2}\", ${hours2});
+	createChart(\"chart3\", \"${textstr}\", \"${type3}\", \"${tmend3}\", ${hours3});
+}
+</script>
+<body onload=\"onloaddoc()\">
+<br>
+<table style=\"width:${width}; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>${title1}</b></td> </tr>
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td id=\"chart1\" style=\"border:1px dotted #000;height:220px;\"></td></tr>
+</table>
+<br> 
+<table style=\"width:${width}; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>${title2}</b></td></tr>
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td id=\"chart2\" style=\"border:1px dotted #000;height:220px;\"></td></tr>
+</table>
+<br>
+<table style=\"width:${width}; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>${title3}</b></td></tr>
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td id=\"chart3\" style=\"border:1px dotted #000;height:220px;\"></td></tr>
+</table>
+</body>
+</html>
+";

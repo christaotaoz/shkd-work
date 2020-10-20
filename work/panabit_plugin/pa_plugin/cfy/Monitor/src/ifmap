@@ -1,0 +1,60 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+<html xmlns=\"http://www.w3.org/1999/xhtml\">
+<head>
+<title>调度设置->${CGI_name}/队列${CGI_queue}</title>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=gb2312\">
+<META HTTP-EQUIV=\"Pragma\" CONTENT=\"no-cache\">
+<META HTTP-EQUIV=\"Cache-Control\" content=\"no-cache\">
+</head>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	errmsg=`/usr/ramdisk/bin/floweye ifmap set name=${CGI_name} queue=${CGI_queue} flow=${CGI_flow}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		echo "<script type=\"text/javascript\">"
+		echo "window.close();"
+		echo "</script>"
+	fi
+fi
+for nameval in `/usr/ramdisk/bin/floweye ifmap get name=${CGI_name} queue=${CGI_queue}`
+do
+	eval "CGI_${nameval}"
+done
+CGI_flow="${CGI_setflow}"
+[ "${CGI_flow}" = "0" ] && CGI_flow="${CGI_autoflow}"
+
+echo -n "
+<body>
+<base target=\"_self\">
+<form method=post action=\"/cgi-bin/Monitor/ifmap\">
+<div style=\"overflow: auto; position:absolute;left:8px;top:8px;height:10px;width:310px;border:2px\"></div>
+<div style=\"overflow: auto; position:absolute;left:8px;top:29px;height:40px;width:310px;border:2px\">
+<a style=\"font-size:13px;\"><b>处理单元</b>:</a><select style=\"width:125px;font-size:13px\" name=flow value=\"${CGI_flow}\">
+";
+	/usr/ramdisk/bin/floweye system list | while read flow theothers
+	do
+		[ "${flow}" = "flow" -o "${flow}" = "0" ] && continue
+		
+		if [ "${CGI_flow}" = "${flow}" ]; then
+			echo "<option value=${flow} selected>单元${flow}</option>"
+		else
+			echo "<option value=${flow}>单元${flow}</option>"
+		fi
+	done
+
+echo -n "
+</select>
+<input type=submit value=\"确定\" align=center style=\"width:95px\" onclick=\"onOK()\"></input>
+<input type=hidden name=name value=\"${CGI_name}\" />
+<input type=hidden name=queue value=\"${CGI_queue}\" />
+</div>
+</body>
+</html>
+";

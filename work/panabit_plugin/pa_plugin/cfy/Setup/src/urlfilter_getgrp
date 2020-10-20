@@ -1,0 +1,246 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+if [ "${CGI_policy}" = "" ]; then
+	for policy in `${FLOWEYE} urlfilter listgrp | awk '{print $1}'`
+	do
+		CGI_policy="${policy}"
+		break
+	done
+fi
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script languate=javascript>
+function onAddPolicy()
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_addgrp\";
+}
+function onClonePolicy(policy)
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_clonegrp?fromgrp=${CGI_policy}\";
+}
+function onAddRule(policy)
+{ 
+	window.location.href = \"/cgi-bin/Setup/urlfilter_addrule?policy=\" + policy;
+}
+function modifyRule(group, polno) 
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_setrule?policy=\" + group + \"&polno=\" + polno;
+}
+function onSelectPolicy(obj)
+{
+	window.location.href = \"/cgi-bin/Setup/urlfilter_getgrp?policy=\" + obj.value; 
+}
+function deleteRule(group, rule)
+{
+	if (confirm(\"确定要删除该规则?\")) {
+		window.location.href = \"/cgi-bin/Setup/urlfilter_getgrp?action=rmvrule\" +
+		                       \"&group=\" + group + \"&ruleid=\" + rule;
+	}
+}
+function onDeletePolicy(policy)
+{
+	if (confirm(\"确定要删除此策略组?\")) {
+		window.location.href = \"/cgi-bin/Setup/urlfilter_getgrp?action=deletegroup&\" +
+		                       \"policy=\" + policy;
+	}
+}
+function dnsEdit(grpname)
+{
+        var url = \"/cgi-bin/Protocol/urldnsgrp_edit?grpname=\" + grpname;
+        ShowWindow(url, \"\", 840, 560);
+}
+function enablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=enable&policy=\" + grp + \"&ruleid=\" + polno;
+        window.location.href = url;
+}
+function disablePolicy(grp, polno)
+{
+        var url;
+        url = \"${myself}?action=disable&policy=\" + grp + \"&ruleid=\" + polno;
+        window.location.href = url;
+}
+</script>
+";
+if [ "${CGI_action}" = "deletegroup" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter rmvgrp ${CGI_policy}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+elif [ "${CGI_action}" = "rmvrule" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter rmvrule ${CGI_group} ${CGI_ruleid}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		CGI_policy="${CGI_group}"
+	fi
+elif [ "${CGI_action}" = "disable" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter setrule group=${CGI_policy} id=${CGI_ruleid} disable=1`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+elif [ "${CGI_action}" = "enable" ]; then
+	operator_check "${myself}?policy=${CGI_policy}"
+	errmsg=`${FLOWEYE} urlfilter setrule group=${CGI_policy} id=${CGI_ruleid} disable=0`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	fi
+fi
+policylist=`${FLOWEYE} urlfilter listgrp`
+
+echo -n "
+<body>
+"; cgi_show_title "HTTP管控->策略组" 
+echo -n "
+<br>
+<table style=\"width:1300; border-bottom:1px #787882 solid; font-bold:true;font-size:15px; color:#0000ff\">
+<tr><td><b>说明：编辑完策略组后请做策略调度，这样策略组才会生效!</td></tr>
+</table>
+<table width=1300 border=0 cellspacing=1 cellpadding=1>
+<tr id=tblhdr height=23>
+	<td width=74 align=center>选择策略组</td>
+	<td width=160>";
+	echo "<select name=policy value=\"${CGI_policy}\" style=\"width:100%;height:22\" onchange=\"onSelectPolicy(this)\">"
+	${FLOWEYE} urlfilter listgrp | while read policy policyname
+	do
+		if [ "${CGI_policy}" = "${policy}" ]; then
+			echo "<option value=${policy} selected>${policyname}</option>"
+		else
+			echo "<option value=${policy}>${policyname}</option>"
+		fi
+	done 
+	if [ "${policylist}" = "" ]; then
+		echo "<option value=0>(没有定义任何策略组)</option>"
+	fi
+	echo "</select>" 
+echo -n "
+	</td>
+	<td width=* align=right>
+";
+	if [ "${CGI_policy}" != "" ]; then
+		echo "&nbsp;<input type=button style=\"width:100;height:23\" onclick=\"onDeletePolicy('${CGI_policy}')\" value=\"删除策略组\"></input>&nbsp;<input type=button style=\"width:100;height:23\" value=\"复制策略组>>\" onclick=\"onClonePolicy('${CGI_policy}')\"></input>"
+	fi
+
+echo -n "
+	&nbsp;<input type=button style=\"width:100;height:23\" value=\"创建策略组>>\" onclick=\"onAddPolicy()\"></input>
+	</td>
+</tr>
+</table>
+";
+if [ "${CGI_policy}" != "" ]; then
+	rowno=1
+	echo "<table width=1300 border=0 cellspacing=1 cellpadding=1> 
+<tr id=tblhdr height=22>
+        <td width=40  align=center>序号</td>
+	<td width=120 align=center>源地址</td>
+	<td width=60  align=center>访问方式</td>
+	<td width=120 align=center>网站域名</td>
+	<td width=100 align=center>文件类型</td>
+	<td width=60  align=center>共享用户</td>
+	<td width=60  align=center>移动终端</td>
+	<td width=60  align=center>QQ号码</td>
+	<td width=60  align=center>匹配一次</td>
+	<td width=70  align=center>执行动作</td>
+	<td width=100 align=center>输出线路</td>
+	<td width=270 align=center>动作参数</td>
+        <td width=*   align=right>
+		<a style=\"color:#0000ff;font-size:14\" href=\"javascript:onAddRule('${CGI_policy}')\">添加策略>></a>&nbsp;&nbsp;
+	</td>
+</tr>"
+	idname="row1"
+	${FLOWEYE} urlfilter getgrp ${CGI_policy} | \
+	while read polno intype inip method dnstype dns ext natip hasms qqcnt onlyfirst disabled action outpxy pkts actarg ifname others 
+	do
+		if [ ${disabled} -eq 1 ]; then
+			echo "<tr id=row4>"
+		else
+        		echo "<tr id=${idname}>"
+		fi
+        	echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:modifyRule('${CGI_policy}', '${polno}')\">${polno}</a></td>"
+		echo "<td align=center>${inip}</td>"
+		if [ "${method}" = "get" ]; then
+			method="浏览(GET)"
+		elif [ "${method}" = "post" ]; then
+			method="上传(POST)"
+		fi
+		echo "<td align=center>${method}</td>"
+		if [ "${dns}" = "any" ]; then
+			echo "<td align=center>any</td>"
+		else
+			if [ "${dnstype}" = "usr" ]; then
+			    echo "<td align=center><a style=\"color:#0000ff\" href=\"javascript:dnsEdit('${dns}')\">${dns}</a></td>"
+			else
+			    echo "<td align=center>*${dns}</td>"
+			fi
+		fi
+		echo "<td align=center>${ext}</td>"
+		[ "${natip}" = "0" ] && natip=""
+		[ "${hasms}" = "0" ] && hasms=""
+		[ "${qqcnt}" = "0" ] && qqcnt=""
+		echo "<td align=center>${natip}</td>"
+               	echo "<td align=center>${hasms}</td>"
+               	echo "<td align=center>${qqcnt}</td>"
+		if [ ${onlyfirst} -eq 0 ]; then 
+			onlyfirst="NO"
+		else
+			onlyfirst="YES"
+		fi
+		echo "<td align=center>${onlyfirst}</td>"
+		case "${action}" in
+		"deny")
+			echo "<td align=center>阻断</td>"
+			;;
+		"accept")
+			echo "<td align=center>允许</td>"
+			;;
+		"prompt")
+			echo "<td align=center>信息提示</td>"
+			;;
+		"redirect")
+			echo "<td align=center>URL跳转</td>"
+			;;
+	
+		"reqfwd")
+			echo "<td align=center>请求报文镜像</td>"
+			;;
+		esac
+		[ "${outpxy}" = "NULL" ] && outpxy=""
+		echo "<td align=right>${outpxy}&nbsp;</td>"
+		[ "${actarg}" = "null" ] && actarg=""
+		echo "<td align=right>${actarg}&nbsp;</td>"
+        	echo "<td align=right>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:modifyRule('${CGI_policy}', '${polno}')\">&nbsp;编辑&nbsp;</a>"
+		echo "<a style=\"color:#0000ff\" href=\"javascript:deleteRule('${CGI_policy}', '${polno}')\">&nbsp;删除&nbsp;</a>"
+		if [ ${disabled} -eq 0 ]; then 
+                	echo "<a style=\"color:#0000ff\" href=\"javascript:disablePolicy('${CGI_policy}', '${polno}')\">禁用</a>"
+		else 
+                	echo "<a style=\"color:#ff0000\" href=\"javascript:enablePolicy('${CGI_policy}', '${polno}')\">启用</a>"
+		fi
+        	echo "</td></tr>"
+        	if [ "${idname}" = "row1" ]; then
+                	idname="row2"
+        	else
+                	idname="row1"
+        	fi
+	done
+fi
+
+echo -n "
+</body>
+</html>
+";

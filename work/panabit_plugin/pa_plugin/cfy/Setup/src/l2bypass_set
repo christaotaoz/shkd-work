@@ -1,0 +1,111 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var name = document.getElementsByName(\"name\")[0];
+	var mac  = document.getElementsByName(\"mac\")[0];
+	var ifname = document.getElementsByName(\"ifname\")[0];
+	mac.value = TrimAll(mac.value);
+	if (mac.value == \"\") {
+		alert(\"MAC地址不能为空!\");
+		mac.select();
+		return false;
+	}
+	name.value = TrimAll(name.value);
+	if (!IsName(name.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		name.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请输入网卡!\");
+		ifname.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Setup/l2bypass_config\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	args="name=${CGI_name} mac=${CGI_mac} if=${CGI_ifname}"
+	errmsg=`${FLOWEYE} l2route add ${args}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/l2bypass_config"
+		exit 0
+	fi
+else
+	for nameval in `${FLOWEYE} l2route get mac=${CGI_mac}`
+	do
+		eval "CGI_${nameval}"
+	done
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "用户旁路->添加用户" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td align=left>用户MAC</td>
+        <td align=left><b>${CGI_mac}</b><input type=hidden name=mac style=\"width:130px\" value=\"${CGI_mac}\" /></td>
+</tr>
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>用户名称</td>
+	<td width=400 align=left><input type=text name=name style=\"width:130px\" value=\"${CGI_name}\" />&nbsp;(不要超过8个汉字或15个英文字符)</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>外出网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:130\">
+		";
+		for ifname in `${FLOWEYE} if list | grep outside | awk '{print $1}'`; do
+			if [ "${CGI_outif}" = "${ifname}" ]; then
+				echo "<option value=\"${ifname}\" selected>${ifname}</option>"
+			else
+				echo "<option value=\"${ifname}\">${ifname}</option>"
+			fi
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn value=\"提交\"></input>
+		<input type=button id=newbtn value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

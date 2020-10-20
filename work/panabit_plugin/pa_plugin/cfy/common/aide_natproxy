@@ -1,0 +1,381 @@
+#!/bin/sh
+# 作用: 用于导入导出流控线路配置的辅助工具
+# 日期: 2013-12-10
+#
+
+FLOWEYE="/usr/ramdisk/bin/floweye"
+SED="/usr/ramdisk/bin/sed"
+
+deviceif_list()
+{
+        local ifnames=`echo $* | tr ' ' '|'`
+
+        ${FLOWEYE} if list | grep -E "${ifnames} *.* outside "
+}
+
+clean_proxy()
+{
+        ${FLOWEYE} nat listproxy type=proxy.pppoe | \
+        while read type id name ifname othe
+        do
+                ${FLOWEYE} nat rmvproxy ${id}
+				if [ "$?" != "0" ]; then
+						echo "rmvproxy err: ${type} ${id} ${name} ${ifname}"
+				fi
+        done
+}
+
+set_proxy_group()
+{
+		# this content format, follows:
+		# type id wanname
+		# you can input like as "${FLOWEYE} nat listproxy type=proxy.pppoe" result
+		local groupid=$1
+
+        while read type id name othe
+        do
+                errmsg=`${FLOWEYE} nat setwg id=${groupid} proxy=${name} weight=10`
+                if [ "$?" != "0" ]; then
+                        echo "err: ${type} ${id} ${name}, code: ${errmsg}"
+                        break;
+                fi
+        done
+}
+
+import_pppoe_client_from_pipe()
+{
+		# pipe content format, follows:
+		#
+		# #my proxy line
+		# natproxy name=ctc ifname=em1 addr=1.1.1.2 gateway=2.2.2.3 dns=0.0.0.0 vlan=0 mtu=1500 pingip=0.0.0.0
+		# #my pppoe line
+		# pppoeif name=11 ifname=em1 vlan=10 mtu=1480 pingip=0.0.0.0 username=admin password=pa
+
+		while read type rulename rulecmd
+		do
+				case "${type}" in
+					"natproxy")
+							op="addproxy"
+							#rulecmd="addproxy ${rulename} ${rulecmd}"
+					;;
+					"pppoeif")
+							op="addpppoe"
+							#rulecmd="addpppoe ${rulename} ${rulecmd}"
+					;;
+					*)
+							echo "$type $rulecmd"
+							continue
+					;;
+				esac
+
+				# echo "${rulecmd}"
+				errmsg=`${FLOWEYE} nat ${op} ${rulename} ${rulecmd}`
+                if [ "$?" != "0" ]; then
+						errcnt=1
+						while true
+						do
+							[ "${errmsg}" != "PROXY_EXIST" -a "${errmsg}" != "PXY_EXIST" ] && break
+
+							errmsg=`${FLOWEYE} nat ${op} ${rulename}${errcnt} ${rulecmd}`
+							if [ "$?" = "0" ]; then
+								echo "ok: RENAME >>> ${op} ${rulename}${errcnt} ${rulecmd}"
+								break
+							fi
+							errcnt=$((${errcnt} + 1))
+						done
+
+						if [ "${errmsg}" != "" ]; then
+							echo "err: ${errmsg} >>> ${op} ${rulename} ${rulecmd}"
+							[ "${errmsg}" = "NO_ENT" -o "${errmsg}" = "no free entry" ] && break
+						fi
+                fi
+		done
+}
+
+dump_wanline_from_pa_conf()
+{
+		# /usr/panaetc/panabit.conf content format, follows:
+		#
+		# #my proxy line
+		# natproxy name=ctc ifname=em1 addr=1.1.1.2 gateway=2.2.2.3 dns=0.0.0.0 vlan=0 mtu=1500 pingip=0.0.0.0
+		# #my pppoe line
+		# pppoeif name=11 ifname=em1 vlan=10 mtu=1480 pingip=0.0.0.0 username=admin password=pa
+
+		local name=""
+		local ifname=""
+		local vlan=""
+		local mtu=""
+		local pingip=""
+				
+		local addr=""
+		local gateway=""
+		local dns=""
+		local username=""
+		local password=""
+		local natcmd=""
+		local notetag=""
+		local clonemac=""
+		
+        while read type othe
+        do
+				[ "${type}" = "" -o "${othe}" = "" ] && continue
+				notetag=`echo "${type}" | grep "^#"`
+				[ "${notetag}" = "#" ] && continue
+
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/)print $0}'`
+						if [ "${key}" != "" ]; then
+								eval ${key_node}
+						fi
+				done
+
+				[ "${pingip}" = "" ] && pingip=0.0.0.0
+
+				case "${type}" in
+					"natproxy")
+							if [ "${name}" = "" -o "${ifname}" = "" -o "${addr}" = "" -o \
+								 "${gateway}" = "" -o "${dns}" = "" -o "${vlan}" = "" -o \
+								 "${mtu}" = "" -o "${pingip}" = "" ]; then
+								#echo "err: ${type} ${othe}"
+								continue
+							fi
+							
+							[ "${clonemac}" != "" ] && clonemac="clonemac=${clonemac}"
+							
+							natcmd="name=${name} ifname=${ifname}"
+							natcmd="${natcmd} addr=${addr} gateway=${gateway} dns=${dns}"
+							natcmd="natproxy ${natcmd} ${clonemac} vlan=${vlan} mtu=${mtu} pingip=${pingip}"
+					;;
+					"pppoeif")
+							if [ "${name}" = "" -o "${ifname}" = "" -o "${username}" = "" -o \
+								 "${password}" = "" -o "${mtu}" = "" -o "${vlan}" = "" -o \
+								 "${pingip}" = "" ]; then
+								#echo "err: ${type} ${othe}"
+								continue
+							fi
+							
+							[ "${clonemac}" != "" ] && clonemac="clonemac=${clonemac}"
+							
+							natcmd="name=${name} ifname=${ifname}"
+							natcmd="${natcmd} vlan=${vlan} mtu=${mtu} pingip=${pingip}"
+							natcmd="pppoeif ${natcmd} ${clonemac} username=${username} password=${password}"
+					;;
+					*)
+							continue
+					;;
+				esac
+
+				echo "${natcmd}"
+				
+				name=""
+				ifname=""
+				vlan=""
+				mtu=""
+				pingip=""
+				
+				addr=""
+				gateway=""
+				dns=""
+				username=""
+				password=""
+				natcmd=""
+				clonemac=""
+        done
+}
+
+dump_pppoe_from_ros_export()
+{
+		# ros_export content format, follows:
+		#
+		# /interface pppoe-client
+		# add add-default-route=yes disabled=no interface=vrrp1 name=pppoe-out1 \
+		#     password=123456 service-name=Quidway user=XXXXX1113845834@16900.gd
+		# 
+
+		local ifname=$1
+		local user=""
+		local password=""
+		local vlan=0
+		local mtu=1480
+		local pingip="0.0.0.0"
+		
+        while read type othe
+        do
+				[ "${type}" != "add" -o "${othe}" = "" ] && continue
+				
+				for key_node in ${othe}
+				do
+						key=`echo ${key_node} | awk -F '=' '/[^ ]+=/{if($1 ~ /^[a-zA-Z0-9_]+$/)print $0}'`
+						if [ "${key}" != "" ]; then
+								eval ${key_node}
+						fi
+				done
+
+				[ "${user}" = "" -o "${password}" = "" ] && continue
+
+				name=`echo ${user} | grep -Eo "[a-zA-Z0-9_]+" | awk '{if($1!=""){l=length($1);if(l>15)print substr($1,1,15);else print $1;exit}}'`
+                natcmd="name=${name} ifname=${ifname}"
+                natcmd="${natcmd} vlan=${vlan} mtu=${mtu} pingip=${pingip}"
+                natcmd="${natcmd} username=${user} password=${password}"
+
+                echo "pppoeif ${natcmd}"
+
+				user=""
+				password=""
+        done
+}
+
+dump_static_line_from_text()
+{
+		# text content format, follows:
+		#
+		# # my text content
+		# # ip netmask gateway dns
+		# 2xx.11.22.33 255.255.255.248 2xx.11.22.34 [8.8.8.8]
+		# 2xx.11.22.31 255.255.255.248 2xx.11.22.34 [8.8.8.8]
+
+		local ifname=$1
+		local user=""
+		local password=""
+		local vlan=0
+		local mtu=1500
+		local pingip="0.0.0.0"
+		local notetag=""
+		local name=""
+
+        while read ip netmask gateway dns othe
+        do
+				[ "${dns}" = "" ] && dns="0.0.0.0"
+				
+				name=`echo ${ip} | tr -ds '.' ''`
+				natcmd="name=WAN${name} ifname=${ifname}"
+				natcmd="${natcmd} addr=${ip} gateway=${gateway} dns=${dns}"
+				natcmd="${natcmd} vlan=${vlan} mtu=${mtu} pingip=${pingip}"
+
+                echo "natproxy ${natcmd}"
+
+				user=""
+				password=""
+        done
+}
+
+dump_pppoe_from_text()
+{
+		# text content format, follows:
+		#
+		# # my text content
+		# XXXXX1113845834@16900.gd 123456
+		# XXXXX1113845834@16901.gd 123456
+
+		local ifname=$1
+		local user=""
+		local password=""
+		local vlan=0
+		local mtu=1448
+		local pingip="0.0.0.0"
+		local notetag=""
+		
+        while read user password othe
+        do
+				[ "${user}" = "" -o "${password}" = "" ] && continue
+				#notetag=`echo "${type}" | grep "^#"`
+				#[ "${notetag}" = "#" ] && continue
+				
+				name=`echo ${user} | grep -Eo "[a-zA-Z0-9_]+" | \
+				awk '{if($1!=""){l=length($1);if(l>15)print substr($1,1,15);else print $1;exit}}'`
+                natcmd="name=${name} ifname=${ifname}"
+                natcmd="${natcmd} vlan=${vlan} mtu=${mtu} pingip=${pingip}"
+                natcmd="${natcmd} username=${user} password=${password}"
+
+                echo "pppoeif ${natcmd}"
+
+				user=""
+				password=""
+        done
+}
+
+dump_pppoe_client_from_file()
+{
+		local file=$1
+		local ifname=""
+		
+		[ "${file}" = "" ] && echo "file err." && exit 1
+		[ ! -f ${file} ] && echo "err file. ${file}" && exit 1
+
+		shift
+		ifname=`deviceif_list $* | awk '{print $1;exit}'`
+		if [ "${1}" = "" ]; then
+			[ "${ifname}" = "" ] && echo "not found available device(ifname)" && exit 1
+		else
+			[ "${ifname}" = "" ] && echo "err ifname \"${1}\"" && exit 1
+		fi
+
+		case "${file##*.}" in 
+				"rsc")
+						ifrule=`deviceif_list | `
+						${SED} -nr 'H;${x;s/\\\n *//g;s/\\/\\\\/g;p;}' ${file} | \
+						awk '/^(add( +[^ ]+=)+|( *[^ ]+=)+( *\?)?)/' | \
+						dump_pppoe_from_ros_export ${ifname}
+				;;
+				"txt")
+						grep -E "( *(25[0-5]|2[0-4][0-9]|1[0-9]{1,2}|[1-9][0-9]|[0-9])(\.(25[0\
+-5]|2[0-4][0-9]|1[0-9]{1,2}|[1-9][0-9]|[0-9])){3}){3}" ${file} | dump_static_line_from_text ${ifname}
+						awk '/^[^ ]+ +[^ ]+$/' ${file} | dump_pppoe_from_text ${ifname}
+				;;
+				"conf")
+						awk '/^(pppoeif|natproxy) +(name=|ifname=|vlan=|mtu=|pingip=)+/' ${file} | \
+						dump_wanline_from_pa_conf
+				;;
+				*)
+						echo "err file type. you can try [ \"rsc\" or \"txt\" or \"conf\" ] type file"
+						exit 1
+				;;
+		esac
+}
+
+format_natproxy_conf()
+{
+		[ "$1" = "" ] && echo "err arg" && exit 1
+
+		case $1 in
+				"-")
+						while read line
+						do
+								echo ${line} | \
+								awk '/^(pppoeif|natproxy) +(name=|ifname=|vlan=|mtu=|pingip=)/' | \
+								dump_wanline_from_pa_conf
+						done
+				;;
+				*)
+						dump_pppoe_client_from_file $*
+				;;
+		esac
+}
+
+help()
+{
+        printf "usage:\t -d|device_list [ifname] [ifname] ...\n"
+        printf "      \t -f|format_out -\n"
+        printf "      \t -f|format_out file ifname\n"
+        printf "      \t -i|import -\n"
+        printf "      \t -i|import file ifname\n"
+}
+
+case $1 in
+        "-d"|"device_list")
+				shift
+                deviceif_list $*
+        ;;
+        "-f"|"format_out")
+				shift
+				format_natproxy_conf $*
+        ;;
+        "-i"|"import")
+				shift
+				format_natproxy_conf $* | import_pppoe_client_from_pipe
+        ;;
+        *)
+                help
+        ;;
+esac

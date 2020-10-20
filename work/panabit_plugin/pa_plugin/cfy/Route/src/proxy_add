@@ -1,0 +1,413 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Route/`basename $0`"
+return_url="/cgi-bin/Route/proxy_list"
+AIDE_REMARKMAN="${PGPATH}/admin/cgi-bin/common/aide_remarkman"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeAddProxy(frm)
+{
+	var proxyname = document.getElementsByName(\"proxyname\")[0];
+	var proxyaddr = document.getElementsByName(\"proxyaddr\")[0];
+	var proxygw   = document.getElementsByName(\"proxygw\")[0];
+	var proxydns  = document.getElementsByName(\"proxydns\")[0];
+	var ifname    = document.getElementsByName(\"ifname\")[0];
+	var vlan      = document.getElementsByName(\"vlan\")[0];
+	var vlan1     = document.getElementsByName(\"vlan1\")[0];
+	var pingip    = document.getElementsByName(\"pingip\")[0];
+	var pingip2   = document.getElementsByName(\"pingip2\")[0];
+	var wantype   = document.getElementsByName(\"wantype\")[0];
+	var username  = document.getElementsByName(\"username\")[0];
+	var password  = document.getElementsByName(\"password\")[0];
+	var service   = document.getElementsByName(\"service\")[0];
+	var reqacname = document.getElementsByName(\"reqacname\")[0];
+	var waitime   = document.getElementsByName(\"waitime\")[0];
+	proxyname.value = TrimAll(proxyname.value);
+	if (!IsName(proxyname.value)) {
+		alert(\"名称中不能有&等特殊字符!\");
+		proxyname.select();
+		return false;
+	}
+	if (wantype.value == \"static\") {
+		proxyaddr.value = TrimAll(proxyaddr.value);
+		if (!IsIPAddr(proxyaddr.value)) {
+			alert(\"请输入线路的IP地址!\");
+			proxyaddr.select();
+			return false;
+		}
+		proxygw.value = TrimAll(proxygw.value);
+		if (!IsIPAddr(proxygw.value)) {
+			alert(\"请输入网关地址!\");
+			proxygw.select();
+			return false;
+		}
+		proxydns.value = TrimAll(proxydns.value);
+		if (proxydns.value != \"\" && !IsIPAddr(proxydns.value)) {
+			alert(\"请输入正确的DNS服务器地址!\");
+			proxydns.select();
+			return false;
+		}
+	}
+	else {
+		service.value = TrimAll(service.value);
+		reqacname.value = TrimAll(reqacname.value);
+		username.value = TrimAll(username.value);
+		if (username.value == \"\") {
+			alert(\"请输入PPPOE账号!\");
+			username.select();
+			return false;
+		}
+		password.value = TrimAll(password.value);
+		if (password.value == \"\") {
+			alert(\"请输入PPPOE密码!\");
+			password.select();
+			return false;
+		}
+		waitime.value = TrimAll(waitime.value);
+		if (!IsDigitin(waitime.value, 1, 65535)) {
+			alert(\"无效的等待时间!\");
+			waitime.select();
+			return false;
+		}
+	}
+	vlan.value = TrimAll(vlan.value);
+	vlan1.value = TrimAll(vlan1.value);
+	if (vlan.value == \"\" || vlan.value == \"0\") {
+		if (vlan1.value != \"\" && vlan1.value != \"0\") {
+			alert(\"外层VLAN没有设置，系统忽略内层VLAN设置!\");
+			return false;
+		}
+	}
+	pingip.value = TrimAll(pingip.value);
+	if (pingip.value != \"\" && !IsIPAddr(pingip.value)) {
+		alert(\"请输入正确的IP地址!\n\");
+		pingip.select();
+		return false;
+	}
+	pingip2.value = TrimAll(pingip2.value);
+	if (pingip2.value != \"\" && !IsIPAddr(pingip2.value)) {
+		alert(\"请输入正确的IP地址!\n\");
+		pingip2.select();
+		return false;
+	}
+	if (pingip.value != \"\" && pingip2.value != \"\" &&
+	    pingip.value != \"0.0.0.0\" &&
+	    pingip.value == pingip2.value ) {
+		alert(\"请使用不同的心跳IP!\");
+		pingip2.select();
+		return false;
+	}
+	if (ifname.value == \"\") {
+		alert(\"请选择网卡!\");
+		ifname.select();
+		return false;
+	}
+	return true;
+}
+function onTypeChanged(obj)
+{
+	var tblProxy = document.getElementById(\"idProxy\");
+	var tblPppoe = document.getElementById(\"idPppoe\");
+	if (obj.value == \"static\") {
+		tblProxy.style.display = \"block\";
+		tblPppoe.style.display = \"none\";
+	}
+	else {
+		tblProxy.style.display = \"none\";
+		tblPppoe.style.display = \"block\";
+	}
+}
+function onCancel() 
+{
+	window.location.href = \"${return_url}\";
+}
+function onLoad()
+{
+	var wantype = document.getElementsByName(\"wantype\")[0];
+	onTypeChanged(wantype);
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	string_verify "${CGI_proxyname}"
+	if [ "$?" = "0" ]; then
+		afm_dialog_msg "线路名字中包含非法字符!"
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+	[ "${CGI_vlan}" = "" ] && CGI_vlan="0"
+	[ "${CGI_vlan1}" = "" ] && CGI_vlan1="0"
+	[ "${CGI_pingip}" = "" ] && CGI_pingip="0.0.0.0"
+	[ "${CGI_pingip2}" = "" ] && CGI_pingip2="0.0.0.0"
+	[ "${CGI_clonemac}" = "" ] && CGI_clonemac="00:00:00:00:00:00"
+	natcmd="name=${CGI_proxyname} ifname=${CGI_ifname}"
+	if [ "${CGI_wantype}" = "static" ]; then
+		[ "${CGI_proxymtu}" = "" ] && CGI_proxymtu=1500
+		CGI_mtu=${CGI_proxymtu}
+	else
+		[ "${CGI_pppoemtu}" = "" ] && CGI_pppoemtu=1500
+		CGI_mtu=${CGI_pppoemtu}
+	fi
+	natcmd="${natcmd} mtu=${CGI_mtu} pingip=${CGI_pingip} pingip2=${CGI_pingip2}"
+	natcmd="${natcmd} clonemac=${CGI_clonemac}"
+	natcmd="${natcmd} vlan=${CGI_vlan} vlan1=${CGI_vlan1}"
+	if [ "${CGI_wantype}" = "static" ]; then
+		[ "${CGI_proxydns}" = "" ] && CGI_proxydns="0.0.0.0"
+		natcmd="nat addproxy ${natcmd} addr=${CGI_proxyaddr} gateway=${CGI_proxygw} dns=${CGI_proxydns}"
+		if [ "${CGI_natip}" != "" -a "${CGI_natip}" != "0.0.0.0" ]; then
+			natcmd="${natcmd} natip=${CGI_natip}"
+		fi
+	else
+		natcmd="nat addpppoe ${natcmd} username=${CGI_username} password=${CGI_password}"
+		[ "${CGI_service}" != "" ] && natcmd="${natcmd} service=${CGI_service}"
+		[ "${CGI_reqacname}" != "" ] && natcmd="${natcmd} acname=${CGI_reqacname}"
+		[ "${CGI_waitime}" != "" ] && natcmd="${natcmd} waitime=${CGI_waitime}"
+		[ "${CGI_pppoe_onlypap}" != "" ] && natcmd="${natcmd} pppoe_onlypap=${CGI_pppoe_onlypap}"
+	fi
+	[ "${CGI_ipidnormalize}" = "1" ] && natcmd="${natcmd} ipidnormalize=1"
+	
+	errmsg=`${FLOWEYE} ${natcmd}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "${return_url}"
+		errmsg=`${AIDE_REMARKMAN} -c ${CGI_proxyname} ${CGI_remark}`
+		if [ "${errmsg}" != "" ]; then
+			errmsg=`${AIDE_REMARKMAN} -a ${CGI_proxyname} ${CGI_remark}`
+		fi
+		exit 0
+	fi
+else
+	CGI_proxydns="0.0.0.0"
+	CGI_vlan="0"
+	CGI_vlan1="0"
+	CGI_pingip="0.0.0.0"
+	CGI_pppoe_onlypap=0
+	[ "${CGI_wantype}" = "" ] && CGI_wantype="static"
+	[ "${CGI_waitime}" = "" ] && CGI_waitime="5"
+	CGI_remark="`${AIDE_REMARKMAN} -l | grep -E "^${CGI_proxyname} " | awk '{print $2}'`" 
+	[ "${CGI_ipidnormalize}" = "" ] && CGI_ipidnormalize=0
+	[ "${CGI_standby}" = "" ] && CGI_standby="NULL"
+fi
+
+echo -n "
+<body onload=\"onLoad()\">
+"; cgi_show_title "接口线路->添加线路" 
+echo -n "
+<div style=\"position:absolute;padding:0px 0px 0px 0px;left:20;top:50;height:360px;width:580\">
+<form method=post onsubmit=\"return beforeAddProxy(this)\" action=\"${myself}\">
+<table style=\"font:14px;width:800\" border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=100 align=left>线路名称</td>
+	<td width=* align=left>
+	<input type=text name=proxyname style=\"width:130px\" value=\"${CGI_proxyname}\"></input>&nbsp;(不能包含&,|,>,\,-等特殊字符)
+	</td>
+</tr>
+</table>
+<br>
+<table style=\"width:100%; font-bold:true; font-size:13px; color:#CE6C04;border-bottom:1px dotted #185a73\">
+<tr><td align=left><b>基本信息</b></td></tr>
+</table>
+<table style=\"font:14px\" width=100% border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td align=left width=100>所在网卡</td>
+        <td align=left>
+		<select name=ifname style=\"width:130\">
+		";
+		for ifname in `${FLOWEYE} if list | grep outside | awk '{print $1}'`; do
+			echo "<option value=\"${ifname}\">${ifname}</option>"
+		done
+		
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>外层VLAN</td>
+        <td align=left>
+		<input type=text name=vlan style=\"width:130px\" value=\"${CGI_vlan}\"></input>&nbsp;(0~4095,0或不填表示无VLAN)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>内层VLAN</td>
+        <td align=left>
+		<input type=text name=vlan1 style=\"width:130px\" value=\"${CGI_vlan1}\"></input>&nbsp;(0~4095,0或不填表示无VLAN)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>启用防封杀</td>
+        <td align=left>
+		<select name=ipidnormalize style=\"width:130\" value=\"${CGI_ipidnormalize}\"> 
+		"; if [ "${CGI_ipidnormalize}" = "1" ]; then 
+echo -n "
+		<option value=\"0\">不启用</option>
+		<option value=\"1\" selected>启用</option>
+		"; else 
+echo -n "
+		<option value=\"0\" selected>不启用</option>
+		<option value=\"1\">启用</option>
+		"; fi 
+echo -n "
+		</select>&nbsp;(启用此功能，可以尽量避免ISP封杀共享，主要用于ADSL线路)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>克隆MAC</td>
+        <td align=left><input type=text name=clonemac style=\"width:130px\" value=\"${CGI_clonemac}\" />&nbsp;(xx:xx:xx:xx:xx:xx或xx-xx-xx-xx-xx-xx)
+</tr>
+<tr id=row1>
+        <td align=left>线路类型</td>
+        <td align=left>
+		<select name=wantype style=\"width:130\" value=\"${CGI_wantype}\" onchange=\"onTypeChanged(this)\">
+		"; if [ "${CGI_wantype}" = "static" ]; then 
+echo -n "
+		<option value=\"static\" selected>静态IP</option>
+		<option value=\"pppoe\">PPPOE</option>
+		"; else 
+echo -n "
+		<option value=\"static\">静态IP</option>
+		<option value=\"pppoe\" selected>PPPOE</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+</table>
+<br>
+<table style=\"width:100%; font-bold:true; font-size:13px; color:#CE6C04;border-bottom:1px dotted #185a73\">
+<tr><td align=left><b>心跳设置</b></td></tr>
+</table>
+<table style=\"font:14px\" width=100% border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td align=left width=100>心跳服务器1</td>
+        <td align=left>
+		<input type=text name=pingip style=\"width:130px\" value=\"${CGI_pingip}\"></input>&nbsp;(通过ping此IP来对线路做健康检查,0.0.0.0表示关闭)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>心跳服务器2</td>
+        <td align=left><input type=text name=pingip2 style=\"width:130px\" value=\"${CGI_pingip2}\"></input>&nbsp;(同上,任何一个IP通都表示心跳正常)</td>
+</tr>
+</table>
+<br>
+<table style=\"width:100%; font-bold:true; font-size:13px; color:#CE6C04;border-bottom:1px dotted #185a73\">
+<tr><td align=left><b>其它参数</b></td></tr>
+</table>
+"; 
+mtu=${CGI_mtu}
+[ "${mtu}" = "" ] && mtu=1500 
+
+echo -n "
+<table id=idProxy style=\"font:14px\" width=100% border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=100 align=left>MTU</td>
+        <td align=left><input type=text name=proxymtu style=\"width:130px\" value=\"${mtu}\"></input>&nbsp;</td>
+</tr>
+<tr id=row1>
+        <td align=left>线路IP</td>
+        <td width=* align=left><input type=text name=proxyaddr style=\"width:130px\" value=\"${CGI_proxyaddr}\" /></td>
+</tr>
+<tr id=row1>
+        <td align=left id=tdGateway>网关地址</td>
+        <td align=left><input type=text name=proxygw  style=\"width:130px\" value=\"${CGI_proxygw}\" /></td>
+</tr>
+<tr id=row1>
+        <td align=left id=tdDnsaddr>DNS服务器</td>
+        <td align=left><input type=text name=proxydns style=\"width:130px\" value=\"${CGI_proxydns}\" />&nbsp;(选填)</td>
+</tr>
+<tr id=row1>
+        <td align=left>NAT地址池</td>
+        <td width=* align=left>
+		<input type=text name=natip style=\"width:200px\" value=\"${CGI_natip}\" />&nbsp;(NAT时用的地址,不填或0.0.0.0则使用线路IP)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>备注</td>
+        <td align=left width=*>
+		<input type=text name=remark style=\"width:100%\" value=\"${CGI_remark}\"></input>
+	</td>
+</tr>
+</table>
+"; 
+mtu=${CGI_mtu}
+[ "${mtu}" = "" ] && mtu=1480
+
+echo -n "
+<table id=idPppoe style=\"font:14px\" width=100% border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=100 align=left>MTU</td>
+        <td align=left><input type=text name=pppoemtu style=\"width:130px\" value=\"${mtu}\"></input>&nbsp;</td>
+</tr>
+<tr id=row1>
+        <td align=left>PPPOE账号</td>
+        <td align=left><input type=text name=username  style=\"width:130px\" value=\"${CGI_username}\" /></td>
+</tr>
+<tr id=row1>
+        <td align=left>PPPOE密码</td>
+        <td align=left><input type=text name=password style=\"width:130px;\" value=\"${CGI_password}\" /></td>
+</tr>
+<tr id=row1>
+        <td align=left>服务名称</td>
+        <td align=left><input type=text name=service style=\"width:130px\" value=\"${CGI_service}\" /></td>
+</tr>
+<tr id=row1>
+        <td align=left>接入服务器</td>
+        <td align=left>
+		<input type=text name=reqacname style=\"width:130px\" value=\"${CGI_reqacname}\"></input>&nbsp;(如果指定服务器，则只和指定的服务器连接)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>重拨等待时间</td>
+        <td align=left>
+		<input type=text name=waitime style=\"width:130px\" value=\"${CGI_waitime}\"></input>&nbsp;(单位秒，避免频繁拨号而被运营商封线)
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>认证方式</td>
+        <td align=left>
+		<select name=pppoe_onlypap style=\"width:130\" value=\"${CGI_pppoe_onlypap}\"> 
+		"; if [ "${CGI_pppoe_onlypap}" = "0" ]; then 
+echo -n "
+		<option value=\"0\" selected>支持PAP和CHAP</option>
+		<option value=\"1\">只支持PAP</option>
+		"; else 
+echo -n "
+		<option value=\"0\">支持PAP和CHAP</option>
+		<option value=\"1\" selected>只支持PAP</option>
+		"; fi 
+echo -n "
+		</select>
+	</td>
+</tr>
+<tr id=row1>
+        <td align=left>备注</td>
+        <td align=left width=*>
+		<input type=text name=remark style=\"width:100%\" value=\"${CGI_remark}\"></input>
+	</td>
+</tr>
+</table>
+<table style=\"width:100%; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:100%\"> 
+<tr>
+        <td align=right>
+		<input type=submit id=newbtn value=\"提交\"></input>
+		<input type=button id=newbtn value=\"取消\" onclick=\"onCancel()\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</div>
+</body>
+</html>
+";

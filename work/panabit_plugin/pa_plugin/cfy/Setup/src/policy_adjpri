@@ -1,0 +1,130 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeSubmit(frm)
+{
+	var miniprate = document.getElementsByName(\"miniprate\")[0];
+	var maxiprate = document.getElementsByName(\"maxiprate\")[0];
+	miniprate.value = TrimAll(miniprate.value);
+	if (miniprate.value == \"\") {
+		alert(\"请输入带宽,如果想关闭功能，请输入0!\");
+		miniprate.select();
+		return false;
+	}
+	if (!IsDigitIn(miniprate.value, 0, 1000000)) {
+		alert(\"请输入0~1000000之间的数字\");
+		miniprate.select();
+		return false;
+	}
+	maxiprate.value = TrimAll(maxiprate.value);
+	if (maxiprate.value == \"\") {
+		alert(\"请输入带宽,如果想关闭功能，请输入0!\");
+		maxiprate.select();
+		return false;
+	}
+	if (!IsDigitIn(maxiprate.value, 0, 1000000)) {
+		alert(\"请输入0~1000000之间的数字\");
+		maxiprate.select();
+		return false;
+	}
+	
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} policy priadjset miniprate=${CGI_miniprate} minpri=${CGI_minpri} \
+		maxiprate=${CGI_maxiprate} maxpri=${CGI_maxpri}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误: ${errmsg}"
+	else
+		afm_dialog_msg "操作成功!"
+	fi
+fi
+for nameval in `${FLOWEYE} policy priadjget`; do
+	tag=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2`
+	case "${tag}" in
+	"iprate")
+		CGI_miniprate="${val}"
+		;;
+	"pri")
+		CGI_minpri="${val}"
+		;;
+	"miniprate")
+		CGI_miniprate="${val}"
+		;;
+	"minpri")
+		CGI_minpri="${val}"
+		;;
+	"maxiprate")
+		CGI_maxiprate="${val}"
+		;;
+	"maxpri")
+		CGI_maxpri="${val}"
+		;;
+	esac
+	[ "${CGI_minpri}" = "" ] && CGI_minpri="0"
+	[ "${CGI_maxpri}" = "" ] && CGI_maxpri="6"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "流量控制->动态调整" 
+echo -n "
+";
+cgi_show_pri()
+{
+	local pri;
+	for pri in 0 1 2 3 4 5 6;
+	do
+		if [ ${pri} -eq $1 ]; then
+			echo "<option value=${pri} selected>${pri}</option>"
+		else
+			echo "<option value=${pri}>${pri}</option>"
+		fi
+	done
+}
+
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeSubmit(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=800 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td></td>
+        <td align=left>当IP流入流量小于<input type=text name=miniprate style=\"width:100px\" value=\"${CGI_miniprate}\">kbps&nbsp;(0表示关闭此功能)&nbsp;时,&nbsp;将数据包优先级调整为<select name=minpri value=\"${CGI_minpri}\" style=\"width:50px\">"; cgi_show_pri ${CGI_minpri} 
+echo -n "</select>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>当IP流入流量大于<input type=text name=maxiprate style=\"width:100px\" value=\"${CGI_maxiprate}\">kbps&nbsp;(0表示关闭此功能)&nbsp;时,&nbsp;将数据包优先级调整为<select name=maxpri value=\"${CGI_maxpri}\" style=\"width:50px\">"; cgi_show_pri ${CGI_maxpri} 
+echo -n "</select>(优先级0和1不受此影响)
+	</td>
+</tr>
+</table>
+<table style=\"width:800; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:800\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

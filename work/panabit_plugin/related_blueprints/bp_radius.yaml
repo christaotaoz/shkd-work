@@ -1,0 +1,42 @@
+tosca_definitions_version: cloudify_dsl_1_3
+imports:
+  - 'http://www.getcloudify.org/spec/cloudify/4.3/types.yaml'
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+inputs:
+  login_name:
+    default:
+      get_secret: login_name
+    type: string
+  login_password:
+    default:
+      get_secret: login_password
+    type: string
+  name: null
+  nas: null
+  radius_ip: null
+  route_name: null
+  secret_key: null
+node_templates:
+  New_radius_server_1:
+    type: cloudify.pa.radius_server
+    capabilities:
+      scalable:
+        properties:
+          default_instances: 1
+    properties:
+      connection_config:
+        host: 192.168.4.39
+        login_name:
+          get_input: login_name
+        login_password:
+          get_input: login_password
+      name:
+        get_input: name
+      nas:
+        get_input: name
+      radius_ip:
+        get_input: radius_ip
+      route_name:
+        get_input: route_name
+      secret_key:
+        get_input: secret_key

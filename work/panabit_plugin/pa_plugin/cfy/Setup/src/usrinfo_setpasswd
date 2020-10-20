@@ -1,0 +1,94 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Setup/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var passwd1 = document.getElementsByName(\"passwd1\")[0];
+	var passwd2 = document.getElementsByName(\"passwd2\")[0];
+	passwd1.value = TrimAll(passwd1.value);
+	if (passwd1.value == \"\") {
+		alert(\"请输入密码!\");
+		passwd1.select();
+		return false;
+	}
+	if (passwd2.value != passwd1.value) {
+		alert(\"两次输入密码不同，请重新输入!\");
+		passwd1.select();
+		return false;
+	}
+	return true;
+}
+function onCancel() 
+{
+	window.location.href = \"/cgi-bin/Setup/usrinfo_list?group=${CGI_group}\";
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	errmsg=`${FLOWEYE} usrinfo set name=${CGI_usrname} newpwd=${CGI_passwd1}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "操作失败:${errmsg}"
+	else
+		afm_load_page 0 "/cgi-bin/Setup/usrinfo_list?group=${CGI_group}"
+		exit 0
+	fi
+fi
+
+echo -n "
+<body>
+"; cgi_show_title "Web认证->账号管理->修改密码" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table style=\"font:14px\" width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+	<td width=40></td>
+        <td width=80 align=left>账号名称</td>
+	<td width=400 align=left><b>${CGI_usrname}</b>
+		<input type=hidden name=usrname style=\"width:120px\" value=\"${CGI_usrname}\"></input>
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>密码</td>
+        <td align=left>
+		<input type=password class=text name=passwd1 style=\"width:120px\" value=\"${CGI_passwd1}\"></input>
+		&nbsp;&nbsp;(不超过21个英文字符)
+	</td>
+</tr>
+<tr id=row1>
+	<td></td>
+        <td align=left>再输入密码</td>
+        <td align=left>
+		<input type=password class=text name=passwd2 style=\"width:120px\" value=\"${CGI_passwd1}\"></input>
+		&nbsp;&nbsp;(不超过21个英文字符)
+	</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr>
+        <td align=right>
+		<input type=submit style=\"width:80\" value=\"提交\"></input>
+		<input type=button style=\"width:80\" value=\"取消\" onclick=\"onCancel()\"></input>
+		<input type=hidden name=group value=\"${CGI_group}\"></input>
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+";

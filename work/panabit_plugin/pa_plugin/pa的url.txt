@@ -1,0 +1,85 @@
+请求cookie：
+curl -X POST https://192.168.4.23/login/userverify.cgi -k -d "username=admin&password=panabit"
+
+保存当前配置文件：
+ curl -X GET -k --cookie 'pauser_1535653419_549215=paonline_admin_9392_15356542311' "https://192.168.4.23/cgi-bin/cfy/Maintain/cfg_import"
+ 
+上传配置文件:
+curl -X POST -k --cookie 'pauser_1535653419_549215=paonline_admin_9392_15356542311' "https://192.168.4.23/cgi-bin/cfy/Maintain/cfg_import?action=upload" -F "cfgfile=@/root/now.conf"
+
+导入配置文件:
+curl -X GET -k --cookie 'pauser_1535653419_549215=paonline_admin_9392_15356542311' "https://192.168.4.23/cgi-bin/cfy/Maintain/cfg_import?action=import"
+
+更改pa管理口:
+curl -X POST -k --cookie 'pauser_1535910879_543060=paonline_admin_16891_15359124651' https://192.168.4.23/cgi-bin/cfy/if_admin -d "ipaddr=192.168.4.23&netmask=255.255.255.0&gateway=192.168.4.1"
+
+添加ppoe服务器
+curl -X POST -k --cookie 'pauser_1536131302_741464=paonline_admin_9910_15361422991' "https://192.168.4.65/cgi-bin/cfy/Pppoe/pppoesvr_add" -d "svrname=ceshi&ifname=em1&addr=192.168.77.1&vlan=0&mtu=1942&dns0=114.114.114.114&dns1=8.8.8.8&auth=local/radius&radsvr=0&pool=10&maxclnt=0"
+
+添加地址池
+curl -X POST -k --cookie 'pauser_1536131302_741464=paonline_admin_30826_15361343081' "' "https://192.168.4.65/cgi-bin/cfy/Pppoe/ippool_edit?id=10" -d" -d "name=pool10&start=rt=192.168.112.2&end&end=nd=192.168.112.100&dns&dns=ns=114.114.114.114,8.8,14,8.8.8.8&rat&ratein=0&rateout=0&maxonlinetime=0&clntepa=pass"
+
+添加ppoe账户
+curl -X POST -k --cookie 'pauser_1536131302_741464=paonline_admin_1887_15361313801' ''https://192.168.4.65/cgi-bin/cfy/Pppoe/pppoe_addacct" -d "poolid=1&account=test&passwd1=test&start=2018-09-05&expire=2019-09-05"date (+%Y-%m-%d)
+
+地址池列表
+curl -X GET -k --cookie 'pauser_1536131302_741464=paonline_admin_9910_15361422991' "https://192.168.4.65/cgi-bin/cfy/Pppoe/ippool_list"
+
+ppoe服务器启动
+curl -X POST -k --cookie 'pauser_1536131302_741464=paonline_admin_9910_15361422991' "https://192.168.4.65/cgi-bin/cfy/Pppoe/pppoesvr_config" -d "enable=1"
+
+网络接口
+curl -X GET -k --cookie 'pauser_1536023828_755432=paonline_admin_3352_15360241011' "https://192.168.4.65/cgi-bin/cfy/Monitor/if_stat"
+
+网卡设置
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_2448_15361981941' "https://192.168.4.65/cgi-bin/cfy/Setup/if_edit?ifname=em1" -d "mode=0&zone=inside&peer=none&ifname&em1"
+
+wan口list
+curl -X GET -k --cookie 'pauser_1536023828_755432=paonline_admin_3352_15360241011;pauser_1536024751_757962=paonline_admin_18888_15360268981' "https://192.168.4.65/cgi-bin/cfy/Route/proxy_list"
+
+wan线添加
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_2448_15361981941' "https://192.168.4.65/cgi-bin/cfy/Route/proxy_add" -d "proxyname=test001&ifname=em2&wantype=static&pingip=8.8.8.8&proxymtu=1500&proxyaddr=10.2.0.22&proxygw=10.2.0.1&waitime=5"
+
+lan口添加
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_2448_15361981941' "https://192.168.4.65/cgi-bin/cfy/Route/iflan_add" -d "name=testlan&ifname=em1&ifaddr=10.2.0.34&netmask=255.255.255.0&mtu=1500&mode=work"
+
+lan口list
+curl -X GET -k --cookie 'pauser_1536023828_755432=paonline_admin_3352_15360241011;pauser_1536024751_757962=paonline_admin_18888_15360268981' "https://192.168.4.65/cgi-bin/cfy/Route/iflan_list"
+
+添加策略路由
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_33310_15362827631' "https://192.168.4.65/cgi-bin/cfy/Route/policy_addrule" -d "polno=40&inifname=proxy.yunxunzero&route_proxy=outside1&srctype=any&dsttype=any&proto=any&appid=any&nat_proxy=outside1&nat_nexthop=_NULL_&action=nat"
+
+策略路由list
+curl -X GET -k --cookie 'pauser_1536023828_755432=paonline_admin_3352_15360241011;pauser_1536024751_757962=paonline_admin_18888_15360268981' "https://192.168.4.65/cgi-bin/cfy/Route/policy_list"
+
+radius启用服务
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_33310_15362827631' "https://192.168.4.65/cgi-bin/cfy/Pppoe/radsvr_list" -d "rad_enable=1"
+
+radius添加功能
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_21369_15362920361' "https://192.168.4.65/cgi-bin/cfy/Pppoe/radsvr_add" -d "desc=5&ip=192.168.111.111&authport=1812&acctport=1813&secret=qqq&proxy=outside1&proxy2=testlan"
+
+ping外网
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_21369_15362920361' "https://192.168.4.65/cgi-bin/cfy/App/ping/webmain" -d "ip=192.168.4.1&wan=1&seq=0"
+
+ping内网
+curl -X POST -k --cookie 'pauser_1536198051_752886=paonline_admin_21369_15362920361' "https://192.168.4.65/cgi-bin/cfy/App/ping/lanping" -d "ip=192.168.4.1&wan=2&seq=0&nexthop=192.168.40.2"
+
+账号导入
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

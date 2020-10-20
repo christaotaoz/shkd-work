@@ -1,0 +1,76 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+. ../common/common.sh 
+afm_load_page 60 "/cgi-bin/Monitor/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function showMobTrend(type, name, cname)
+{
+	var url = \"/cgi-bin/Monitor/mob_graph?type=\" + type + \"&name=\" + name +
+	         \"&cname=\" + cname;
+	ShowWindow(url, \"\", 650, 700);
+}
+function showIPs(type, cname)
+{
+	var url = \"/cgi-bin/Monitor/mob_topip?type=\" + type + \"&cname=\" + cname; 
+	ShowWindow(url, \"\", 620, 700);
+}
+</script>
+<body>
+"; cgi_show_title "移动终端->在线趋势" 
+echo -n "
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近一天在线趋势</b></td>
+        <td align=right><a href=\"javascript:showMobTrend('3day', 'total', '移动终端')\">三日对比</a></td>
+</tr>
+</table>
+";
+daypng=mob_day.png
+errmsg=`${FLOWEYE} chart show width=800 height=280 yname="#count" hours=24 tag=mob_total outimg=${TMPPATH}/${daypng}`
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr> <td><img src=\"/tmp/${daypng}\"></img></td> </tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近一周在线趋势</b></td>
+        <td align=right><a href=\"javascript:showMobTrend('3day', 'total', '移动终端')\">三日对比</a></td>
+</tr>
+</table>
+";
+weekpng=mob_week.png
+errmsg=`${FLOWEYE} chart show width=800 height=280 yname="#count" hours=168 tag=mob_total outimg=${TMPPATH}/${weekpng}`
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr> <td><img src=\"/tmp/${weekpng}\"></img></td> </tr>
+</table>
+<br>
+<table style=\"width:800; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>
+        <td align=left><b>最近一月在线趋势</b></td>
+        <td align=right><a href=\"javascript:showMobTrend('3day', 'total', '移动终端')\">三日对比</a></td>
+</tr>
+</table>
+";
+monpng=mob_month.png
+errmsg=`${FLOWEYE} chart show width=800 height=280 yname="#count" hours=168 tag=mob_total outimg=${TMPPATH}/${monpng}`
+
+echo -n "
+<table width=800 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr> <td><img src=\"/tmp/${monpng}\"></img></td> </tr>
+</table>
+</body>
+</html>
+";

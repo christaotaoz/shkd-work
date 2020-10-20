@@ -1,0 +1,80 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n "";
+. ../common/common.sh 
+myself="/cgi-bin/Maintain/`basename $0`"
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function beforeCommit(frm)
+{
+	var syslogsvrip = document.getElementsByName(\"alertip\")[0];
+	var syslogsvrport = document.getElementsByName(\"alertport\")[0];
+	syslogsvrip.value = TrimAll(syslogsvrip.value);
+	if (syslogsvrip.value != \"\" && !IsIPAddr(syslogsvrip.value)) {
+		alert(\"请输入正确的IP地址!\");
+		syslogsvrip.select();
+		return false;
+	}
+	syslogsvrport.value = TrimAll(syslogsvrport.value);
+	if (svrport.value == \"\" && !IsDigitIn(syslogsvrport.value, 1, 65535)) {
+		alert(\"错误的端口号!\");
+		syslogsvrport.select();
+		return false;
+	}
+	
+	return true;
+}
+</script>
+";
+if [ "${REQUEST_METHOD}" = "POST" ]; then
+	operator_check "${myself}"
+	cfgstr="alertip=${CGI_alertip} alertport=${CGI_alertport}"
+	errmsg=`${FLOWEYE} logger config ${cfgstr}`
+	if [ "$?" != "0" ]; then
+		afm_dialog_msg "出现错误:${errmsg}"
+	else
+		afm_load_page 0 "${myself}"
+		exit 0
+	fi
+fi
+for nameval in `${FLOWEYE} logger stat`
+do
+	name=`echo ${nameval} | cut -d'=' -f1`
+	val=`echo ${nameval} | cut -d'=' -f2-`
+	export CGI_${name}="${val}"
+done
+
+echo -n "
+<body>
+"; cgi_show_title "系统告警->参数设置" 
+echo -n "
+<br>
+<form method=post onsubmit=\"return beforeCommit(this)\" action=\"${myself}\">
+<table width=600 border=0 cellspacing=0 cellpadding=3 bgcolor=\"#ffffff\">
+<tr id=row1>
+        <td width=40></td>
+        <td align=left width=120>接收服务器IP</td>
+        <td align=left width=*><input type=text name=alertip value=\"${CGI_alertip}\" style=\"width:120\" />&nbsp;(xxx.xxx.xxx.xxx)</td>
+</tr>
+<tr id=row1>
+        <td></td>
+        <td align=left width=120>接收服务器端口</td>
+        <td align=left width=*><input type=text name=alertport value=\"${CGI_alertport}\" style=\"width:60\" />&nbsp;(0~65535)</td>
+</tr>
+</table>
+<table style=\"width:600; border-bottom:1px #787882 solid; color:#0000ff\">
+<tr><td align=right>&nbsp;</td></tr>
+</table>
+<table style=\"width:600\"> 
+<tr><td align=right><input type=submit style=\"width:80\" value=\"提交\"></input></td></tr>
+</table>
+</form>
+</body>
+</html>
+";

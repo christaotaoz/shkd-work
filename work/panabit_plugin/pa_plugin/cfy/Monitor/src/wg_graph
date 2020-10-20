@@ -1,0 +1,149 @@
+#!/bin/sh
+#This script is created by ssparser automatically. The parser first created by MaoShouyan
+printf "Content-type: text/html;charset=gb2312
+Cache-Control: no-cache
+
+"
+echo -n ""; 
+thetitle="线路组\"${CGI_name}\""
+case "${CGI_time}" in
+"3day")
+	if [ "${CGI_type}" = "inbps" ]; then
+		CGI_browsertitle="${thetitle}流入流量3日对比趋势图"
+	elif [ "${CGI_type}" = "outbps" ]; then
+		CGI_browsertitle="${thetitle}流出流量3日对比趋势图"
+	else
+		CGI_browsertitle="${thetitle}未知类型"
+	fi
+	;;
+"mon")
+	if [ "${CGI_type}" = "inbps" ]; then
+		CGI_browsertitle="${thetitle}流入流量历史趋势图"
+	elif [ "${CGI_type}" = "outbps" ]; then
+		CGI_browsertitle="${thetitle}流出流量历史趋势图"
+	else
+		CGI_browsertitle"${thetitle}未知类型历史趋势图"
+	fi
+	;;
+*)
+	CGI_browsertitle="${thetitle}最近24小时趋势图"
+	;;
+esac
+. ../common/common.sh 
+wgid=${CGI_id}
+
+echo -n "
+<script type=\"text/javascript\" src=\"/img/common.js\"></script>
+<script language=\"javascript\">
+function MyShowWindow(url, args, width, height)
+{
+        var left = (window.screen.width - width) / 2;
+        var top  = (window.screen.height - height) / 2;
+        if (args == \"\")
+                args = \"scrollbars=1,toolbar=0,menubar=0,status=0,location=0\";
+        else
+                args += \",location=0\";
+        args += \",top=\" + top + \",left=\" + left + \",height=\" + height + \",width=\" + width;
+        window.open(url, \"_blank\", args);
+}
+function popupurl(url, width, height)
+{
+        MyShowWindow(url, \"scrollbars=1,resizable=1\", width, height);
+}
+</script>
+<body>
+<script type=\"text/javascript\" src=\"/img/wz_tooltip.js\"></script>
+<span id=\"hlp3day\" style=\"display:none\">查看最近三天趋势图</span>
+<span id=\"hlpall\" style=\"display:none\">查看最近一周、一月的趋势图</span>
+<br>
+";
+width=720
+TMPPATH=${PGPATH}/admin/tmp
+if [ "${CGI_time}" = "3day" ]; then
+	png72=grp72_${CGI_type}_wg_${wgid}.png
+        png48=grp48_${CGI_type}_wg_${wgid}.png
+        png24=grp24_${CGI_type}_wg_${wgid}.png
+	floweyearg="type=line width=${width} height=220 hours=24 tag=wg_${CGI_type}_${wgid}"
+        endtm=`date +%s`
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png24} tmend=${endtm}`
+        endtm=$((${endtm} - 86400))
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png48} tmend=${endtm}`
+        endtm=$((${endtm} - 86400))
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${png72} tmend=${endtm}`
+        echo "<table style=\"width:700; font-bold:true;font-size: 14px; color:#CE6C04\">
+<tr><td align=left><b>最近24小时趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png24}\"></img></td></tr></table>"
+        echo "<table style=\"width:700; font-bold:true; font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>24小时前趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png48}\"></img></td></tr></table>"
+        echo "<table style=\"width:700; font-bold:true;font-size: 14px; color:#CE6C04\">
+<tr><td align=left><b>48小时前趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${png72}\"></img></td></tr></table>"
+	echo "</body></html>"
+	exit 0
+fi
+if [ "${CGI_time}" = "mon" ]; then
+        daypng=day_${CGI_type}_wg_${wgid}.png
+        weekpng=week_${CGI_type}_wg_${wgid}.png
+        monpng=mon_${CGI_type}_wg_${wgid}.png
+	floweyearg="type=line width=${width} height=220 tag=wg_${CGI_type}_${wgid}"
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${daypng} hours=24`
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${weekpng} hours=168`
+        errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${TMPPATH}/${monpng} hours=720`
+        echo "<table style=\"width:700; font-bold:true;font-size: 14px; color:#CE6C04\">
+<tr><td align=left><b>最近1天趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${daypng}\"></img></td></tr></table>"
+        echo "<br><table style=\"width:700; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>最近1周趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${weekpng}\"></img></td></tr></table>"
+        echo "<br><table style=\"width:700; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr><td align=left><b>最近1月趋势图</b></td><td align=right></td></tr></table>"
+        echo "<table width=700 border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/${monpng}\"></img></td></tr></table>"
+	echo "</body></html>"
+	exit 0
+fi
+floweyearg="type=line width=${width} height=220 hours=24" 
+grpinbps=${TMPPATH}/day_wg_${wgid}_inbps.png
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${grpinbps} tag=wg_inbps_${wgid}`
+grpoutbps=${TMPPATH}/day_wg_${wgid}_outbps.png
+errmsg=`${FLOWEYE} chart show ${floweyearg} outimg=${grpoutbps} tag=wg_outbps_${wgid}`
+
+echo -n "     
+<table style=\"width:${width}; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>    
+        <td align=left><b>最近24小时流入趋势图</b></td>
+        <td align=right>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/wg_graph?id=${CGI_id}&name=${CGI_name}&type=inbps&time=3day', 750, 800)\"
+            onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/wg_graph?id=${CGI_id}&name=${CGI_name}&type=inbps&time=mon', 750, 800)\"
+            onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/day_wg_${wgid}_inbps.png\"></img></td></tr>
+</table>
+<br> 
+<table style=\"width:${width}; font-bold:true;font-size:14px; color:#CE6C04\">
+<tr>    
+        <td align=left><b>最近24小时流出趋势图</b></td>
+        <td align=right>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/wg_graph?id=${CGI_id}&name=${CGI_name}&type=outbps&time=3day', 750, 800)\"
+            onmouseover=\"TagToTip('hlp3day')\" onmouseout=\"UnTip()\">三日对比</a>
+        <a href=\"javascript:popupurl('/cgi-bin/Monitor/wg_graph?id=${CGI_id}&name=${CGI_name}&type=outbps&time=mon', 750, 800)\"
+            onmouseover=\"TagToTip('hlpall')\" onmouseout=\"UnTip()\">历史图表</a>
+	</td>
+</tr>   
+</table>
+<table width=${width} border=0 cellspacing=1 cellpadding=1 bgcolor=\"#ffffff\">
+<tr><td><img src=\"/tmp/day_wg_${wgid}_outbps.png\"></img></td></tr>
+</table>
+</body>
+</html>
+";

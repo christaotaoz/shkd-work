@@ -1,0 +1,5499 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Revision History :
+ * Date             Author               Reference      Comments
+ * *********      ************           **********    **********
+ *
+ * Jul,2018      Gaurav                                 5G DU
+ * Copyright (c) 2018, Aricent Inc. All Rights Reserved
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wmh="http://www.wmhelp.com/2003/eGenerator" elementFormDefault="qualified">
+  <xs:element name="InternetGatewayDevice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="X_VENDOR_NMS_FTPServerConfig"/>
+        <xs:element ref="DeviceSummary"/>
+        <xs:element ref="ManagementServer"/>
+        <xs:element ref="DeviceInfo"/>
+        <xs:element ref="LANDevice"/>
+        <xs:element ref="FAP"/>
+         <xs:element ref="Services"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="X_VENDOR_NMS_FTPServerConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="X_VENDOR_Enable"/>
+        <xs:element ref="X_VENDOR_FTPServerURL"/>
+        <xs:element ref="X_VENDOR_FTPServerUsername"/>
+        <xs:element ref="X_VENDOR_FTPServerUserPassword"/>
+        <xs:element ref="X_VENDOR_LocalDirectoryPath"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="X_VENDOR_Enable" type="xs:boolean" default="1"/>
+  <xs:element name="X_VENDOR_FTPServerURL" default="ftp://10.203.7.212">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="255"/>
+        <xs:minLength value="13"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_FTPServerUsername" nillable="true">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="255"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_FTPServerUserPassword" nillable="true">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="255"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_LocalDirectoryPath" default="/home/user">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="255"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DeviceSummary">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="1024"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ManagementServer">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="URL"/>
+        <xs:element ref="X_VENDOR_IHEMS_URL"/>
+        <xs:element ref="X_VENDOR_CONNECT_TO_IHEMS"/>
+        <xs:element ref="ConnectionRequestURL"/>
+        <xs:element ref="EnableCWMP"/>
+        <xs:element ref="Username"/>
+        <xs:element ref="Password"/>
+        <xs:element ref="PeriodicInformEnable"/>
+        <xs:element ref="PeriodicInformInterval"/>
+        <xs:element ref="PeriodicInformTime"/>
+        <xs:element ref="ParameterKey"/>
+        <xs:element ref="ConnectionRequestUsername"/>
+        <xs:element ref="ConnectionRequestPassword"/>
+        <xs:element ref="CWMPRetryMinimumWaitInterval"/>
+        <xs:element ref="CWMPRetryIntervalMultiplier"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="URL"  default="http://1.1.1.1:7547">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_IHEMS_URL">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_CONNECT_TO_IHEMS" type="xs:boolean" default="0"/>
+
+  <xs:element name="EnableCWMP" type="xs:boolean" default="1"/>
+
+  <xs:element name="PeriodicInformEnable" type="xs:boolean" default="0"/>
+
+  <xs:element name="PeriodicInformInterval" default="3600">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PeriodicInformTime" default="2016-01-01T19:00">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ParameterKey" default="abc123">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="32"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnectionRequestUsername" default="user123">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnectionRequestPassword" default="pass123">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CWMPRetryMinimumWaitInterval" default="123">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CWMPRetryIntervalMultiplier" default="2000">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1000"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnectionRequestURL"  default="http://1.1.1.1:7548">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DeviceInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Manufacturer"/>
+        <xs:element ref="ManufacturerOUI"/>
+        <xs:element ref="ModelName"/>
+        <xs:element ref="Description"/>
+        <xs:element ref="ProductClass"/>
+        <xs:element ref="SerialNumber"/>
+        <xs:element ref="HardwareVersion"/>
+        <xs:element ref="SoftwareVersion"/>
+        <xs:element ref="ModemFirmwareVersion"/>
+        <xs:element ref="AdditionalSoftwareVersion"/>
+        <xs:element ref="UpTime"/>
+        <xs:element ref="FirstUseDate"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Manufacturer" default="Vendor">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ManufacturerOUI" default="00256D">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="6"/>
+        <xs:minLength value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ModelName" default="HeNBDU">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Description" default="Home gNodeB DU">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ProductClass" default="5G FAP">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SerialNumber" default="000000">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="HardwareVersion" default="0.0.0">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SoftwareVersion" default="2.0.0">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ModemFirmwareVersion" default="0.0.0">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="AdditionalSoftwareVersion" default="0.0.0">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UpTime" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="FirstUseDate" type="xs:dateTime" default="2018-11-28T08:00:00-00:00"/>
+
+  <xs:element name="LANDevice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="LAN_HostConfigManagement"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="LAN_HostConfigManagement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="IPInterfaceNumberOfEntries"/>
+        <xs:element ref="IPInterface" minOccurs="1" maxOccurs="10"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="IPInterfaceNumberOfEntries" default="3">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="256"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IPInterface">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Enable"/>
+        <xs:element ref="IPInterfaceIPAddress"/>
+        <xs:element ref="IPInterfaceSubnetMask"/>
+        <xs:element ref="IPInterfaceAddressingType"/>
+        <xs:element ref="X_VENDOR_INTERFACE_TYPE"/>
+        <xs:element ref="X_VENDOR_SOURCE_PORT_NUMBER"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Enable" type="xs:boolean" default="0"/>
+  <xs:element name="IPInterfaceIPAddress" default="172.16.81.51">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="45"/>
+        <xs:minLength value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IPInterfaceSubnetMask" default=" ">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="45"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IPInterfaceAddressingType" default="Static">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:enumeration value='DHCP'/>
+        <xs:enumeration value='Static'/>
+        <xs:enumeration value='AutoIP'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_INTERFACE_TYPE" default="0">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="256"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_SOURCE_PORT_NUMBER" default="38473">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+    </xs:restriction>
+  </xs:simpleType>
+  </xs:element>
+ 
+  <xs:element name="FAP">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PerfMgmt"/>
+        <xs:element ref="Tunnel"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PerfMgmt">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ConfigNumberOfEntries"/>
+        <xs:element ref="Config"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ConfigNumberOfEntries" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="URL"/>
+        <xs:element ref="Username"/>
+        <xs:element ref="Password"/>
+        <xs:element ref="Enable"/>
+        <xs:element ref="PeriodicUploadInterval"/>
+        <xs:element ref="PeriodicUploadTime"/>
+        <xs:element ref="X_VENDOR_FileWriteTimer"/>
+        <xs:element ref="X_VENDOR_SamplingInterval"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Username" nillable="true">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Password" nillable="true">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="PeriodicUploadInterval" default="10">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PeriodicUploadTime" type="xs:dateTime" default="2013-11-05T08:15:30-05:00"/>
+
+  <xs:element name="X_VENDOR_FileWriteTimer" default="10">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="5"/>
+        <xs:maxInclusive value="1000"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="X_VENDOR_SamplingInterval" default="2">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="60"/>
+      </xs:restriction>
+    </xs:simpleType>
+   </xs:element>
+
+  <xs:element name="Tunnel">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CryptoProfileNumberOfEntries"/>
+        <xs:element ref="CryptoProfile"/>
+        <xs:element ref="IKESANumberOfEntries"/>
+        <xs:element ref="IKESA"/>
+        <xs:element ref="MaxVirtualInterfaces"/>
+        <xs:element ref="VirtualInterfaceNumberOfEntries"/>
+        <xs:element ref="VirtualInterface"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CryptoProfile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Enable"/>
+        <xs:element ref="IKERekeyLifetime"/>
+        <xs:element ref="IPsecRekeyLifetimeTime"/>
+        <xs:element ref="AuthMethod"/>
+        <xs:element ref="DPDTimer"/>
+        <xs:element ref="NATTKeepaliveTimer"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="IKERekeyLifetime" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+         <xs:minInclusive value="0"/>
+         <xs:maxInclusive value="4294967295"/>
+       </xs:restriction>
+     </xs:simpleType>
+   </xs:element>
+  <xs:element name="IPsecRekeyLifetimeTime" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="AuthMethod" nillable="true">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="DPDTimer" default="300">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="NATTKeepaliveTimer" default="180">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="IKESA">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PeerAddress"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PeerAddress" nillable="true">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="VirtualInterface">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Enable"/>
+        <xs:element ref="DSCPMarkPolicy"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DSCPMarkPolicy" default="-1">
+  <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-2"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="MaxVirtualInterfaces" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="IKESANumberOfEntries" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CryptoProfileNumberOfEntries" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="VirtualInterfaceNumberOfEntries" default="1">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Services">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FAPServiceNumberOfEntries"/>
+        <xs:element ref="FAPService" minOccurs = "1" maxOccurs = "6"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FAPServiceNumberOfEntries">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="FAPService">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DNPrefix" minOccurs = "0"/>
+        <xs:element ref="DeviceType" minOccurs = "0"/>
+        <xs:element ref="Capabilities" minOccurs = "0"/>
+        <xs:element ref="FAPControl" minOccurs = "0"/>
+        <xs:element ref="CellConfig" minOccurs = "1" maxOccurs = "6"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DNPrefix" default="00256D">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>  
+
+  <xs:element name="DeviceType" default="Standalone">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:enumeration value='Standalone'/>
+        <xs:enumeration value='Integrated'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Capabilities">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SupportedSystems"/>
+        <xs:element ref="DuplexMode"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SupportedSystems" default="5G-NR DU">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value='UMTS'/>
+        <xs:enumeration value='LTE'/>
+        <xs:enumeration value='CDMA1x'/>
+        <xs:enumeration value='CDMAHRPD'/>
+        <xs:enumeration value='5G-NR DU'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DuplexMode" default="TDD">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value='FDD'/>
+        <xs:enumeration value='TDD'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+ 
+  <xs:element name="FAPControl">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SelfConfigEvents"/>
+        <xs:element ref="EnclosureTamperingDetected"/>
+        <xs:element ref="NR"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+ 
+  <xs:element name="SelfConfigEvents" default="InitialREM">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value='InitialREM'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+ 
+  <xs:element name="EnclosureTamperingDetected" type="xs:string"/>
+
+  <xs:element name="NR">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="AdminState"/>
+        <xs:element ref="OpState"/>
+        <xs:element ref="RFTxStatus"/>
+        <xs:element ref="Gateway"/>
+        <xs:element ref="SysParams"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="AdminState" type="xs:boolean" default="0"/>
+  <xs:element name="OpState" type="xs:boolean" default="0"/>
+  <xs:element name="RFTxStatus" type="xs:boolean" default="0"/>
+  <xs:element name="Gateway">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SecGWServer1"/>
+        <xs:element ref="SecGWServer2"/>
+        <xs:element ref="SecGWServer3"/>
+        <xs:element ref="F1APSigLinkServer"/>
+        <xs:element ref="F1APSigLinkPort"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SysParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SctpConfParam"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="FeatureEnableParams">
+    <xs:complexType>
+      <xs:sequence>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SecGWServer1" nillable="true">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="SecGWServer2" nillable="true">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="SecGWServer3" nillable="true">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="F1APSigLinkServer" default="172.16.52.82">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="256"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="F1APSigLinkPort" default="38472">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SctpConfParam">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Hbinterval"/>
+        <xs:element ref="Pathmaxrxt"/>
+        <xs:element ref="InitNumOstreams"/>
+        <xs:element ref="InitMaxInstreams"/>
+        <xs:element ref="InitMaxAttempts"/>
+        <xs:element ref="InitMaxInitTimeo"/>
+        <xs:element ref="RtoInitial"/>
+        <xs:element ref="RtoMax"/>
+        <xs:element ref="RtoMin"/>
+        <xs:element ref="AssocMaxRetrans" minOccurs = "0"/>
+        <xs:element ref="DSCPValue" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Hbinterval" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Pathmaxrxt" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitNumOstreams" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitMaxInstreams" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitMaxAttempts" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitMaxInitTimeo" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RtoInitial" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RtoMax" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RtoMin" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4294967295"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="AssocMaxRetrans" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DSCPValue" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UEMgmt"/>
+        <xs:element ref="QosParams"/>
+        <xs:element ref="QosSrbParams"/>
+        <xs:element ref="PhrParams"/>
+        <xs:element ref="PowerControl"/>
+        <xs:element ref="FIVEGNR"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+ 
+  <xs:element name="UEMgmt">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="gNB"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="gNB">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxUEsServed"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxUEsServed" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QosParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="QoSNumberOfEntries"/>
+        <xs:element ref="QOS" minOccurs="1" maxOccurs="9"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="QoSNumberOfEntries" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="9"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QOS">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Enable"/>
+        <xs:element ref="QCI"/>
+        <xs:element ref="Type"/>
+        <xs:element ref="Priority"/>
+        <xs:element ref="MACParams"/>
+        <xs:element ref="RLCParams"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="QCI" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="9"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Type" default="GBR">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value='GBR'/>
+        <xs:enumeration value='NON_GBR'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Priority" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MACParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="TPeriodicBsr" minOccurs = "0"/>
+        <xs:element ref="TRetxBsr" minOccurs = "0"/>
+        <xs:element ref="LogicalChannelSrMask"/>
+        <xs:element ref="LogicalChannelSrDelayTimerApplied"/>
+        <xs:element ref="LogicalChannelGroup"/>
+        <xs:element ref="SrParams"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TPeriodicBsr" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TRetxBsr" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="LogicalChannelSrMask" type="xs:boolean" default="0"/>
+  <xs:element name="LogicalChannelSrDelayTimerApplied" type="xs:boolean" default="0"/>
+
+  <xs:element name="LogicalChannelGroup" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SrParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SrProhibitTimer" minOccurs = "0"/>
+        <xs:element ref="SrMaxTransmission"/>
+        <xs:element ref="SrParamsGroupId" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SrProhibitTimer" default="5">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SrMaxTransmission" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RLCParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxHarqTxUl" minOccurs = "0"/>
+        <xs:element ref="MaxHarqTxDl" minOccurs = "0"/>
+        <xs:element ref="MaxRlcTransmissions" minOccurs = "0"/>
+        <xs:element ref="AmSnFieldLenDL" minOccurs = "0"/>
+        <xs:element ref="AmSnFieldLenUL" minOccurs = "0"/>
+        <xs:element ref="UmSnFieldLenDL" minOccurs = "0"/>
+        <xs:element ref="UmSnFieldLenUL" minOccurs = "0"/>
+        <xs:element ref="UlTPollRetransmit" minOccurs = "0"/>
+        <xs:element ref="DlTPollRetransmit" minOccurs = "0"/>
+        <xs:element ref="UlPollPdu" minOccurs = "0"/>
+        <xs:element ref="DlPollPdu" minOccurs = "0"/>
+        <xs:element ref="UlPollByte" minOccurs = "0"/>
+        <xs:element ref="DlPollByte" minOccurs = "0"/>
+        <xs:element ref="UlMaxRetxThreshold" minOccurs = "0"/>
+        <xs:element ref="DlMaxRetxThreshold" minOccurs = "0"/>
+        <xs:element ref="UlTReassemblyAm" minOccurs = "0"/>
+        <xs:element ref="DlTReassemblyAm" minOccurs = "0"/>
+        <xs:element ref="UlTReassemblyUm" minOccurs = "0"/>
+        <xs:element ref="DlTReassemblyUm" minOccurs = "0"/>
+        <xs:element ref="UlTStatusProhibit" minOccurs = "0"/>
+        <xs:element ref="DlTStatusProhibit" minOccurs = "0"/>
+        <xs:element ref="LogicalChannelGroup" minOccurs = "0"/>
+        <xs:element ref="BucketSizeDuration" minOccurs = "0"/>
+        <xs:element ref="PrioritizedBitRate" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxHarqTxUl" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxHarqTxDl" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxRlcTransmissions" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="AmSnFieldLenDL" default="12">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="AmSnFieldLenUL" default="12">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="UmSnFieldLenDL" default="12">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UmSnFieldLenUL" default="12">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlTPollRetransmit" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="58"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlTPollRetransmit" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="58"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlPollPdu" default="5">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="23"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlPollPdu" default="5">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="23"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlPollByte" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="43"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlPollByte" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="43"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlMaxRetxThreshold" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlMaxRetxThreshold" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlTReassemblyAm" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="30"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlTReassemblyAm" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="30"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlTReassemblyUm" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="30"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlTReassemblyUm" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="30"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlTStatusProhibit" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="61"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlTStatusProhibit" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="61"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BucketSizeDuration" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrioritizedBitRate" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QosSrbParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="QoSSrbNumberOfEntries"/>
+        <xs:element ref="QosSrb" minOccurs="1" maxOccurs="2"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="QoSSrbNumberOfEntries" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QosSrb">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SRBType"/>
+        <xs:element ref="Priority"/>
+        <xs:element ref="MACParams"/>
+        <xs:element ref="RLCParams"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SRBType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PhrParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="phrPeriodicTimer"/>
+        <xs:element ref="phrProhibitTimer"/>
+        <xs:element ref="phrTxPowerFactorChange"/>
+        <xs:element ref="phrMultiple"/>  
+        <xs:element ref="phrType2SpCell"/>
+        <xs:element ref="phrType2OtherCell"/>
+        <xs:element ref="phr_mode_other_cg"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="phrPeriodicTimer" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="phrProhibitTimer" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="phrTxPowerFactorChange" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="phrMultiple" type="xs:boolean" default="1"/>
+  <xs:element name="phrType2SpCell" type="xs:boolean" default="1"/>
+  <xs:element name="phrType2OtherCell" type="xs:boolean" default="1"/>
+  <xs:element name="phr_mode_other_cg" type="xs:boolean" default="1"/>
+
+<xs:element name="PowerControl">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="OlpcConfigParams"/>
+        <xs:element ref="PowerControlCommonInfo"/>
+       </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="OlpcConfigParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="OlpcPuschSupportedCategory"/>
+        <xs:element ref="OlpcPuschSnrThresholdForCellCenterUe"/>
+        <xs:element ref="OlpcPuschSnrThresholdForCellEdgeUe"/>
+        <xs:element ref="OlpcP0UePuschRangeStart"/> 
+        <xs:element ref="OlpcP0UePuschRangeEnd"/>
+        <xs:element ref="OlpcPucchSupportedCategory"/> 
+        <xs:element ref="OlpcPucchSnrThreshold"/>
+        <xs:element ref="OlpcP0UePucchRangeStart"/>
+        <xs:element ref="OlpcP0UePucchRangeEnd"/>
+        <xs:element ref="ULPathlossThreshold"/>
+        <xs:element ref="UeHandoverCountThreshold"/>
+        <xs:element ref="MinUePower"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="OlpcPuschSupportedCategory">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="OlpcTuple" minOccurs="1" maxOccurs="4"/> 
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="OlpcTuple">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="IsPathlossHigh"/>  
+       <xs:element ref="IsSinrHigh"/> 
+       <xs:element ref="Action"/> 
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="IsPathlossHigh" type="xs:boolean" default="0"/>
+
+<xs:element name="IsSinrHigh" type="xs:boolean" default="0"/>
+
+<xs:element name="Action" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcPuschSnrThresholdForCellCenterUe" default="190">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcPuschSnrThresholdForCellEdgeUe" default="190">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcP0UePuschRangeStart" default="-8">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-8"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcP0UePuschRangeEnd" default="7">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-8"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcPucchSupportedCategory">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="OlpcTuple" minOccurs="1" maxOccurs="4"/> 
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="OlpcPucchSnrThreshold" default="190">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcP0UePucchRangeStart" default="-8">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-8"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="OlpcP0UePucchRangeEnd" default="7">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-8"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="ULPathlossThreshold" default="7">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="UeHandoverCountThreshold" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="MinUePower" default="18">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-40"/>
+        <xs:maxInclusive value="23"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PowerControlCommonInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="MaximumTransitPower"/>  
+       <xs:element ref="UeUlAdditionalSpectrumEmission"/> 
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="MaximumTransitPower" default="33">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-30"/>
+        <xs:maxInclusive value="33"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="UeUlAdditionalSpectrumEmission" default="7">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="FIVEGNR">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="RAN"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RAN">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CommonInfo"/>
+        <xs:element ref="MacParams"/>
+        <xs:element ref="PhyParams"/>
+        <xs:element ref="RlcParams"/>
+        <xs:element ref="TimersAndConstants"/>
+        <xs:element ref="UacBarringInfo"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CommonInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PLMNListNumberOfEntries"/>
+        <xs:element ref="PLMNList" minOccurs="1" maxOccurs="12"/>
+        <xs:element ref="CellIdentity"/>
+        <xs:element ref="CellGroupId"/>
+        <xs:element ref="NRPCI"/>
+        <xs:element ref="CellBarred"/>
+        <xs:element ref="CellReservedForOtherUse"/>
+        <xs:element ref="CellReservedForOperatorUse"/>
+        <xs:element ref="RanAreaCode"/>
+        <xs:element ref="ImsEmergencySupport"/>
+        <xs:element ref="ECallOverImsSupport"/>
+        <xs:element ref="OffsetToPointA"/>
+        <xs:element ref="IntraFreqReselection"/>
+        <xs:element ref="FIVEGSTAC" minOccurs = "0"/>
+        <xs:element ref="ConfiguredEPSTAC" minOccurs = "0"/>
+        <xs:element ref="cellSelectionInfo" minOccurs = "0"/>
+        <xs:element ref="NRModeInfo"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PLMNListNumberOfEntries" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="12"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PLMNList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Enable"/>
+        <xs:element ref="IsPrimary"/>
+        <xs:element ref="PLMNID"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="IsPrimary" type="xs:boolean" default="1"/>
+  <xs:element name="PLMNID" default="123123">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="6"/>
+        <xs:minLength value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellIdentity" default="3333">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="36"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellGroupId" type="xs:boolean" default="1"/>
+
+  <xs:element name="NRPCI" default="50">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1007"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellBarred" type="xs:boolean" default="1"/>
+  <xs:element name="CellReservedForOtherUse" type="xs:boolean" default="0"/>
+  <xs:element name="CellReservedForOperatorUse" type="xs:boolean" default="0"/>
+
+  <xs:element name="RanAreaCode" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ImsEmergencySupport" type="xs:boolean" default="0"/>
+  <xs:element name="ECallOverImsSupport" type="xs:boolean" default="0"/>
+
+  <xs:element name="OffsetToPointA" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2199"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IntraFreqReselection" type="xs:boolean" default="1"/>
+
+  <xs:element name="FIVEGSTAC" default="000000000000000000000001">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="24"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConfiguredEPSTAC" default="0000000000000001">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="16"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="cellSelectionInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="QRxLevMin" />
+        <xs:element ref="QRxLevMinOffset"  minOccurs="0"/>
+        <xs:element ref="QQualMin"  minOccurs="0"/>
+        <xs:element ref="QQualMinOffset"  minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="QRxLevMin" default="-70">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-70"/>
+        <xs:maxInclusive value="-22"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QRxLevMinOffset" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QQualMin" default="-3">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-34"/>
+        <xs:maxInclusive value="-3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QQualMinOffset" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnEstFailureControl">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ConnEstFailCount" />
+        <xs:element ref="ConnEstFailOffsetValidity" />
+        <xs:element ref="ConnEstFailOffset" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ConnEstFailCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnEstFailOffsetValidity" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ConnEstFailOffset" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRModeInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NRArfcnDL"  minOccurs="0"/>
+        <xs:element ref="NRFreqBandDLCount"  minOccurs="0"/>
+        <xs:element ref="NRFreqBandDL"  minOccurs="0"/>
+        <xs:element ref="NRSCSDL"  minOccurs="0"/>
+        <xs:element ref="NRTransmissionBwDL"  minOccurs="0"/>
+        <xs:element ref="NRArfcnUL"  minOccurs="0"/>
+        <xs:element ref="NRFreqBandULCount"  minOccurs="0"/>
+        <xs:element ref="NRFreqBandUL"  minOccurs="0"/>
+        <xs:element ref="NRSCSUL"  minOccurs="0"/>
+        <xs:element ref="NRTransmissionBwUL"  minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NRArfcnDL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3279165"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRFreqBandDLCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRFreqBandDL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="1024"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRSCSDL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRTransmissionBwDL" default="28">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="28"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRArfcnUL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3279165"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRFreqBandULCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRFreqBandUL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="1024"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRSCSUL" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NRTransmissionBwUL" default="28">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="28"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MacParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="RNTIStartRange"/>
+        <xs:element ref="RNTIEndRange"/>
+        <xs:element ref="LogLevel"/>
+        <xs:element ref="DL256QAMSupport"/>
+        <xs:element ref="UL256QAMSupport"/>
+        <xs:element ref="DLSchedulerStrategy"/>
+        <xs:element ref="ULSchedulerStrategy"/>
+        <xs:element ref="PHYCommInfo"/>
+        <xs:element ref="DLGbrBktDepthFactor" minOccurs = "0"/>
+        <xs:element ref="DLAmbrBktDepthFactor" minOccurs = "0"/>
+        <xs:element ref="DLTokenPeriodicity" minOccurs = "0"/>
+        <xs:element ref="DLQosStrategyOverAllocFactor" minOccurs = "0"/>
+        <xs:element ref="DLEnableAllocAfterAllowedBitrate" minOccurs = "0"/>
+        <xs:element ref="DlRbRestrictionFactor"  minOccurs = "0"/>
+        <xs:element ref="DlAmbrTokenLimitFactor" minOccurs = "0"/>
+        <xs:element ref="DlGbrTokenLimitFactor" minOccurs = "0"/>
+        <xs:element ref="DlQosStrategyWeights"/>
+        <xs:element ref="ULGbrBktDepthFactor" minOccurs = "0"/>
+        <xs:element ref="ULAmbrBktDepthFactor" minOccurs = "0"/>
+        <xs:element ref="ULTokenPeriodicity" minOccurs = "0"/>
+        <xs:element ref="ULQosStrategyOverAllocFactor" minOccurs = "0"/>
+        <xs:element ref="ULEnableAllocAfterAllowedBitrate" minOccurs = "0"/>
+        <xs:element ref="UlRbRestrictionFactor" minOccurs = "0"/>
+        <xs:element ref="UlAmbrTokenLimitFactor" minOccurs = "0"/>
+        <xs:element ref="UlGbrTokenLimitFactor" minOccurs = "0"/>
+        <xs:element ref="UlQosStrategyWeights"/>
+        <xs:element ref="ConnEstFailureControl" minOccurs = "0"/>
+        <xs:element ref="RNTIConfig"/>
+        <xs:element ref="Sib1Mask"/>
+      </xs:sequence>
+    </xs:complexType>
+ </xs:element>
+
+  <xs:element name="RNTIStartRange" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RNTIEndRange" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="LogLevel" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DL256QAMSupport" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UL256QAMSupport" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLSchedulerStrategy" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULSchedulerStrategy" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PHYCommInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SelfInfo"/>
+        <xs:element ref="PeerInfo"/>
+        <xs:element ref="DataBufferSize"  minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SelfInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PortNumber"/>
+        <xs:element ref="IPV4Address"/>
+        <xs:element ref="IPV6Address"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PeerInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PortNumber"/>
+        <xs:element ref="IPV4Address"/>
+        <xs:element ref="IPV6Address"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PortNumber" default="38473">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+    </xs:restriction>
+  </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IPV4Address" default="127.0.0.1">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="16"/>
+        <xs:minLength value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IPV6Address" default="::1">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="40"/>
+        <xs:minLength value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DataBufferSize" default="1500">
+  <xs:simpleType>
+    <xs:restriction base="xs:unsignedInt">
+      <xs:minInclusive value="1500"/>
+      <xs:maxInclusive value="65535"/>
+    </xs:restriction>
+  </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLGbrBktDepthFactor" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLAmbrBktDepthFactor" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLTokenPeriodicity" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="10"/>
+        <xs:maxInclusive value="100"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLQosStrategyOverAllocFactor" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="10"/>
+        <xs:maxInclusive value="100"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLEnableAllocAfterAllowedBitrate" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlRbRestrictionFactor" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlAmbrTokenLimitFactor" default="-1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-1"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlGbrTokenLimitFactor" default="-1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-1"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlQosStrategyWeights">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PdbWeight"/>
+        <xs:element ref="QciWeight"/>
+        <xs:element ref="TokenWeight"/>
+        <xs:element ref="QloadWeight"/>
+        <xs:element ref="McsWeight"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PdbWeight" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QciWeight" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TokenWeight" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="QloadWeight" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="McsWeight" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULGbrBktDepthFactor" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULAmbrBktDepthFactor" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULTokenPeriodicity" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="10"/>
+        <xs:maxInclusive value="100"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULQosStrategyOverAllocFactor" default="20">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="10"/>
+        <xs:maxInclusive value="100"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ULEnableAllocAfterAllowedBitrate" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlRbRestrictionFactor" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlAmbrTokenLimitFactor" default="-1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-1"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlGbrTokenLimitFactor" default="-1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-1"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlQosStrategyWeights">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PdbWeight"/>
+        <xs:element ref="QciWeight"/>
+        <xs:element ref="TokenWeight"/>
+        <xs:element ref="QloadWeight"/>
+        <xs:element ref="McsWeight"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TotalRaPreambles" default="63">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="64"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumRaPreamblesGroupA" default="52">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="64"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RaMsg3SizeGrpA" default="56">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="56"/>
+        <xs:maxInclusive value="1000"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RaContResTimer" default="8">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="64"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="messagePowerOffsetGroupB" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NTAOffset" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="RNTIConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CrntiStart"/>
+        <xs:element ref="CrntiNum"/>
+        <xs:element ref="CsRntiStart" minOccurs = "0"/>
+        <xs:element ref="CsRntiNum" minOccurs = "0"/>
+        <xs:element ref="TpcPucchRntiStart" minOccurs = "0"/>
+        <xs:element ref="TpcPucchRntiNum" minOccurs = "0"/>
+        <xs:element ref="TpcPuschRntiStart" minOccurs = "0"/>
+        <xs:element ref="TpcPuschRntiNum" minOccurs = "0"/>
+        <xs:element ref="TpcSrsRntiStart" minOccurs = "0"/>
+        <xs:element ref="TpcSrsRntiNum" minOccurs = "0"/>
+        <xs:element ref="TpcCsRntiStart" minOccurs = "0"/>
+        <xs:element ref="TpcCsRntiNum" minOccurs = "0"/>
+        <xs:element ref="IntRntiStart" minOccurs = "0" />
+        <xs:element ref="IntRntiNum" minOccurs = "0"/>
+        <xs:element ref="SfiRntiStart" minOccurs = "0"/>
+        <xs:element ref="SfiRntiNum" minOccurs = "0"/>
+        <xs:element ref="SpCsiRntiStart" minOccurs = "0"/>
+        <xs:element ref="SpCsiRntiNum" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CrntiStart" default="20000">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="CrntiNum" default="100">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CsRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="CsRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TpcPucchRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="TpcPucchRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TpcPuschRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="TpcPuschRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TpcSrsRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="TpcSrsRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TpcCsRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="TpcCsRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IntRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="IntRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SfiRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="SfiRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SpCsiRntiStart" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="SpCsiRntiNum" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="65519"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Sib1Mask" default="1111111111111111111111111111111111111111111111111111111111111111">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PhyParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DlRbs"/>
+        <xs:element ref="UlRbs"/>
+        <xs:element ref="NumOfTxAntenna"/>
+        <xs:element ref="NumOfRxAntenna"/>
+        <xs:element ref="SsbConfig"/>
+        <xs:element ref="MeasurementTimingConfiguration"/>
+        <xs:element ref="TimingAdvaneOffset"  minOccurs="0"/>
+        <xs:element ref="TimeAlignmentTimer"/>
+        <xs:element ref="BwpConfig"/>
+        <xs:element ref="TddConfigCommon" minOccurs = "0"/>
+        <xs:element ref="TddConfigCommon2" minOccurs = "0"/>
+        <xs:element ref="RateMatchPatternParams" minOccurs = "0"/>
+        <xs:element ref="PhyVendorSpecificParams" minOccurs = "0"/>
+        <xs:element ref="CellGroupSpecificParams"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DlRbs" default="273">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlRbs" default="273">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOfTxAntenna" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOfRxAntenna" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SubCarrierSpacingCommon"/>
+        <xs:element ref="SsbScs"/>
+        <xs:element ref="SsbSubcarrierOffset"/>
+        <xs:element ref="SsbPeriodicity"/>
+        <xs:element ref="DmrsTypeAPos"/>
+        <xs:element ref="SsbMask"/>
+        <xs:element ref="SsbPower"/>
+        <xs:element ref="SsbCyclicPrefix"/>
+        <xs:element ref="SsbHalfSubframe"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SubCarrierSpacingCommon" type="xs:boolean" default="1"/>
+
+  <xs:element name="SsbScs" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbSubcarrierOffset" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="31"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbPeriodicity" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DmrsTypeAPos" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+ 
+  <xs:element name="SsbMask" default="1000000000000000000000000000000000000000000000000000000000000000">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbPower" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="110"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbCyclicPrefix" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbHalfSubframe" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbBurstPatternType" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MeasurementTimingConfiguration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="frequencyAndTimingCount"/>
+        <xs:element ref="frequencyAndTiming" minOccurs="1" maxOccurs="32"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="frequencyAndTimingCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="frequencyAndTiming">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="carrierFreq"/>
+        <xs:element ref="ssbSubcarrierSpacing"/>
+        <xs:element ref="ssb-MTC"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="carrierFreq" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3279165"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ssbSubcarrierSpacing" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ssb-MTC">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="periodicity"/>
+        <xs:element ref="offset"/>
+        <xs:element ref="duration"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="periodicity" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="offset" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="159"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="duration" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TimingAdvaneOffset" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BwpConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FirstActiveDlBwpId"/>
+        <xs:element ref="DlBwpCount"/>
+        <xs:element ref="DlBwpConfig"/>
+        <xs:element ref="FirstActiveUlBwpId"/>
+        <xs:element ref="UlBwpCount"/>
+        <xs:element ref="UlBwpConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="FirstActiveDlBwpId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlBwpCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlBwpConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DlBwpId"/>
+        <xs:element ref="DlBwpInfo"/>
+        <xs:element ref="MaxDlUeToBeScheduledInSlot"/>
+        <xs:element ref="DlBwpCommonConfig"  minOccurs="0"/>
+        <xs:element ref="DlBwpDedicatedConfig"  minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="FirstActiveUlBwpId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UlBwpId"/>
+        <xs:element ref="UlBwpInfo"/>
+        <xs:element ref="MaxUlUeToBeScheduledInSlot"/>
+        <xs:element ref="UlBwpCommonConfig"  minOccurs="0"/>
+        <xs:element ref="UlBwpDedicatedConfig"  minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DlBwpId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlBwpInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StartRb"/>
+        <xs:element ref="NumRb"/>
+        <xs:element ref="BwpScs"/>
+        <xs:element ref="BwpCyclicPrefix"/>
+        <xs:element ref="InitDlMcs" minOccurs = "0"/>
+        <xs:element ref="InitUlMcs" minOccurs = "0"/>
+        <xs:element ref="PMaxULPower" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="StartRb" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumRb" default="273">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BwpScs" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BwpCyclicPrefix" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitDlMcs" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="28"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InitUlMcs" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="28"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PMaxULPower" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-30"/>
+        <xs:maxInclusive value="33"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxDlUeToBeScheduledInSlot" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlBwpCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PDCCHCommonConfig" minOccurs = "0"/>
+        <xs:element ref="PDSCHCommonConfig" minOccurs = "0"/>
+        <xs:element ref="BcchConfig"/>
+        <xs:element ref="PcchConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PDCCHCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CoresetZero" minOccurs = "0"/>
+        <xs:element ref="CommonCoreset" minOccurs = "0"/>
+        <xs:element ref="SearchSpaceZero" minOccurs = "0"/>
+        <xs:element ref="SearchSpaceCommonCount" minOccurs = "0"/>
+        <xs:element ref="SearchSpaceConfig" minOccurs="0" maxOccurs="4"/>
+        <xs:element ref="RaSearchSpaceId" minOccurs = "0"/>
+        <xs:element ref="Sib1SearchSpaceId" minOccurs = "0"/>
+        <xs:element ref="OtherSiSearchSpaceId" minOccurs = "0"/>
+        <xs:element ref="PagingSearchSpaceId" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CoresetZero" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CommonCoreset">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CoresetId"/>
+        <xs:element ref="NumSymbols"/>
+        <xs:element ref="CoresetType"/>
+        <xs:element ref="FreqDomainResources"/>
+        <xs:element ref="CceRegMappingType"/>
+        <xs:element ref="CceRegBundleSize"/>
+        <xs:element ref="CceInterleaverSize"/>
+        <xs:element ref="CceShiftIndex" minOccurs = "0"/>
+        <xs:element ref="PrecoderGranularity"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CoresetId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="11"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumSymbols" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CoresetType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="FreqDomainResources" default="1111111111000000000000000000000000000000000000">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:maxLength value="64"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CceRegMappingType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CceRegBundleSize" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CceInterleaverSize" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CceShiftIndex" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrecoderGranularity" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceZero" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceCommonCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SearchSpaceId"/>
+        <xs:element ref="CoresetId"/>
+        <xs:element ref="PdcchSlotPeriodicity"/>
+        <xs:element ref="PdcchSlotOffset"/>
+        <xs:element ref="SearchSpaceDuration" minOccurs="0" />
+        <xs:element ref="PdcchSymbolsInSlot"/>
+        <xs:element ref="PdcchCandidatesAggLevel1"/>
+        <xs:element ref="PdcchCandidatesAggLevel2"/>
+        <xs:element ref="PdcchCandidatesAggLevel4"/>
+        <xs:element ref="PdcchCandidatesAggLevel8"/>
+        <xs:element ref="PdcchCandidatesAggLevel16"/>
+        <xs:element ref="SearchSpaceCommon" minOccurs = "0"/>
+        <xs:element ref="SearchSpaceUeSpecific" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="39"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchSlotPeriodicity" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2560"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchSlotOffset" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2559"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceDuration" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="2559"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchSymbolsInSlot" default="10000000000000">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="14"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="PdcchCandidatesAggLevel1" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchCandidatesAggLevel2" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchCandidatesAggLevel4" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchCandidatesAggLevel8" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PdcchCandidatesAggLevel16" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceCommon">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DciFormat00And10"/>
+        <xs:element ref="DciFormat21"/>
+        <xs:element ref="DciFormat22"/>
+        <xs:element ref="DciFormat20"/>
+        <xs:element ref="DciFormat23"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DciFormat00And10" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DciFormat21" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DciFormat22" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DciFormat20" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DciFormat23" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceUeSpecific">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DciFormat"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DciFormat" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RaSearchSpaceId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Sib1SearchSpaceId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="OtherSiSearchSpaceId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PagingSearchSpaceId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PDSCHCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PDSCHResAllocCount" minOccurs = "0"/>
+        <xs:element ref="PDSCHResAlloc" minOccurs = "0" maxOccurs = "16"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PDSCHResAllocCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PDSCHResAlloc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="K0" minOccurs = "0"/>
+        <xs:element ref="DMRSMappingType"/>
+        <xs:element ref="StartSymbol"/>
+        <xs:element ref="Length"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="K0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DMRSMappingType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="StartSymbol" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="12"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Length" default="11">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="14"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BcchConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ModificationPeriodCoeff"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ModificationPeriodCoeff" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PcchConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DefaultPagingCycle"/>
+        <xs:element ref="NumPagingFramePerCycle"/>
+        <xs:element ref="PagingFrameOffset"/>
+        <xs:element ref="firstPdcchMonitoringType"/>
+        <xs:element ref="NumOccationPerPagingFrame"/>
+        <xs:element ref="firstPdcchMonitoringOcc" minOccurs = '1' maxOccurs = '4'/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DefaultPagingCycle" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumPagingFramePerCycle" default="4">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PagingFrameOffset" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="firstPdcchMonitoringType" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOccationPerPagingFrame" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="firstPdcchMonitoringOcc" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="17919"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlBwpDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PDCCHDedicatedConfig" minOccurs = "0"/>
+        <xs:element ref="PDSCHDedicatedConfig" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PDCCHDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NumOfCellRegions" minOccurs = "0"/>
+        <xs:element ref="CellRegion" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NumOfCellRegions" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellRegion">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NumOfCoresets"/>
+        <xs:element ref="CoreSet"  minOccurs="1" maxOccurs="3"/>
+        <xs:element ref="SearchSpaceCount"/>
+        <xs:element ref="SearchSpaceConfig" minOccurs="1" maxOccurs="10"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NumOfCoresets" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CoreSet">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CoresetId"/>
+        <xs:element ref="NumSymbols"/>
+        <xs:element ref="CoresetType"/>
+        <xs:element ref="FreqDomainResources"/>
+        <xs:element ref="CceRegMappingType"/>
+        <xs:element ref="CceRegBundleSize" />
+        <xs:element ref="CceInterleaverSize" />
+        <xs:element ref="CceShiftIndex" minOccurs="0"/>
+        <xs:element ref="PrecoderGranularity"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SearchSpaceCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PDSCHDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ResourceAllocation"/>
+        <xs:element ref="McsTable"/>
+        <xs:element ref="DMRSMappingTypeA"/>
+        <xs:element ref="MaxNumOfCodewordsScheduledByDci"/>
+        <xs:element ref="NumOfHarqProcessesForPdsch" minOccurs = "0"/>
+        <xs:element ref="MaxMimoLayers" minOccurs = "0"/>
+        <xs:element ref="MaxLength" minOccurs = "0"/>
+        <xs:element ref="DataScramblingId"/>
+        <xs:element ref="VrbToPrbInterleaver"/>
+        <xs:element ref="AggregationFactor"/>
+        <xs:element ref="ScramblingId0"/>
+        <xs:element ref="ScramblingId1"/>
+        <xs:element ref="RateMatchPatternParams" minOccurs = "0"/>
+        <xs:element ref="PDSCHResAllocCount" minOccurs = "0"/>
+        <xs:element ref="PDSCHResAlloc" minOccurs = "0" maxOccurs = "16"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ResourceAllocation" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+</xs:element>
+
+  <xs:element name="McsTable" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DMRSMappingTypeA">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DmrsType" minOccurs = "0"/>
+        <xs:element ref="DmrsAdditionalPosition" minOccurs = "0"/>
+        <xs:element ref="MaxLength" minOccurs = "0"/>
+        <xs:element ref="ScramblingID0" minOccurs = "0"/>
+        <xs:element ref="ScramblingID1" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DmrsType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxNumOfCodewordsScheduledByDci" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOfHarqProcessesForPdsch" default="5">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxMimoLayers" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DataScramblingId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1023"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="VrbToPrbInterleaver" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="AggregationFactor" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ScramblingId0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ScramblingId1" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RateMatchPatternParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="RateMatchPatternCount" minOccurs = "0"/>
+        <xs:element ref="RateMatchPattern" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RateMatchPatternCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RateMatchPattern">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="RateMatchPatternId"/>
+        <xs:element ref="PatternType"/>
+        <xs:element ref="BitmapRBs"  minOccurs="0"/>
+        <xs:element ref="ResourceBlockSymbolOneSlot"  minOccurs="0"/>
+        <xs:element ref="ResourceBlockSymbolTwoSlot"  minOccurs="0" />
+        <xs:element ref="BitmapPeriodicity"  minOccurs="0"/>
+        <xs:element ref="BitmapPattern"  minOccurs="0"/>
+        <xs:element ref="CoreSetId"  minOccurs="0"/>
+        <xs:element ref="Mode"  minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RateMatchPatternId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PatternType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BitmapRBs" default="0">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="275"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ResourceBlockSymbolOneSlot" default="0">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="14"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ResourceBlockSymbolTwoSlot" default="0">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="28"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BitmapPeriodicity" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="40"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BitmapPattern" default="0">
+  <xs:simpleType>
+    <xs:restriction base="xs:string">
+        <xs:maxLength value="40"/>
+        <xs:minLength value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Mode" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CoreSetId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="11"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StartRb"/>
+        <xs:element ref="NumRb"/>
+        <xs:element ref="BwpScs"/>
+        <xs:element ref="PMaxULPower" minOccurs="0"/>
+        <xs:element ref="BwpCyclicPrefix"/>
+        <xs:element ref="InitDlMcs" minOccurs = "0"/>
+        <xs:element ref="InitUlMcs" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxUlUeToBeScheduledInSlot" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="RachCommonConfig"/>
+        <xs:element ref="PuschCommonConfig" minOccurs="0"/>
+        <xs:element ref="PucchCommonConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RachCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PrachConfigIndex"/>
+        <xs:element ref="PrachMsg1Fdm"/>
+        <xs:element ref="PrachMsg1FreqStartRb"/>
+        <xs:element ref="ZeroCorrelationZoneConfig"/>
+        <xs:element ref="PrachRootSeqIndex"/>
+        <xs:element ref="PrachScs"/>
+        <xs:element ref="PrachRestrictSet"/>
+        <xs:element ref="SsbPerRachOcc"/>
+        <xs:element ref="TotalCbPreamblesPerSsb"/>
+        <xs:element ref="PrachRsrpThresholdSsb" minOccurs="0"/>
+        <xs:element ref="Msg3TransformPrecoding"/>
+        <xs:element ref="preambleReceivedTargetPower"/>
+        <xs:element ref="preambleTransMax"/>
+        <xs:element ref="powerRampingStep"/>
+        <xs:element ref="RaResponseWindow"/>
+        <xs:element ref="TotalRaPreambles" minOccurs="0"/>
+        <xs:element ref="NumRaPreamblesGroupA"/>
+        <xs:element ref="RaMsg3SizeGrpA"/>
+        <xs:element ref="RaContResTimer"/>
+        <xs:element ref="messagePowerOffsetGroupB"/>
+        <xs:element ref="NTAOffset" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PrachConfigIndex" default="69">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="255"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachMsg1Fdm" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachMsg1FreqStartRb" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="275"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ZeroCorrelationZoneConfig" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachRootSeqIndex" default="137">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="137"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachScs" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachRestrictSet" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SsbPerRachOcc" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TotalCbPreamblesPerSsb" default="52">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="64"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PrachRsrpThresholdSsb" default="127">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="127"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Msg3TransformPrecoding" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="preambleReceivedTargetPower" default="-200">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-202"/>
+        <xs:maxInclusive value="-60"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="preambleTransMax" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="10"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="powerRampingStep" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RaResponseWindow" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PuschCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Count"/>
+        <xs:element ref="PuschResAlloc" minOccurs="0" maxOccurs="16"/>
+        <xs:element ref="GrpHopEnabledTransformPrecoding"  minOccurs="0"/>
+        <xs:element ref="P0NominalWithGrant"  minOccurs="0"/>
+        <xs:element ref="Msg3DeltaPreamble" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Count" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PuschResAlloc">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DMRSMappingType"/>
+        <xs:element ref="StartSymbol"/>
+        <xs:element ref="Length"/>
+        <xs:element ref="K2" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="K2" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Msg3DeltaPreamble" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-1"/>
+        <xs:maxInclusive value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="GrpHopEnabledTransformPrecoding" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="P0NominalWithGrant" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-202"/>
+        <xs:maxInclusive value="24"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="PucchCommonConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PucchResCommon"/>
+        <xs:element ref="PucchGrpHopping"/>
+        <xs:element ref="HoppingId"/>
+        <xs:element ref="P0Nominal"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PucchResCommon" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PucchGrpHopping" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="HoppingId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1023"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="P0Nominal" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-202"/>
+        <xs:maxInclusive value="24"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlBwpDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PucchDedicatedConfig"/>
+        <xs:element ref="PuschDedicatedConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PucchDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="InterSlotFreqHopping"/>
+        <xs:element ref="AdditionalDmrs"/>
+        <xs:element ref="MaxCodeRate"  minOccurs="0"/>
+        <xs:element ref="pi2BPSK"  minOccurs="0"/>
+        <xs:element ref="SimultaneousHARQAckCSI"  minOccurs="0"/>
+        <xs:element ref="SrParamsGroupCount"/>
+        <xs:element ref="SrParamsGroup"  minOccurs="1" maxOccurs="8"/>
+        <xs:element ref="PucchFormat0Count"/>
+        <xs:element ref="PucchFormat0Res"  minOccurs="1" maxOccurs="32"/>
+        <xs:element ref="PucchFormat2Count"/>
+        <xs:element ref="PucchFormat2Res"  minOccurs="1" maxOccurs="8"/>
+        <xs:element ref="DLDataToULAckCount"/>
+        <xs:element ref="DLDataToULAckValue" minOccurs="0" maxOccurs="9"/>
+        <xs:element ref="PucchPowerControlConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SrParamsGroup">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SrParamsGroupId"/>
+        <xs:element ref="SrPeriodicityInSymbols"/>
+        <xs:element ref="PucchFormat0ResourceCount"/>
+        <xs:element ref="PucchFormat0ResourceConfig" minOccurs="1" maxOccurs="32"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PucchFormat0ResourceCount" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PucchFormat0ResourceConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PrbId"/>
+        <xs:element ref="NumOfSymbols"/>
+        <xs:element ref="StartSymbolIndex"/>
+        <xs:element ref="DeltaCyclicShift"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PucchFormat0Res">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PrbId"/>
+        <xs:element ref="NumOfSymbols"/>
+        <xs:element ref="StartSymbolIndex"/>
+        <xs:element ref="DeltaCyclicShift"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PucchFormat0Count" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PucchFormat2Count" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PucchFormat2Res">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PrbId"/>
+        <xs:element ref="NumOfPRBs"/>
+        <xs:element ref="NumOfSymbols"/>
+        <xs:element ref="StartSymbolIndex"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PrbId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="274"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="NumOfPRBs" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="NumOfSymbols" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="InterSlotFreqHopping" type="xs:boolean" default="0"/>
+  <xs:element name="AdditionalDmrs" type="xs:boolean" default="0"/>
+  <xs:element name="pi2BPSK" type="xs:boolean" default="0"/>
+  <xs:element name="SimultaneousHARQAckCSI" type="xs:boolean" default="0" />
+
+  <xs:element name="SrParamsGroupCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="StartSymbolIndex" default="13">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="13"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DeltaCyclicShift" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="5"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SrPeriodicityInSymbols" default="3">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+ <xs:element name="SrParamsGroupId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PUCCHResourceSetConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxPayloadMinusOneForResourceSet1"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxPayloadMinusOneForResourceSet1" default="15">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="4"/>
+        <xs:maxInclusive value="256"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Format0Config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StartingPRBForPucchFormat0"/>
+        <xs:element ref="NumOfSymbolsforFormat0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="StartingPRBForPucchFormat0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="274"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOfSymbolsforFormat0" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Format2Config">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StartingPRBForPucchFormat2"/>
+        <xs:element ref="NumPRBsForPUCCHFormat2"/>
+        <xs:element ref="NumOfSymbolsforFormat2"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="StartingPRBForPucchFormat2" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="274"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumOfSymbolsforFormat2" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumPRBsForPUCCHFormat2" default="10">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="16"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxCodeRate" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLDataToULAckCount" default="8">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="9"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DLDataToULAckValue" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PucchPowerControlConfig">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="DeltafPucchF0"/>  
+       <xs:element ref="DeltafPucchF1"/>  
+       <xs:element ref="DeltafPucchF2"/>  
+       <xs:element ref="DeltafPucchF3"/> 
+       <xs:element ref="DeltafPucchF4"/> 
+       <xs:element ref="P0PucchSet"/>  
+       <xs:element ref="TwoPucchPcAdjustmentStates"/> 
+       <xs:element ref="PucchPathlossReferenceRsList"/>    
+    </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="DeltafPucchF0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="DeltafPucchF1" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="DeltafPucchF2" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="DeltafPucchF3" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="DeltafPucchF4" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="P0PucchSet">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="Count"/>   
+       <xs:element ref="P0PucchInfo" minOccurs="1" maxOccurs="8"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="P0PucchInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="P0PucchId"/>   
+       <xs:element ref="P0PucchValue"/>     
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="P0PucchId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="P0PucchValue" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="TwoPucchPcAdjustmentStates" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PucchPathlossReferenceRsList">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="Count"/>   
+       <xs:element ref="PucchPathlossReferenceRsInfo" minOccurs="1" maxOccurs="4"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="PucchPathlossReferenceRsInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="PucchPathlossReferenceRsId"/>   
+       <xs:element ref="SsbIndex"/>   
+       <xs:element ref="CsiRsIndex"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="PucchPathlossReferenceRsId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="SsbIndex" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="CsiRsIndex" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="191"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="PuschDedicatedConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ResourceAllocation"/>
+        <xs:element ref="UciOnPusch" minOccurs = "0"/>
+        <xs:element ref="DmrsUplinkConfig" minOccurs = "0"/>
+        <xs:element ref="Count"/>
+        <xs:element ref="PuschResAlloc" minOccurs="1" maxOccurs="16"/> 
+        <xs:element ref="PuschPowerControlConfig"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UciOnPusch">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="BetaOffsetType" minOccurs = "0"/>
+        <xs:element ref="BetaOffsetCount" minOccurs = "0"/>
+        <xs:element ref="BetaOffsets" minOccurs = "0"/>
+        <xs:element ref="Scaling" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="BetaOffsetType" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BetaOffsetCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BetaOffsets">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="BetaOffsetAck-Index1" minOccurs = "0"/>
+        <xs:element ref="BetaOffsetAck-Index2" minOccurs = "0"/>
+        <xs:element ref="BetaOffsetAck-Index3" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="BetaOffsetAck-Index1" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="31"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BetaOffsetAck-Index2" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="31"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="BetaOffsetAck-Index3" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="31"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="Scaling" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DmrsUplinkConfig">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DmrsType" minOccurs = "0"/>
+        <xs:element ref="DmrsAdditionalPosition" minOccurs = "0"/>
+        <xs:element ref="MaxLength" minOccurs = "0"/>
+        <xs:element ref="TransformPrecodingChoice" minOccurs = "0"/>
+        <xs:element ref="TransformPrecodingDisable" minOccurs = "0"/>
+        <xs:element ref="TransformPrecodingEnable" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DmrsAdditionalPosition" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MaxLength" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TransformPrecodingChoice" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TransformPrecodingDisable">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ScramblingID0" minOccurs = "0"/>
+        <xs:element ref="ScramblingID1" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ScramblingID0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="ScramblingID1" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TransformPrecodingEnable">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NPUSCHIdentity" minOccurs = "0"/>
+        <xs:element ref="DisableSequenceGroupHopping" minOccurs = "0"/>
+        <xs:element ref="SequenceHoppingEnabled" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NPUSCHIdentity" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1007"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DisableSequenceGroupHopping" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SequenceHoppingEnabled" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PuschPowerControlConfig">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="TpcAccumulation"/>  
+       <xs:element ref="Msg3alpha"/>  
+       <xs:element ref="P0NominalWithoutGrant"/> 
+       <xs:element ref="PuschPowercontrolP0AlphasetsInfo"/>  
+       <xs:element ref="PathlossReferenceRsToAddModList"/> 
+       <xs:element ref="PathlossReferenceRsToRelList"/>  
+       <xs:element ref="TwoPuschPcAdjustmentStates"/>  
+       <xs:element ref="DeltaMcsEnabled"/>  
+    </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="TpcAccumulation" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="Msg3alpha" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="0"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="P0NominalWithoutGrant" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-202"/>
+        <xs:maxInclusive value="24"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PuschPowercontrolP0AlphasetsInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="Count"/>   
+       <xs:element ref="P0PuschAlphaSetInfo" minOccurs="1" maxOccurs="2"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="P0PuschAlphaSetInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="AlphaSetId"/>   
+       <xs:element ref="P0"/>   
+       <xs:element ref="Alpha"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="AlphaSetId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="P0" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-16"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="Alpha" default="7">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PathlossReferenceRsToAddModList">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="Count"/>   
+       <xs:element ref="PuschPathLossReferenceRsInfo" minOccurs="1" maxOccurs="4"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="PuschPathLossReferenceRsInfo">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="PuschPathlossReferenceRsId"/>   
+       <xs:element ref="SsbIndex"/>   
+       <xs:element ref="CsiRsIndex"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="PuschPathlossReferenceRsId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="PathlossReferenceRsToRelList">
+    <xs:complexType>
+      <xs:sequence>
+       <xs:element ref="Count"/>   
+       <xs:element ref="PathlossReferenceId" minOccurs="1" maxOccurs="4"/>  
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+<xs:element name="PathlossReferenceId" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="TwoPuschPcAdjustmentStates" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+<xs:element name="DeltaMcsEnabled" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="TddConfigCommon">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ReferenceScs"/>
+        <xs:element ref="DlUlTransmissionPeriodicity"/>
+        <xs:element ref="NumDlSlots"/>
+        <xs:element ref="NumDlSymbols"/>
+        <xs:element ref="NumUlSlots"/>
+        <xs:element ref="NumUlSymbols"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ReferenceScs" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlUlTransmissionPeriodicity" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumDlSlots" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="320"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumDlSymbols" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="13"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumUlSlots" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="320"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumUlSymbols" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="13"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TddConfigCommon2">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="ReferenceScs"/>
+        <xs:element ref="DlUlTransmissionPeriodicity"/>
+        <xs:element ref="NumDlSlots"/>
+        <xs:element ref="NumDlSymbols"/>
+        <xs:element ref="NumUlSlots"/>
+        <xs:element ref="NumUlSymbols"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PhyVendorSpecificParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="SsbAbsoluteFreq"/>
+        <xs:element ref="DlFftSize" minOccurs = "0"/>
+        <xs:element ref="UlFftSize" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SsbAbsoluteFreq" default="620352">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3279165"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="DlFftSize" default="512">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="512"/>
+        <xs:maxInclusive value="4096"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UlFftSize" default="512">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="512"/>
+        <xs:maxInclusive value="4096"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="CellGroupSpecificParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="pNR"/>
+        <xs:element ref="pdschHARQACKCodebook"/>
+        <xs:element ref="TagAddModCount"  minOccurs="0"/>
+        <xs:element ref="TagAddModList"  minOccurs="0"/>
+        <xs:element ref="MeasurementQuantityChoice"/>
+        <xs:element ref="MeasurementQuantityThreshold"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="pNR" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:minInclusive value="-30"/>
+        <xs:maxInclusive value="33"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="pdschHARQACKCodebook" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TagAddModCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="4"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TagAddModList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="TagId"/>
+        <xs:element ref="TimeAlignmentTimer"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TagId" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TimeAlignmentTimer" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MeasurementQuantityChoice" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="3"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="MeasurementQuantityThreshold" default="0">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="65535"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="RlcParams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NumAMLcPerUE"/>
+        <xs:element ref="NumUMLcPerUE"/>
+        <xs:element ref="SN18BitSupported"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NumAMLcPerUE" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="NumUMLcPerUE" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="32"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="SN18BitSupported" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="1"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="TimersAndConstants">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="T300"/>
+        <xs:element ref="T301"/>
+        <xs:element ref="T304"/>
+        <xs:element ref="T310"/>
+        <xs:element ref="N310"/>
+        <xs:element ref="T311"/>
+        <xs:element ref="N311"/>
+        <xs:element ref="T319"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="T300" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="T301" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="T304" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="T310" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="N310" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="T311" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="6"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="N311" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="T319" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacBarringForCommon" minOccurs="0"/>
+        <xs:element ref="UacBarringPerPlmnList" minOccurs="0"/>
+        <xs:element ref="UacBarringInfoSetList" minOccurs="1"/>
+        <xs:element ref="UacAccessCategory1SelectionAssistanceInfo" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacBarringForCommon">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NumOfUacBarringPerCatList"/>
+        <xs:element ref="UacBarringPerCat" minOccurs="1" maxOccurs="63"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+
+  <xs:element name="NumOfUacBarringPerCatList" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringPerCat">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="AccessCategory"/>
+        <xs:element ref="UacBarringInfoSetIndex"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="AccessCategory" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringInfoSetIndex" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringPerPlmnList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="NumOfUacBarringPerPlmnList"/>
+        <xs:element ref="UacBarringPerPlmn" minOccurs="1" maxOccurs="12"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="NumOfUacBarringPerPlmnList" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="12"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringPerPlmn">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PlmnIdentityIndex"/>
+        <xs:element ref="UacACBarringListType" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PlmnIdentityIndex" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="12"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacACBarringListType">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacACBarringListTypeConfig"/>
+        <xs:element ref="UacImplicitACBarringListCount"/>
+        <xs:element ref="UacImplicitACBarringList" minOccurs = "0" maxOccurs="63"/>
+        <xs:element ref="UacExplicitACBarringList" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacACBarringListTypeConfig" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacImplicitACBarringListCount" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacImplicitACBarringList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacBarringInfoSetIndex"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacExplicitACBarringList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UACBarringPerCatList" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UACBarringPerCatList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxUacBarringPerCat"/>
+        <xs:element ref="UacBarringPerCat" minOccurs = "0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxUacBarringPerCat" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="63"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringInfoSetList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxUacBarringInfo"/>
+        <xs:element ref="UacBarringInfoSet" minOccurs = "1" maxOccurs="8"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxUacBarringInfo" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="8"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringInfoSet">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacBarringFactor"/>
+        <xs:element ref="UacBarringTime"/>
+        <xs:element ref="UacBarringForAccessIdentity"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacBarringFactor" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="15"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringTime" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="7"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="UacBarringForAccessIdentity" default="1111111">
+    <xs:simpleType>
+      <xs:restriction base="xs:integer">
+        <xs:pattern value="[0-1][0-1][0-1][0-1][0-1][0-1][0-1]"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+
+  <xs:element name="UacAccessCategory1SelectionAssistanceInfo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacAccessCategoryType"/>
+        <xs:element ref="PlmnCommon" minOccurs="0"/>
+        <xs:element ref="IndividualPLMNList" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacAccessCategoryType" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="PlmnCommon">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacAccessCategory1SelectionAssistanceInfoItem"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="UacAccessCategory1SelectionAssistanceInfoItem" default="1">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="2"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IndividualPLMNList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MaxIndividualPLMN"/>
+        <xs:element ref="IndividualPLMN" minOccurs="2" maxOccurs="12"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MaxIndividualPLMN" default="2">
+    <xs:simpleType>
+      <xs:restriction base="xs:unsignedInt">
+        <xs:minInclusive value="2"/>
+        <xs:maxInclusive value="12"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name="IndividualPLMN">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="UacAccessCategory1SelectionAssistanceInfoItem"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

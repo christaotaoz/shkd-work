@@ -1,0 +1,27 @@
+{
+  "name": "高可用性管理",
+  "widgets": [
+    {
+      "name": "Maintenance Mode Button",
+      "definition": "maintenanceModeButton",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "集群管理",
+      "definition": "highAvailability",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 3
+    },
+    {
+      "name": "Snapshots",
+      "definition": "snapshots",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 27
+    }
+  ]
+}

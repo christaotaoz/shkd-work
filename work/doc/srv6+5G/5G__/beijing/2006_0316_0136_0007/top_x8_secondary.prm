@@ -1,0 +1,14 @@
+===================================
+Configuration Memory information
+===================================
+File Format        MCS
+Interface          SPIX8
+Size               32M
+Start Address      0x00000000
+End Address        0x01FFFFFF
+Checksum           0x7B55D58E
+Fill Value         0xFF
+
+Addr1         Addr2         Date                    File(s)                                                        Checksum
+0x00000000    0x008ED3BB    Jun  3 20:00:51 2020    E:/bit/5G-flexran/11P/V2.0/2t2r/2006_0316_0136_0007/top.bit    0x0B9ABDD2
+File Checksum Total                                                                                                0x0B9ABDD2

@@ -1,0 +1,106 @@
+version: 2
+
+directory: &default-working-directory
+  working_directory: ~/repo
+
+image: &default-node-image
+  image: circleci/node:10.15-stretch
+
+env: &default-env
+  <<: *default-working-directory
+  docker:
+    - <<: *default-node-image
+
+jobs:
+  build:
+    <<: *default-env
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: npm run beforebuild
+
+      - run:
+          name: Build application
+          command: npm run build
+
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - repo
+
+  test:
+    <<: *default-working-directory
+
+    docker:
+      - <<: *default-node-image
+      - image: circleci/postgres:9.6.9
+        environment:
+          POSTGRES_USER: cloudify
+          POSTGRES_PASSWORD: cloudify
+          POSTGRES_DB: stage
+
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Initialize database
+          command: |
+            cd backend
+            npm run db-migrate
+      - run:
+          name: Start Stage Backend
+          environment:
+            STAGE_BACKEND_INSTANCES: 0
+          command: |
+            cd backend
+            sudo npm run start
+      - run:
+          name: Run tests
+          command: npm run prodtest
+      - run:
+          name: Check code style
+          command: npm run lint
+
+  checkBundleSize:
+    <<: *default-env
+
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Check bundle size
+          command: npm run size
+
+  checkDocs:
+    <<: *default-env
+
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Generate components documentation
+          command: npm run doc
+      - run:
+          name: Generate widgets documentation
+          command: npm run docWidgets
+      - run:
+          name: Check if widgets documentation is up to date
+          command: git diff --exit-code ./widgets
+
+workflows:
+  version: 2
+  build-test-check:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - checkBundleSize:
+          requires:
+            - build
+      - checkDocs:
+          requires:
+            - build

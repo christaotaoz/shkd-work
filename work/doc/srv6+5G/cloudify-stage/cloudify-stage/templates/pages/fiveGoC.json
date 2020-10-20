@@ -1,0 +1,45 @@
+﻿{
+  "name": "5GoC",
+  "widgets": [
+    {
+      "name": "5G边缘云测试",
+      "definition": "managementAccount",
+      "width": 2,
+      "height": 3,
+      "x": 1,
+      "y": 0
+    },
+    {
+      "name": "配置传输资源",
+      "definition": "backupSettings",
+      "width": 2,
+      "height": 3,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "name": "启动5GC",
+      "definition": "start5GC",
+      "width": 2,
+      "height": 3,
+      "x": 5,
+      "y": 0
+    },
+    {
+      "name": "启动BBU",
+      "definition": "startBBU",
+      "width": 2,
+      "height": 3,
+      "x": 7,
+      "y": 0
+    },
+    {
+      "name": "systemDetails",
+      "definition": "systemDetails",
+      "width": 2,
+      "height": 3,
+      "x": 9,
+      "y": 0
+    }
+  ]
+}

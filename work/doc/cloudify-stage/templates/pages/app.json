@@ -1,0 +1,71 @@
+﻿{
+  "name": "主页",
+  "widgets": [
+    {
+      "name": "Number of blueprints",
+      "width": 2.4,
+      "height": 8,
+      "definition": "blueprintNum",
+      "x": 0,
+      "y": 0,
+      "configuration":{
+        "page":"5GoC状态"
+      }
+    },
+    {
+      "name": "Number of deployments",
+      "width": 2.4,
+      "height": 8,
+      "definition": "deploymentNum",
+      "x": 2.4,
+      "y": 0,
+      "configuration":{
+        "page":"设备功能部署"
+      }
+    },
+    {
+      "name": "Number of plugins",
+      "width": 2.4,
+      "height": 8,
+      "definition": "pluginsNum",
+      "x": 4.8,
+      "y": 0,
+      "configuration":{
+        "page": "业务运营"
+      }
+    },
+    {
+      "name": "Number of nodes",
+      "width": 2.4,
+      "height": 8,
+      "definition": "nodesComputeNum",
+      "x": 7.2,
+      "y": 0,
+      "configuration":{
+        "page": "设备维护"
+      }
+    },
+    {
+      "name": "Number of running executions",
+      "width": 2.4,
+      "height": 8,
+      "definition": "executionNum",
+      "x": 9.6,
+      "y": 0,
+      "configuration":{
+        "page": "日志"
+      }
+    },
+        {
+      "name": "部署",
+      "width": 12,
+      "height": 25,
+      "definition": "deployments",
+      "x": 0,
+      "y": 15,
+      "configuration":{
+        "displayStyle":"list"
+      }
+    }
+  ]
+}

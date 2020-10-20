@@ -1,0 +1,20 @@
+{
+  "whiteLabel": {
+    "pageTitle": "UCM",
+    "logoUrl": "/console/static/images/logo.png",
+    "mainColor": "#000069",
+    "productName": "UCM",
+    "headerTextColor": "#d8e3e8",
+    "showVersionDetails": false,
+    "loginPageHeader": "Unified communication management",
+    "loginPageHeaderColor": "white",
+    "loginPageText": "BNC",
+    "loginPageTextColor": "white",
+    "sidebarColor": "#E2E2E2",
+    "sidebarTextColor" : "#585860",
+    "customCssPath": ""
+  },
+  "widgets": {
+    "allowedModules": ["lodash", "body/json", "elkjs"]
+  }
+}

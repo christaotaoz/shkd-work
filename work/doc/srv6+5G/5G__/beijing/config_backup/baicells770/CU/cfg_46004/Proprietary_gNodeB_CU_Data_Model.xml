@@ -1,0 +1,1999 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (c) 2018, Aricent Inc. All Rights Reserved
+ * Feb, 2018      Ankit Gupta    Initial Creation  
+-->
+<gNodeBParams>
+  <!-- Determines the management client (i.e. tr069 agent or SNMP agent) -->
+  <!-- Range: 0-1, 1: tr069 agent, 0: SNMP agent, Default:0 -->
+  <ManagementMode>0</ManagementMode>
+
+  <!-- Each bit Indicates the type of OAM Log Level
+    LOG_LEVEL_FATAL       =1    /* Critical messages *?
+    LOG_LEVEL_ERROR       =3,   /* Error messages */
+    LOG_LEVEL_WARNING     =7,   /* Warning messages */
+    LOG_LEVEL_INFO        =15,  /* Info messages*/
+    LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+    LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+    LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+     -->
+  <logLevel>15</logLevel>
+  <!-- Save all the LOGS in a File -->
+  <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 1 -->
+  <OAM_Support_Log_Archival>1</OAM_Support_Log_Archival>
+  <oam_shm_logger_cfg>
+    <!--This interval indicate the time for which logger thread will sleep incase no trace is available in any segment -->
+    <!-- Unit In Sec -->
+    <wait_interval>2</wait_interval>
+    <!-- Path at which log files will be created -->
+    <log_path>.</log_path>
+    <!-- Size of shared memory to be created for dumping the log -->
+    <!-- Value is in MB -->
+    <shm_size>5</shm_size>
+    <!-- The maximum limit of log file -->
+    <!-- Value is in MB -->
+    <log_file_size>10</log_file_size>
+    <!-- The maximum number of log lines to be read from each segment  -->
+    <!-- Range: 1-65535, Default: 10 -->
+    <log_chunk_count>100</log_chunk_count>
+    <!-- The bitmap to show the cores on which the logger thread will be executed -->
+    <!-- Range: 1-31, Default: 1-->
+    <cpu_bitmap>1</cpu_bitmap>
+    <!-- The maximum number of log files to be maintained in a directory -->
+    <!-- Range: 1-10, Default: 10-->
+    <file_count>10</file_count>
+  </oam_shm_logger_cfg>
+  <Perf_Stats>
+  <!-- duration for which performance statistics need to be provided to
+  OAM (Value in seconds) -->
+  <!-- Range: 1-3600, Default: 60 -->
+  <report_period>60</report_period>
+  <!--indicate whether performance statistics needs to be
+  enabled or not by PDCP Layer-->
+  <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 0 -->
+  <periodic_reporting>0</periodic_reporting>
+  </Perf_Stats>
+ <!-- If Load Configuration is not supported then this tag should be
+      commented or Enable tag set to 0. -->
+ <load_configuration>
+    <Enable>1</Enable>
+    <!---
+     Indicate the periodicity at which the load level of the gNodeB is checked.
+     On each timer expiry of this RRM checks what is the load level of the cell if there is any change in the load level of the cell it triggers corresponding action
+     Unit is in seconds -->
+    <load_chk_periodicity>60</load_chk_periodicity>
+    <!---
+     Indicate the periodicity at which the RRM shall check the load level of the gNodeB when atleast one cell is in overloaded state.
+     On each timer expiry of this RRM shall check the load level of the cell and if load level of any of the cell is not overloaded then load_chk_periodicity timer is used.
+     Unit is in seconds -->
+    <overload_chk_periodicity>5</overload_chk_periodicity>
+  </load_configuration>
+  <!-- In case of multi-cell, order of <CellConfig> would be aligned with the order
+  given in gNodeB_CU_Data_Model_TR_196_based.xml -->
+  <CellConfig>
+    <ho_configuration>
+      <spid_table>
+        <!-- (eutran_priority_cfg) -(utran_priority_cfg) -(geran_priority_cfg)
+           -(cdma2000_priority_cfg) -(spid_for_cdma) -(high_priority_bucket1)-->
+      <default_rat_priority_info>
+        <!-- Range (0 to 4) -->
+        <IRAT_PRIORITY_NR>0</IRAT_PRIORITY_NR>
+        <IRAT_PRIORITY_EUTRAN>1</IRAT_PRIORITY_EUTRAN>
+        <IRAT_PRIORITY_UTRAN>2</IRAT_PRIORITY_UTRAN>
+        <IRAT_PRIORITY_GERAN>3</IRAT_PRIORITY_GERAN>
+        <IRAT_PRIORITY_CDMA2000>4</IRAT_PRIORITY_CDMA2000>
+      </default_rat_priority_info>
+      <!--No of SPIDs that can be supported  Range:1-256     default:3 -->
+      <spid_count>3</spid_count>
+      <spid_config>
+          <!-- SPID value -->
+          <!--Range: 1-256, Default: 1-->
+          <spid>1</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>0</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+        <spid_config>
+          <spid>2</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+        <spid_config>
+          <spid>3</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>0</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+      </spid_table>
+    </ho_configuration>
+
+    <admission_control_info>
+      <!--Maximum number of GBR bearers that can be supported at a time for a UE-->
+      <!--Range: 0-16 -->
+      <max_num_gbr_drbs_per_ue>8</max_num_gbr_drbs_per_ue> 
+      <!--Maximum number of non-GBR bearers supported at a time for a UE-->
+      <!--Range: 0-16 -->
+      <max_num_non_gbr_drbs_per_ue>8</max_num_non_gbr_drbs_per_ue>
+      <!--Total backhaul capacity in Mbps, Range: 1-4000000 -->
+      <total_backhaul_capacity>4000000</total_backhaul_capacity>
+      <!-- % of the total backhaul capacity to be used for data traffic, both in DL as well as UL, Range: 0-100 -->
+      <capacity_threshold>100</capacity_threshold>
+      <!-- Percentage of resource reserved for existing users -->
+      <!--Range: 0-100, Default: 100 -->
+      <resource_reserved_for_existing_users>0</resource_reserved_for_existing_users>
+     </admission_control_info> 
+     <load_config>
+      <!-- Seperate load_level_info entries required for OverLoad, HighLoad and MediumLoad -->
+      <!-- Maximum 3 types of load level entries can be defined -->
+      <load_level_num_entries>3</load_level_num_entries>
+      <load_level_info>
+      <!-- Possible values: MediumLoad, HighLoad, OverLoad -->
+      <load_level>OverLoad</load_level>
+      <!-- Load Percentage value on which system is considered for above load level -->
+      <!-- Range: 1-100, Default: 70 -->
+      <load_percentage>70</load_percentage>
+      <!-- 
+      Only two actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Stop Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 are Set)in decimal shall be used.-->
+      <action>3</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+      <num_users>10</num_users>
+     </load_level_info>
+     <load_level_info>
+     <!-- possible values "OverLoad", "HighLoad" and "MidLoad" -->
+     <load_level>HighLoad</load_level>
+     <load_percentage>60</load_percentage>
+      <!-- 
+      Only two actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Stop Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 is Set)in decimal shall be used.-->
+     <action>1</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+     <num_users>10</num_users>
+     </load_level_info>
+     <load_level_info>
+     <!-- possible values "Overload", "HighLoad" and "MidLoad" -->
+     <load_level>MidLoad</load_level>
+     <load_percentage>50</load_percentage>
+      <!-- 
+      Only two actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Stop Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 are Set)in decimal shall be used.-->
+     <action>0</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+     <num_users>10</num_users>
+    </load_level_info>
+    </load_config>
+   <!-- This parameter is used to determine the SN-ID
+        for the peer 5G neighbours of the Serving Cell(Apart from the 
+        Cells belonging to the Serving gNB). This is required
+        for the SgNB Inititated Modification -->
+  <nbr_en_gNB_ID_bit_len>32</nbr_en_gNB_ID_bit_len>
+  </CellConfig>
+  <CellConfig>
+    <ho_configuration>
+      <spid_table>
+        <!-- (eutran_priority_cfg) -(utran_priority_cfg) -(geran_priority_cfg)
+           -(cdma2000_priority_cfg) -(spid_for_cdma) -(high_priority_bucket1)-->
+      <default_rat_priority_info>
+        <!-- Range (0 to 4) -->
+        <IRAT_PRIORITY_NR>0</IRAT_PRIORITY_NR>
+        <IRAT_PRIORITY_EUTRAN>1</IRAT_PRIORITY_EUTRAN>
+        <IRAT_PRIORITY_UTRAN>2</IRAT_PRIORITY_UTRAN>
+        <IRAT_PRIORITY_GERAN>3</IRAT_PRIORITY_GERAN>
+        <IRAT_PRIORITY_CDMA2000>4</IRAT_PRIORITY_CDMA2000>
+      </default_rat_priority_info>
+      <!--No of SPIDs that can be supported  Range:1-256     default:3 -->
+      <spid_count>3</spid_count>
+      <spid_config>
+          <!-- SPID value -->
+          <!--Range: 1-256, Default: 1-->
+          <spid>1</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>0</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+        <spid_config>
+          <spid>2</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+        <spid_config>
+          <spid>3</spid>
+          <rat_count>4</rat_count>
+          <!-- NR = 0, EUTRAN = 1, UTRAN = 2, GERAN = 3, CDMA = 4 --> 
+          <rat_priority>
+            <rat_type>0</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>1</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>2</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+          <rat_priority>
+            <rat_type>3</rat_type>
+            <!-- Range 0 to 8 -->
+            <freq_count>3</freq_count>
+            <freq_priority>
+              <!-- Range 0 to 7 -->
+              <sib_priority>0</sib_priority>
+              <!-- Range 0 to 7 -->
+              <new_priority>0</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>1</sib_priority>
+              <new_priority>1</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>2</sib_priority>
+              <new_priority>2</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>3</sib_priority>
+              <new_priority>3</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>4</sib_priority>
+              <new_priority>4</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>5</sib_priority>
+              <new_priority>5</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>6</sib_priority>
+              <new_priority>6</new_priority>
+            </freq_priority>
+            <freq_priority>
+              <sib_priority>7</sib_priority>
+              <new_priority>7</new_priority>
+            </freq_priority>
+          </rat_priority>
+        </spid_config>
+      </spid_table>
+    </ho_configuration>
+    <admission_control_info>
+      <!--Maximum number of GBR bearers that can be supported at a time for a UE-->
+      <!--Range: 0-16 -->
+      <max_num_gbr_drbs_per_ue>8</max_num_gbr_drbs_per_ue> 
+      <!--Maximum number of non-GBR bearers supported at a time for a UE-->
+      <!--Range: 0-16 -->
+      <max_num_non_gbr_drbs_per_ue>8</max_num_non_gbr_drbs_per_ue>
+      <!--Total backhaul capacity in Mbps, Range: 1-4000000 -->
+      <total_backhaul_capacity>4000000</total_backhaul_capacity>
+      <!-- % of the total backhaul capacity to be used for data traffic, both in DL as well as UL, Range: 0-100 -->
+      <capacity_threshold>100</capacity_threshold>
+      <!-- Percentage of resource reserved for existing users -->
+      <!--Range: 0-100, Default: 100 -->
+      <resource_reserved_for_existing_users>0</resource_reserved_for_existing_users>
+     </admission_control_info> 
+     <load_config>
+      <!-- Seperate load_level_info entries required for OverLoad, HighLoad and MediumLoad -->
+      <load_level_num_entries>3</load_level_num_entries>
+      <load_level_info>
+      <!-- Load levels are reported incase event based reporting is
+      configured on platform -->
+      <!-- Possible values: MediumLoad, HighLoad, OverLoad -->
+      <load_level>OverLoad</load_level>
+      <!-- Load Percentage value is reported incase periodic reporting
+      is configured on platform-->
+      <!-- Range: 1-100, Default: 70 -->
+      <load_percentage>70</load_percentage>
+      <!-- 
+      Only two actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Stop Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 are Set)in decimal shall be used.-->
+      <action>3</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+      <num_users>10</num_users>
+     </load_level_info>
+     <load_level_info>
+     <!-- possible values "OverLoad", "HighLoad" and "MidLoad" -->
+     <load_level>HighLoad</load_level>
+     <load_percentage>60</load_percentage>
+      <!-- 
+      Only two actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Sto3 Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 are Set)in decimal shall be used.-->
+     <action>2</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+     <num_users>10</num_users>
+     </load_level_info>
+     <load_level_info>
+     <!-- possible values "Overload", "HighLoad" and "MidLoad" -->
+     <load_level>MidLoad</load_level>
+     <load_percentage>50</load_percentage>
+      <!-- 
+      Only three actions are allowed these are: 
+      For OverLoadLevel, the possible actions are 'Release UE'
+      or 'Stop Admission' or both. Value 0 means "no action" defined for this load level -->
+      <!-- bit 1 - Stop UE admission-->
+      <!-- bit 2 - UE Release-->
+      <!-- example: To specify 'Release UE' and 'Stop Admission' actions,
+      the value 3 (BIT 1 and 2 are Set)in decimal shall be used.-->
+     <action>0</action>
+      <!-- Applicable, only if action is set to UE Release. 
+       This signifies the number of UEs to be released to reduce the load. -->
+     <num_users>10</num_users>
+    </load_level_info>
+   </load_config>
+   <!-- This parameter is used to determine the SN-ID
+        for the peer 5G neighbours of the Serving Cell(Apart from the 
+        Cells belonging to the Serving gNB). This is required
+        for the SgNB Inititated Modification -->
+  <nbr_en_gNB_ID_bit_len>32</nbr_en_gNB_ID_bit_len>
+  </CellConfig>
+  <health_monitoring>
+    <!-- Health status check Interval in seconds-->
+    <!-- Range: 0-65535, Default: 5 -->
+    <healthMonitoringTimeInterval>5</healthMonitoringTimeInterval>
+    <!-- timer value used for sending health request  -->
+    <!-- For Initiating Health monitoring, Outcome of product (nonresponsive_monitoring_interval * max_retries) 
+         must be less than monitoring_interval -->
+    <!-- Range: 0-65535 (in milliseconds),0:Disable HM Feature, Default:60000 -->
+    <monitoring_interval>60000</monitoring_interval>
+    <!-- Timer for sending the Health Monitoring request to nonresponsive layers -->
+    <!-- Range: 1-65534 (in milliseconds), Default: 10000 -->
+    <nonresponsive_monitoring_interval>10000</nonresponsive_monitoring_interval>
+    <!-- max retries if health resp not come -->
+    <!-- Range: 0-5 , Default: 3 -->
+    <max_retries>3</max_retries>
+  </health_monitoring>
+
+  <gNB_Process_Table>
+    <!-- User name and password to be used by OAM during ftp from agent.
+         All agent will have common username and password -->
+    <username>root</username>
+    <password>abcd1234</password>
+    <!-- Process which needs to be executed on master -->
+    <master_list>
+      <num_of_process>3</num_of_process>
+      <process_info> 
+        <!-- Process name -->
+        <process_name>SON</process_name>
+        <!-- <core> <configuration file> --> 
+        <process_args>1 ../cfg/gNodeB_CU_Configuration.cfg</process_args>
+      </process_info>
+      <process_info>
+        <process_name>RRM</process_name>
+        <process_args>1 ../cfg/gNodeB_CU_Configuration.cfg</process_args>
+      </process_info>
+      <process_info>
+        <process_name>L3</process_name>
+        <process_args>../cfg/gNodeB_CU_Configuration.cfg</process_args>
+      </process_info>
+    </master_list>
+    <agent_info_list>
+      <!-- Number of Instance information that needs to be read -->
+      <num_of_instance>0</num_of_instance>
+      <instance_info>
+        <!-- Instance id of particular instance -->
+        <instance_id>0</instance_id>
+        <!-- Number of process being executed on the particular instance -->
+        <num_of_process>2</num_of_process>
+        <process_info>
+          <process_name>AGENT</process_name>
+          <!-- <Core binding> <gNodeB_CU_Configuration.cfg> <logLevel> -->
+          <process_args>0 ../cfg/gNodeB_CU_Configuration.cfg 3</process_args>
+        </process_info>
+        <process_info>
+          <!-- Process name Layer 2 (PDCP, GTPu) -->
+          <process_name>PDCP</process_name>
+          <!--<pdcp core ID> <ciphering core ID> -->
+          <process_args>3 5</process_args>
+        </process_info>
+      </instance_info>
+      <instance_info>
+        <instance_id>1</instance_id>
+        <num_of_process>2</num_of_process>
+        <process_info>
+          <process_name>AGENT</process_name>
+          <process_args>0 ../cfg/gNodeB_CU_Configuration.cfg 3</process_args>
+        </process_info>
+        <process_info>
+          <process_name>PDCP</process_name>
+          <process_args>2 2</process_args>
+        </process_info>
+      </instance_info>
+      <instance_info>
+        <instance_id>2</instance_id>
+        <num_of_process>2</num_of_process>
+        <process_info>
+          <process_name>AGENT</process_name>
+          <process_args>0 ../cfg/gNodeB_CU_Configuration.cfg 3</process_args>
+        </process_info>
+        <process_info>
+          <process_name>PDCP</process_name>
+          <process_args>5 6</process_args>
+        </process_info>
+      </instance_info>
+    </agent_info_list>
+  <!-- Process which needs to be executed on particular instance -->
+  </gNB_Process_Table>
+
+  <stack_config>
+    <L2params>
+      <!-- Indicates the default Log level with which L2 (PDCP, EGTPU) layer is initialized -->
+      <!-- Indicates the type of L2 (PDCP, EGTPU) Log Level 
+           Range: 1-6, Default: 1
+           CRITICAL    =0    /* Critical messages */
+           ERROR       =1,   /* Error messages */
+           WARNING     =2,   /* Warning messages */
+           INFO        =3,   /* Info messages */
+           BRIEF       =4,   /* Brief messages */
+           DETAILED    =5,   /* Detail about all the messages */
+           DETAILEDALL =6,   /* DetailedAll messages including per TTI messages */
+           -->
+        <PDCPParams>
+          <!-- Indicates the Log Category for PDCP
+           PDCP_OAM = 0x00000000 00000001
+           PDCP_RRC = 0x00000000 00000002
+           PDCP_RRM = 0x00000000 00000004
+           PDCP_TX  = 0x00000000 00000008
+           PDCP_RX  = 0x00000000 00000010
+           PDCP_INTEGRITY = 0x00000000 00000020
+           PDCP_CIPHERING = 0x00000000 00000040
+           PDCP_ROHC = 0x00000000 00000080
+           PDCP_DDDS = 0x00000000 00000100
+           Default: All Enabled
+           -->
+          <logCategory>511</logCategory>
+          <pdcp_timer_config>
+          <!-- Indicates the time interval for which PDCP will retain bearer context while data forwarding is going on it, applicable for DC UEs only.
+               Value in milli-seconds, Range 0 - 65535 -->
+          <dataForwardingGuardTimerInterval>200</dataForwardingGuardTimerInterval>
+          <!-- Indicates the time interval in milli-seconds for which PDCP shall wait for PDCP Status Reports before resuming the data.
+               PSR shall not be handled after the expiry of this timer. This timer is applied per AM bearer entity for which status report required in configured
+	   -->
+          <psr_guard_timer_interval>100</psr_guard_timer_interval>
+          </pdcp_timer_config>
+	            <logLevel>15</logLevel>
+          <!-- Number of master threads to read the data from sockets -->
+          <!-- Currently, only single master thread is supported -->
+          <numMasterThreads>1</numMasterThreads>
+          <!-- Number of worker threads where each thread is assigned one or more UEs to do entire processing -->
+          <numWorkerThreads>1</numWorkerThreads>
+          <!-- Total number of bytes for which pool needs to be created to accommodate the user data
+          Range:1500 - 1900 -->
+          <max_buffer_size_for_mtu>1500</max_buffer_size_for_mtu>
+          <!-- Total bytes that can be allocated for PDCP storage at system level.
+               This value must big enough to cater the maximum throughput requirement -->
+          <max_bytes_threshold>100000000</max_bytes_threshold>
+          <!--Indicates the starting core number of worker thread.
+              In case there are multiple worker threads, subsequent worker threads will be assigned
+              to next core from the starting core number 
+              Range: 0 - MAX Core available -->
+          <core_num_for_worker_thread>5</core_num_for_worker_thread>
+        </PDCPParams>
+        <!-- Parameter used by NGU and X2U -->
+        <EGTPUParams>
+          <logLevel>15</logLevel>
+          <!-- Indicates the Log Category for Packet Relay/eGTPu
+             PR_GTPU_OAM = 0x00000000 00000001
+             PR_GTPU_CONTROL = 0x00000000 00000002
+  	     PR_GTPU_DL_DATA = 0x00000000 00000004
+             PR_GTPU_UL_DATA = 0x00000000 00000008
+             PR_GTPU_COMMON = 0x00000000 00000010
+             PR_GTPU_HO_DATA = 0x00000000 00000020
+             X2U_RELAY = 0x00000000 00000040
+           Default: All Enabled
+           -->
+          <logCategory>64424509567</logCategory>
+          <egtpu_dimension_params>
+            <!--RAB: Radio Access Bearer -->
+            <!-- No. of RAB context records that e-GTPU supports-->
+            <!-- Initial num of RAB context record that e-GTPU supports -->
+            <!-- Min:1 Max:(Maximum UE * MaxRAB per UE) Default :10 -->
+            <numRabRecinitSize>10</numRabRecinitSize>
+            <!-- Step num of RAB context record that e-GTPU supports -->
+            <!-- Min:1 Max:100 Default:5 -->
+            <numRabRecstepSize>5</numRabRecstepSize>
+            <!-- max num of RAB context record that e-GTPU supports  -->
+            <!-- Min:1 Max:(Maximum UE * MaxRAB per UE) Default:768 (=256 * 3) -->
+            <numRabRecmaxSize>768</numRabRecmaxSize>
+            <!-- Num of peers NGU and X2U entities (UPF and eNB/gNB) that e-GTPU can communicate -->
+            <!-- Range:1-48 Default:10 -->
+            <NumPeerRec>10</NumPeerRec>
+          </egtpu_dimension_params>
+          <!-- This is the Time Duration (in seconds) for sending echo request Message again. Value 0 means, disable timer.
+               Range: 0 or 60 - 0xFFFFFFFF -->
+          <echoReqTimer>0</echoReqTimer>
+          <!-- This is the number of attempts for echo message -->
+          <maxRetry>4</maxRetry>
+          <!-- This timer shall be used for triggering the DL data delivery status indication to MeNB. 
+               Value should be in milli-seconds Range: 10-65535 -->
+          <x2uDeliveryStatusTriggerTimer>65535</x2uDeliveryStatusTriggerTimer>
+          <!-- This is the threshold count used for triggering DL data delivery status indication to MeNB.
+               Range: 10 - 65535 -->
+          <x2uDeliveryStatusTriggerPktCnt>65535</x2uDeliveryStatusTriggerPktCnt>
+          <!-- This is the threshold data size used for triggering DL data delivery status indication to MeNB.
+               Range:10 - 65535. 1 Unit = 10000 Bytes --> 
+          <x2uDeliveryStatusTriggerPktSize>65535</x2uDeliveryStatusTriggerPktSize>
+	   <!-- Total number of bytes for which pool needs to be created to accommodate the user data
+	     Range:1500 - 1900 -->
+          <max_buffer_size_for_mtu>1500</max_buffer_size_for_mtu>
+          <!-- Total bytes that can be allocated for PDCP storage at system level.
+               This value must big enough to cater the maximum throughput requirement -->
+          <max_bytes_threshold>50000000</max_bytes_threshold>
+          <!--Number of receiver threads at PR
+              Range: 1-10 -->
+          <num_receiver_thread>1</num_receiver_thread>
+          <!-- Number of worker thread for F1U/X2U at PR
+               Range:1-10 -->
+          <num_worker_thread>1</num_worker_thread>
+          <!--Indicates the starting core number of worker thread.
+              In case there are multiple worker threads, subsequent worker threads will be assigned to 
+	      next core from the starting core number 
+              Range: 0- MAX Core Available -->
+          <core_num_of_worker_thread>7</core_num_of_worker_thread>
+        </EGTPUParams>
+        <!-- Parameter used by F1U -->
+        <F1UParams>
+          <logLevel>15</logLevel>
+          <!--
+           F1U_OAM = 0x00000001 00000000
+           F1U_RRC = 0x00000002 00000000
+           F1U_DL_DATA = 0x00000004 00000000
+           F1U_UL_DATA = 0x00000008 00000000
+           Default: All Enabled
+           -->
+          <logCategory>64424509440</logCategory>
+          <f1u_dimension_params>
+            <!--RAB: Radio Access Bearer --> 
+            <!-- Number of RAB context records that F1-U/e-GTPU supports-->
+            <!-- Initial num of RAB context record that e-GTPU supports -->
+            <!-- Min:1 Max:(Maximum UE * MaxRAB per UE) Default:10 -->
+            <numRabRecinitSize>10</numRabRecinitSize>
+            <!-- Step number of RAB context record that e-GTPU supports -->
+            <!-- Min:1 Max:100 Default:5 -->
+            <numRabRecstepSize>5</numRabRecstepSize>
+            <!-- maximum number of RAB context record that e-GTPU supports  -->
+            <!-- Min:1 Max:(Maximum UE * MaxRAB per UE) Default:768 (=256 * 3) -->
+            <numRabRecmaxSize>768</numRabRecmaxSize>
+            <!-- Num of peers F1 entities (DU) that e-GTPU can communicate -->
+            <!-- Range:1-48 Default:10 -->
+            <NumPeerRec>10</NumPeerRec>
+          </f1u_dimension_params>
+          <!-- This is the Time Duration (in seconds) for sending echo request Message again. Value 0 means, disable timer.
+               Range: 0 or 60 - 0xFFFFFFFF -->
+          <echoReqTimer>0</echoReqTimer>
+          <maxRetry>4</maxRetry>
+          <!-- This timer shall be used for triggering the DL data delivery status indication to MeNB. 
+               Value should be in milli-seconds Range: 10-65535 -->
+          <f1uDeliveryStatusTriggerTimer>65535</f1uDeliveryStatusTriggerTimer>
+          <!-- This is the threshold count used for triggering DL data delivery status indication to MeNB.
+               Range: 10 - 65535 -->
+          <f1uDeliveryStatusTriggerPktCnt>100</f1uDeliveryStatusTriggerPktCnt>
+          <!-- This is the threshold data size used for triggering DL data delivery status indication to MeNB.
+               Range:10 - 65535. 1 Unit = 10000 Bytes --> 
+          <f1uDeliveryStatusTriggerPktSize>65535</f1uDeliveryStatusTriggerPktSize>
+	  <!-- Total number of bytes for which pool needs to be created to accommodate the user data
+	     Range:1500 - 1900 -->
+          <max_buffer_size_for_mtu>1500</max_buffer_size_for_mtu>
+          <!-- Total bytes that can be allocated for PDCP storage at system level.
+               This value must big enough to cater the maximum throughput requirement -->
+          <max_bytes_threshold>50000000</max_bytes_threshold>
+          <!-- This timer shall be used for triggering the DL data delivery status indication.  
+               Value should be in milli-seconds Range: 10-65535 -->
+          <!--Number of receiver threads at PR
+              Range: 1-10 -->
+          <num_receiver_thread>1</num_receiver_thread>
+          <!-- Number of worker thread for F1U/X2U at PR
+               Range:1-10 -->
+          <num_worker_thread>1</num_worker_thread>
+          <!--Indicates the starting core number of worker thread.
+              In case there are multiple worker threads, subsequent worker threads will be assigned to 
+	      next core from the starting core number 
+              Range: 0- MAX Core Available -->
+          <core_num_of_worker_thread>7</core_num_of_worker_thread>
+        </F1UParams>
+    </L2params>
+    <L3Params>
+      <shared_mem_logging_config>
+        <!-- Size of shared memory to be created for dumping the log -->
+        <!-- Values is in MB-->
+        <SharedMemSize>10</SharedMemSize>
+        <!-- The maximum limit of log file -->
+        <!-- Values is in MB-->
+        <MaxLogFileSize>10</MaxLogFileSize>
+        <!-- Path of the LOG file -->
+        <LogFilePath>../bin</LogFilePath>
+        <core_no>9</core_no>
+        <!-- Range: 50-65535, Default: 55535. Unit is in Sec -->
+        <rrcloggerthreadTimer>65535</rrcloggerthreadTimer>
+      </shared_mem_logging_config>
+      <!-- Number of UECC module instaces to be spawnned.
+       -->
+      <num_uecc_instances>1</num_uecc_instances>
+      <!-- Mapping of UECC module instances and core_num. In case no core is available, 
+           set core_num to 255. Should contain (num_uecc_instances + 1) values, last 
+           core_num is assigned to rest_rrc_core_no  -->
+      <core_num_mapping>1,9</core_num_mapping>
+      <!-- Max Number of UEs supported per UECC Instance
+           it is provided by comma seperated values equal to num_uecc_instances
+           This is an optional field 
+           If present will take the values as mentioned else 
+           will distribute the total number of UEs configured, equally among all
+	       the uecc instances,
+           remainder UEs will be again distributed sequentially starting from the 
+           first UECC instance
+           -->
+      <ue_num_mapping>34</ue_num_mapping>
+      <RRCparams>
+        <!-- SFN Offset for non-broadcast information -->
+        <!-- Range: 0 to 1023, Default Value: 1 -->
+        <nonBroadcastSfnOffset>1</nonBroadcastSfnOffset>
+        <!-- Number of retries to be attempted for cell reconfiguration procedure -->
+        <!-- Range: 0-255, Default Value: 0 -->
+        <!-- Each bit Indicates the type of RRC Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+        -->
+        <logLevel>127</logLevel>
+        <maxCellReconfigRetryCount>1</maxCellReconfigRetryCount>
+        <Cell_Traffic_Trace_feature>
+          <!-- Vendor name used for the generation of trace file header for Cell Traffic Trace feature -->
+          <vendorName>abc</vendorName>
+        </Cell_Traffic_Trace_feature>
+        <guard_timers>
+          <!-- This timer is used to guard certain procedures at LL (Lower Layer) e.g. this is started at L3
+               source side (HO ongoing) after reconfiguring S1U for forwarding tunnels and also sending
+               rrcConnectionReconfiguration message to UE in case L3 receives re-establishment request from UE.
+               The timer is used to guard deletion of forwarding tunnels at LL created during HO -->
+          <!-- Range: 50-65535, Default: 65535 Unit is in Sec -->
+          <UECC_LL_GUARD_TIMER_TIMERID_23_VALUE>6000</UECC_LL_GUARD_TIMER_TIMERID_23_VALUE>
+        </guard_timers>
+        <procedural_timers>
+          <!-- Timer started at layer 3 internal LLIM module on reception of configuration/parameters to setup the cell from CSC module -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at CSC module -->
+          <LLIM_CELL_SETUP_TIMER_TIMERID_1_VALUE>6000</LLIM_CELL_SETUP_TIMER_TIMERID_1_VALUE>
+          <!-- LLIM starts this timer on receiving CREATE_UE_ENTITY_REQ from UECC module i.e. when UE entity
+               context is to be created at LL for first time based on the UE parameters received from Upper Layers-->
+          <!-- Range: 50-65535, Default: 55535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_CREATE_UE_ENTITY_TIMER_TIMERID_3_VALUE>6000</LLIM_CREATE_UE_ENTITY_TIMER_TIMERID_3_VALUE>
+          <!-- L3 LLIM modules receives request from UECC for creation/deletion/modification of LC(s). This timer is
+               started to guard the reconfiguration that needs to be applied to already created UE context -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_RECONFIG_UE_ENTITY_TIMER_TIMERID_5_VALUE>6000</LLIM_RECONFIG_UE_ENTITY_TIMER_TIMERID_5_VALUE>
+          <!-- L3 LLIM module receives DELETE_UE_ENTITY_REQ from UECC module. This timer is used to gurad the UE Context deletion/de-allocation at LL -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_DELETE_UE_ENTITY_TIMER_TIMERID_7_VALUE>6000</LLIM_DELETE_UE_ENTITY_TIMER_TIMERID_7_VALUE>
+          <!-- L3 LLIM module receives CONFIGURE_SECURITY_REQ from UECC module. It is used to guard the configuration of security on LL [PDCP] -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_CONFIG_UE_SECURITY_TIMER_TIMERID_8_VALUE>6000</LLIM_CONFIG_UE_SECURITY_TIMER_TIMERID_8_VALUE>
+          <!-- L3 LLIM module receives Suspend UE Entity Req from UECC. As part of this procedure, LLIM sends request to
+               LL [PDCP] to suspend the radio bearers and response to this initiating meesage is guarded by this timer value -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_CELL_SUSPEND_UE_ENTITY_TIMER_TIMERID_27_VALUE>6000</LLIM_CELL_SUSPEND_UE_ENTITY_TIMER_TIMERID_27_VALUE>
+          <!-- L3 LLIM module receives Re-establish UE Entity Request from UECC module. This timer guards the reestablishment handling at LL -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_REESTABLISH_UE_ENTITY_TIMER_TIMERID_28_VALUE>6000</LLIM_REESTABLISH_UE_ENTITY_TIMER_TIMERID_28_VALUE>
+          <!-- L3 LLIM module receives Reconfig UE Security Entity Req from UECC. As part of this procedure, LLIM sends new 
+               keys to LL [PDCP] and response from PDCP is guarded by this -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_RECONFIG_SECURITY_UE_ENTITY_TIMER_TIMERID_29_VALUE>6000</LLIM_RECONFIG_SECURITY_UE_ENTITY_TIMER_TIMERID_29_VALUE>
+          <!-- L3 LLIM module receives Resume UE Entity Request from UECC module. As part of this procedure (guarded by 
+               the specified timer at LL) LLIM module asks LL[PDCP] to Resume -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at UECC module -->
+          <LLIM_RESUME_UE_ENTITY_TIMER_TIMERID_30_VALUE>6000</LLIM_RESUME_UE_ENTITY_TIMER_TIMERID_30_VALUE>
+          <!-- L3 LLIM module starts this timer before sending change CRNTI request to each LL module. L3 LLIM module stops
+               this timer after receiving change CRNTI confirm from each LL module -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <LLIM_CHANGE_CRNTI_TIMER_TIMERID_32_VALUE>65535</LLIM_CHANGE_CRNTI_TIMER_TIMERID_32_VALUE>
+          <!-- L3 LLIM module receives cell start request from CSC module. LLIM acordingly sends cell start request to LL
+               L3 LLIM module stops this timer on completion of Cell start procedure with lower layers -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <!-- This timer value must be less than the respective timer value running at CSC module -->
+          <LLIM_CELL_START_TIMER_TIMERID_36_VALUE>65535</LLIM_CELL_START_TIMER_TIMERID_36_VALUE>
+          <!-- L3 CSC module receives RRC_RRM_CELL_STOP_REQ from RRM and sends it to LLIM module and that is when LLIM 
+               starts this timer to guard the cell stopping at lower layers -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <!-- This timer value must be less than the respective timer value running at CSC module -->
+          <LLIM_CELL_STOP_TIMER_TIMERID_38_VALUE>65535</LLIM_CELL_STOP_TIMER_TIMERID_38_VALUE>
+          <!-- L3 LLIM module receives Cell Stop Request from CSC module. LLIM accordingly sends cell stop request to LL 
+               and this is guarded by the specified timer -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <!-- This timer value must be less than the respective timer value running at CSC module -->
+          <LLIM_CELL_DELETE_TIMER_TIMERID_39_VALUE>65535</LLIM_CELL_DELETE_TIMER_TIMERID_39_VALUE>
+          <!-- L3 receives RRC_RRM_CELL_SETUP_REQ API from RRM and starts this timer to guard the entire procedure till sending of
+               RRC_RRM_CELL_SETUP_RESP -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <CSC_CELL_SETUP_TIMER_TIMERID_0_VALUE> 65535</CSC_CELL_SETUP_TIMER_TIMERID_0_VALUE>
+          <!-- L3 starts this timer to guard cell delete procedure initiated on receiving RRC_RRM_CELL_DELETE_REQ from RRM
+               and CELL SETUP TIMER expiry -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <CSC_CELL_DELETE_TIMER_TIMERID_13_VALUE>65535 </CSC_CELL_DELETE_TIMER_TIMERID_13_VALUE>
+          <!-- L3 CSC module starts this timer on receiving RRC_RRM_CELL_START_REQ from RRM to guard the cell setup procedure
+               at CSC till the response is sent to RRM -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <CSC_CELL_START_TIMER_TIMERID_35_VALUE>65535 </CSC_CELL_START_TIMER_TIMERID_35_VALUE>
+          <!-- L3 CSC module starts this timer on receiving RRC_RRM_CELL_STOP_REQ from RRM to guard the cell stop procedure till
+               the response is sent to RRM for the same -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <CSC_CELL_STOP_TIMER_TIMERID_37_VALUE>65535 </CSC_CELL_STOP_TIMER_TIMERID_37_VALUE>
+          <!-- L3 CSC module starts this timer on receiving F1 SETUP REQUEST from F1AP to guard the F1 setup procedure till
+               the CNF is received from F1AP for the same -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in Sec -->
+          <CSC_PROCEDURE_GUARD_TIMER_TIMERID_52_VALUE>65535 </CSC_PROCEDURE_GUARD_TIMER_TIMERID_52_VALUE>
+          <!-- Timer to guard the RRC Connection Release Procedure -->
+          <!-- Range: 50-65535, Default: 100. Unit is in msec -->
+          <UECC_END_MARKER_IND_TIMER>100</UECC_END_MARKER_IND_TIMER>
+          <!-- Timer to guard the RRC Connection Release Procedure -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <UECC_RRC_CONN_RELEASE_TIMER>65535 </UECC_RRC_CONN_RELEASE_TIMER>
+          <!-- L3 UECC modeule starts this timer on sending SGNB Addition Req Ack and shall stop on receiving SGNB Complete -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <UECC_DC_OVERALL_GUARD_TIMER>65535 </UECC_DC_OVERALL_GUARD_TIMER>
+          <!-- L3 UECC module starts this timer to guard UECC procedure till
+               the CNF is received from other involved module -->
+          <!-- Range: 50-65535, Default: 65535. Unit is in msec -->
+          <UECC_PROCEDURE_GUARD_TIMER>65535</UECC_PROCEDURE_GUARD_TIMER>
+          <rrchealthmonTimer>5</rrchealthmonTimer>
+        </procedural_timers>
+      </RRCparams>
+      <NGAP> <!-- SA Mode -->
+        <!-- Each bit Indicates the type of NGAP Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+        -->
+        <logLevel>127</logLevel>
+        <!-- NG Setup Retry Timer Value to guard NG Setup Request procedure. Value is in milliseconds -->
+        <!-- Range: 50-65535, Default: 65535 -->
+        <ngap_setup_retry_timer>65535</ngap_setup_retry_timer>
+        <!-- Maximum number of NG Setup Retry Count -->
+        <!-- Range: 0-10, Default: 5-->
+        <ngap_setup_retry_count>5</ngap_setup_retry_count>
+        <!-- NG Reset Retry Timer Value to guard NG RESET procedure. Value is in milliseconds -->
+        <!-- Range: 50-65535, Default: 65535 -->
+        <ngap_reset_retry_timer>65535</ngap_reset_retry_timer>
+        <!-- Maximum number of NG RESET Retry Count -->
+        <!-- Range: 0-10, Default: 5-->
+        <ngap_reset_retry_count>5</ngap_reset_retry_count>
+        <!-- AMF Selectuion Algorithm. It can be Round Robin algorithm or Weight Factor algorithm -->
+        <!-- Range: 0-1, 0: Round Robin algorithm, 1: Weight Factor algorithm, Default: 1 -->
+        <!-- Currently This parameter is not used as connection only with 1 AMF is supported -->
+        <amf_selection_algo>1</amf_selection_algo>
+        <!-- On failure in establishing SCTP connection, NGAP waits for this duration before retrying for SCTP connection with AMF -->
+        <!-- Range: 50-65535, Default: 65535, Value is in milliseconds -->
+	    <amf_sctp_conn_recovery_timer>65535</amf_sctp_conn_recovery_timer>	
+      </NGAP>
+      <X2AP>
+        <!-- Each bit Indicates the type of X2AP Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+        -->
+        <logLevel>1</logLevel>
+        <guard_timers>
+          <!-- This gives the cell setup guard timer value in milliseconds
+               Range: 50-65535 -->
+          <x2ap_csi_guard_time_val>2000</x2ap_csi_guard_time_val>
+        </guard_timers>
+        <procedural_timers>
+          <!-- This gives the sctp connect retry timer value in milliseconds -->
+          <!-- Range: 0-65535, Default: 65535, Value 0 means infinite retries -->
+          <sctp_connect_time_val>65535</sctp_connect_time_val>
+          <!--0=1s,1=2s,2=5s,3=10s,4=20s,5=60s, Refer 36.423 9.2.32 -->
+          <x2ap_time_to_wait_index>65535</x2ap_time_to_wait_index>
+          <!-- X2 setup retry time value to be sent in time to wait field of X2 Setup Failure in milliseconds -->
+          <!-- Range: 50-65535, Default: 65535 -->
+          <x2ap_setup_retry_time_val>65535</x2ap_setup_retry_time_val>
+          <!-- This gives sctp connect retry count value. -->
+          <!-- Range: 0-255, Default: 5-->
+          <sctp_connect_retry_cnt>5</sctp_connect_retry_cnt>
+          <!-- This gives the maximum number of x2setup retry count value. -->
+          <!-- Range: 0-10, Default: 5-->
+          <x2ap_setup_retry_cnt>5</x2ap_setup_retry_cnt>
+          <!-- This gives the maximum number of gNB configuration retry count value. -->
+          <!-- Range: 0-10, Default: 5-->
+          <gnb_config_update_retry_cnt>3</gnb_config_update_retry_cnt>
+          <!-- Timer after which retry is attempted for gNB Configuration Update procedure at X2 interface in milliseconds -->
+          <!-- Range: 50-65535, Default: 65535 -->
+          <gNB_Config_Update_retry_timer_val>65535</gNB_Config_Update_retry_timer_val>
+          <!-- Number of retries to attempted in case time to wait is received from peer in response to the gNB 
+               Configuration Request message sent to the peer gNB -->
+          <!-- Range: 0-255, Default: 0 -->
+          <gNB_Config_Update_time_to_wait_retry_cnt>0</gNB_Config_Update_time_to_wait_retry_cnt>
+          <!-- Offset time to be added to time to wait timer IE received with gNB Configuration Update Failure -->
+          <gNB_Config_Update_time_to_wait_offset>65535</gNB_Config_Update_time_to_wait_offset>
+          <!-- This gives the maximum number of times an gNB should retry sending RESET REQUEST to a peer gNB -->
+          <!-- Range: 0-10, Default: 5-->
+          <gnb_x2ap_reset_retry_cnt>5</gnb_x2ap_reset_retry_cnt>
+          <!-- This gives the duration for which gNB should wait for RESET RESPONSE from a peer gNB in milliseconds
+               Range: 50-65535 -->
+          <gnb_x2ap_reset_guard_tim_val>5000</gnb_x2ap_reset_guard_tim_val>
+	  <!-- Timer to wait for ENDC X2 Setup Request from Peer eNodeB after SCTP association 
+	       is successfully established with peer.
+	       0 value means wait for infinite time
+               Range: 0-65535 -->
+          <x2_setup_req_w_timer>65535</x2_setup_req_w_timer>
+        </procedural_timers>
+      </X2AP>
+      <F1AP>
+        <!-- This gives the maximum number of gNB CU Configuration Update retry count value. -->
+        <!-- Range: 0-5, Default: 2-->
+        <cu_config_update_retry_count>2</cu_config_update_retry_count>
+        <!-- Time duration (in msec) to wait for CU Configuration Update Response from DU before sending CU Configuration update again in milliseconds
+             Range: 50-65535, Default: 500 -->
+        <cu_config_update_retry_timer_val>65535</cu_config_update_retry_timer_val>
+        <cu_reset_retry_count>2</cu_reset_retry_count>
+        <!-- Range: 50-65535, Default: 500 -->
+        <cu_reset_guard_timer_val>65535</cu_reset_guard_timer_val>
+
+        <!-- Health status check Interval in seconds-->
+        <!-- Range: 50-65535, Default: 5 -->
+        <f1ap_health_mon_timer_int>5</f1ap_health_mon_timer_int>
+        <!-- This gives the maximum number of gNB CU F1 Setup retry count value. -->
+        <!-- Range: 0-9, Default: 2-->
+        <f1ap_f1_setup_retry_count>2</f1ap_f1_setup_retry_count>
+        <!-- Timer started at F1AP after receiving F1 Setup from DU in msec -->
+        <!-- Range: 50-65535, Default: 500-->
+        <f1_setup_timer_val>65535</f1_setup_timer_val>
+        <!-- IE received with F1AP Provision Request and to RRM in RRM_OAM_INIT_CONFIG_REQ
+             Range: 0-5
+             0-1s
+             1-2s
+             2-5s
+             3-10s
+             4-20s
+             5-60s
+          For details refer Time To wait in 38.473  -->
+        <f1ap_time_to_wait_offset>2</f1ap_time_to_wait_offset>
+	<!-- Timer (in milliseconds)  to wait for F1 Setup Request from DU after successful
+             SCTP association .
+             0 value means wait for infinite time. -->
+        <f1_setup_req_w_timer>65535</f1_setup_req_w_timer>
+        <!-- Each bit Indicates the type of CU F1AP Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+        -->
+        <logLevel>127</logLevel>
+        <!-- Indicates the number of DUs-->
+        <!-- Range: 1-32, Default: 1
+             In Current Release only 1 DU is supported -->
+        <numDU>1</numDU>
+        <du_CommInfo>
+          <!-- Indicates the IP address of DU -->
+          <IPAddr>192.168.12.201</IPAddr>
+          <!-- Refer gNB-DU ID in 38.473 for details.
+               Range 0 - 68719476735 -->
+          <du_index>1111</du_index>
+          <CellNumberOfEntries>1</CellNumberOfEntries>
+          <NR-CGI>
+          <PLMNID>46692</PLMNID>
+          <CellIdentity>3303</CellIdentity>
+          </NR-CGI>
+          <NR-CGI>
+          <PLMNID>46692</PLMNID>
+          <CellIdentity>3334</CellIdentity>
+          </NR-CGI>
+          </du_CommInfo>
+        <du_CommInfo>
+          <!-- Indicates the IP address of DU -->
+          <IPAddr>172.16.81.50</IPAddr>
+          <!-- Refer gNB-DU ID in 38.473 for details.
+               Range 0 - 68719476735 -->
+          <du_index>2</du_index>
+          <CellNumberOfEntries>1</CellNumberOfEntries>
+          <NR-CGI>
+          <PLMNID>46692</PLMNID>
+          <CellIdentity>3334</CellIdentity>
+          </NR-CGI>
+          <NR-CGI>
+          <PLMNID>46692</PLMNID>
+          <CellIdentity>3334</CellIdentity>
+          </NR-CGI>
+        </du_CommInfo>
+
+        </F1AP>
+    </L3Params>
+    <RRMparams>
+      <RRMCoreNum>0</RRMCoreNum>
+      <!--Logging Enable or Disable, Value: 0, LOG-OFF, 1 for LOG-ON -->    
+      <log_on_off>1</log_on_off>
+      <!-- Each bit Indicates the type of RRM Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+      -->
+      <logLevel>15</logLevel>
+      <shm_logger_cfg>
+        <!--This interval indicate the time for which logger thread will sleep incase no trace is available in any segment -->
+        <!-- Unit In Sec -->
+        <wait_interval>2</wait_interval>
+        <!-- Path at which log files will be created -->
+        <log_path>.</log_path>
+        <!-- Size of shared memory to be created for dumping the log -->
+        <!-- Value is in MB -->
+        <shm_size>5</shm_size>
+        <!-- The maximum limit of log file -->
+        <!-- Value is in MB -->
+        <log_file_size>100</log_file_size>
+        <!-- The maximum number of log lines to be read from each segment  -->
+        <!-- Range: 1-65535, Default: 10 -->
+        <log_chunk_count>100</log_chunk_count>
+        <!-- The bitmap to show the cores on which the logger thread will be executed -->
+        <!-- Range: 1-31, Default: 1-->
+        <cpu_bitmap>1</cpu_bitmap>
+        <!-- The maximum number of log files to be maintained in a directory -->
+        <!-- Range: 1-10, Default: 10-->
+        <file_count>10</file_count>
+      </shm_logger_cfg>
+      <operator_info>
+        <!--Indicates if the cell needs to be started immediately or just configured-->
+        <!--In case of late start, a cell-start API needs to be invoked-->
+        <!--By default 0, it will be set to 1 if SCTP connection is successful and link up indication is received-->
+        <!--0: FALSE, 1: TRUE-->
+        <immediate_start_needed>0</immediate_start_needed>
+        <!-- Indicates Number of UE's for which gNB Counter Check request will be sent-->
+        <!-- Range 0 - 75 -->
+        <num_of_ue_for_counter_check>2</num_of_ue_for_counter_check>
+        <!-- Indicates if the Priority for the vaiours types of trigger quantities in order to configure the A1 A2 events-->
+        <measurement_priority_info>
+            <rsrp_trigger_quantity>3</rsrp_trigger_quantity>  
+            <rsrq_trigger_quantity>2</rsrq_trigger_quantity>  
+            <sinr_trigger_quantity>1</sinr_trigger_quantity>  
+        </measurement_priority_info>
+      </operator_info>
+    </RRMparams>
+    <SONParams>
+      <!--Specifies to Enable or Disable Logging-->
+      <!--Range:0-1-->
+      <log_on_off>0</log_on_off>
+      <!--log level to be set-->
+      <!-- Each bit Indicates the type of SON Log Level
+          LOG_LEVEL_FATAL       =1    /* Critical messages *?
+          LOG_LEVEL_ERROR       =3,   /* Error messages */
+          LOG_LEVEL_WARNING     =7,   /* Warning messages */
+          LOG_LEVEL_INFO        =15,  /* Info messages*/
+          LOG_LEVEL_BRIEF       =31,  /* Brief messages*/
+          LOG_LEVEL_DETAILED    =63,  /* Detail about all the messg */
+          LOG_LEVEL_DETAILEDALL =127, /* DetailedAll about all the messg */
+      -->
+      <logLevel>1</logLevel>
+      <son_es_params>
+        <!-- This is used to enable ES(Energy Saving) for the specified cell or
+        to globally enable ES for all the cells if srv_cgi is not present -->
+        <!-- Range: 0-1, 1: Enable ,0: Disable, Default: 1-->
+        <es_enable_disable>1</es_enable_disable>
+        <!-- Active UE count report interval - The value 0 means it will not be reported periodically. (Interval unit is in Secs) -->
+        <!-- Range: 0-65535, Default: 0 -->
+        <interval>0</interval>
+        <!-- Threshold for number of active UEs. When threshold is reached or the number of UE exceeds the threshold value, 
+             report will be send to the OAM -->
+        <!-- Range: 0-255, Default: 5-->
+        <threshold_value>5</threshold_value>
+        <auto_switch_on_off>0</auto_switch_on_off>
+      </son_es_params>
+      <!-- Indicates Mobility Robustness Optimization is Enabled or Disabled -->
+      <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 1-->
+      <mro_enable_disable>0</mro_enable_disable>
+      <!-- Indicates Mobility Load Balancing is Enabled or Disabled -->
+      <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 1-->
+      <mlb_enable_disable>0</mlb_enable_disable>
+      <!-- Indicates Network Monitoring Mode(Module) is Enabled or Disabled -->
+      <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 1-->
+      <NMMSupported>0</NMMSupported>
+      <!--Indicates TNL discovery for all the intra rat configured and discovered neighbour is Enabled or Disabled-->
+      <!-- Range: 0-1, 0: Disable, 1: Enable, Default: 1-->
+      <TNLDiscoveryEnabled>0</TNLDiscoveryEnabled>
+      <son_oam_nr_enb_add_req>
+        <enb_nbr_list>
+          <!-- Indicates the size of List of neighbor gNBs -->
+          <!-- Range: 1-32, Default: 1 -->
+          <enb_nbr_list_size>0</enb_nbr_list_size>
+          <enb_nbr_info>
+            <!-- ENB type: 1: Home gNB, 2: Macro gNB -->
+            <enb_type>1</enb_type>
+            <!-- Global gNB Id -->
+            <!-- default: 1-->
+            <enb_id>1</enb_id>
+            <!-- Range : PLMNID should be 6 digit number -->
+            <PLMNID>46692</PLMNID>
+            <!--Comma Seperated list for Ipv4/V6 ADDRESS Max Two -->
+            <myAddr>172.16.81.51</myAddr>
+            <!-- Indicates Tracking Area Code -->
+            <!-- Range: 0-65535, Default: 1 -->
+            <TAC>1</TAC>
+            <!-- Indicates whether X2 connection can be used for HO or not with the corresponding gNB -->
+            <!-- Range : 1-2 and 255 ,Default: 1-->
+            <x2_ho_status>1</x2_ho_status>
+            <!-- Indicates the status of the X2 Connection -->
+            <!-- Range: 1-255, Default: 7 -->
+            <x2_connection_status>7</x2_connection_status>
+          </enb_nbr_info>
+        </enb_nbr_list>
+      </son_oam_nr_enb_add_req>
+      <!-- Flag to enable disable the conflict with second degree neighbor inacse x2 detected nbr -->
+      <!-- Range: 0-1, Default: 1 -->
+      <ConfilctWithSecondDegreeNBR>1</ConfilctWithSecondDegreeNBR>
+      <!-- In Seconds Range: 0-65535, Default: 10 -->
+      <!-- Timer to Wait for NR add req from OAM to SON for Detected Neighbour through X2 -->
+      <NRAddWaitTimer>10</NRAddWaitTimer>
+      <!-- In Seconds Range: 0-65535, Default: 10 -->
+      <!-- Timer to Wait for gnb configuration update received if conflict is detected at SON-->
+      <ConflictDetectionBackoffTimer>10</ConflictDetectionBackoffTimer>
+      <son_oam_anr_neighbor_default_config_req>
+        <nr_status>1</nr_status>
+        <!-- Indicates whether the ANR function at gNB is allowed to autonomously 
+         remove a newly detected cell or not from the NRT -->
+        <!-- Range: 1,2 and 255 -->
+        <ho_status>1</ho_status>
+        <!-- Indicates whether HO is allowed or not to a newly detected cell-->
+        <!-- Range: 1,2 and 255 -->
+        <x2_status>1</x2_status>
+        <!-- Indicates whether X2 connection can be used for HO or not with the corresponding gNB-->
+        <!-- Range: 1-7 and 255 -->
+        <csg_cell_intf_scheme>2</csg_cell_intf_scheme>
+        <!-- interference scheme to be applied on newly detected csg cells -->
+        <!-- 0 = ICIC
+             1 = EICIC
+             2 = NO_INTF_SCHEME -->
+        <!-- Range: 0-2, Default: 2 -->
+        <pico_cell_intf_scheme>2</pico_cell_intf_scheme>
+        <!-- interference scheme to be applied on newly detected pico cells-->
+        <!-- 0 = ICIC
+             1 = EICIC
+             2 = NO_INTF_SCHEME -->
+        <!-- Range: 0-2, Default: 2 -->
+        <macro_cell_intf_scheme>2</macro_cell_intf_scheme>
+        <!-- interference scheme to be applied on newly detected macro cells-->
+        <!-- 0 = ICIC
+             1 = EICIC
+             2 = NO_INTF_SCHEME -->
+        <!-- Range: 0-2, Default: 2 -->
+      </son_oam_anr_neighbor_default_config_req>
+      <son_nr_params>
+        <!-- Indicates Enable/Disable of ANR Feature -->
+        <!-- 0 = ANR_DISABLED
+             1 = ANR_ENABLED -->
+        <!-- Range: 0-1, Default: 0 -->
+        <anr_global_mode>1</anr_global_mode>
+      </son_nr_params>
+    </SONParams>
+  </stack_config>
+</gNodeBParams>

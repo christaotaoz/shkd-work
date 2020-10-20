@@ -1,0 +1,15 @@
+{
+  "app": {
+      "ssl": {
+        "ca": null
+      }
+  },
+  "manager": {
+    "ip":"<MANAGER_IP>",
+    "protocol" : "http",
+    "port": "80"
+  },
+  "e2e": {
+
+  }
+}

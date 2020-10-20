@@ -1,0 +1,40 @@
+{
+  "name": "初始化页面",
+  "widgets": [
+{
+      "name": "系统初始化",
+      "width": 12,
+      "height": 0,
+      "definition": "init",
+      "x": 0,
+      "y": 0
+    },
+  {
+      "name": "部署",
+      "width": 12,
+      "height": 30,
+      "definition": "deployments",
+      "x": 0,
+      "y": 0,
+      "configuration":{
+        "displayStyle":"list"
+      }
+    },
+    {
+      "name": "模版管理",
+      "definition": "blueprints",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 0
+    },
+     {
+      "name": "插件",
+      "definition": "plugins",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 35
+    }
+  ]
+}

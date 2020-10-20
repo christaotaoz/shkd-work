@@ -1,0 +1,22 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+inputs:
+  IMSI_1:
+    default: 460000000000200
+  IMSI_2:
+    default: 460000000000200
+  ip:
+    default: 192.168.4.76
+node_templates:
+  delete_user:
+    type: delete
+    properties:
+      IMSI_1:
+        get_input: IMSI_1
+      IMSI_2:
+        get_input: IMSI_2
+      ip:
+        get_input: ip

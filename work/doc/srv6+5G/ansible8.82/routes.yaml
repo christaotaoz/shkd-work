@@ -1,0 +1,36 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+   - types.yaml 
+   - 'plugin:srv6-plugin?version=1.0&distribution=centos'
+inputs:
+  manage_ip:
+    description: srv6 manage ip address
+  password:
+    description:
+  interface:
+    description:
+  target:
+    description:
+  netmask:
+    description:
+  gateway:
+    description:
+
+
+node_templates:
+  routes:
+    type: routes
+    properties:
+      manage_ip:
+        get_input: manage_ip
+      password:
+        get_input: password
+      interface:
+        get_input: interface
+      target:
+        get_input: target
+      netmask:
+        get_input: netmask
+      gateway:
+        get_input: gateway

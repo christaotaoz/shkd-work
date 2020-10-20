@@ -1,0 +1,63 @@
+#- hosts: 10.10.3.33
+#  tasks:
+#    - name: fivegcd
+#      shell: cd /root/;source fivegcd;
+
+#- hosts: 192.168.8.82
+#  tasks:
+#    - name: iperf
+#      shell: cd /home/; iperf3 -c 192.168.13.1 -f m -t 30 -i 3 -b 1000M -u;
+#      register: shell_result
+#    - debug:
+#        var: shell_result.stdout
+
+
+- hosts: 192.168.10.109
+  tasks:
+    - name: bbu2.6
+      shell: cd /root/;source bbu26d;
+      async: 300
+
+      poll: 0
+#      shell: cd /root/stack_bin/DU/cfg;ln -snf TR196_gNodeB_DU_Data_Model.xml_bak TR196_gNodeB_DU_Data_Model.xml;cd /home/NR5G/rec;./build_script install;lspci |grep fec;lspci |grep Xil;ls /dev;cd /root;./ipaddr.sh;cd /root/stack_bin;./5g_app start 1>/root/bbu26out.log 2>/root/bbu26err.log
+#
+
+#cd /root/stack_bin/DU/cfg
+#ln -snf TR196_gNodeB_DU_Data_Model.xml_bak TR196_gNodeB_DU_Data_Model.xml
+#cd /root
+##rec
+##./build_script install
+##lspci |grep fec
+##lspci |grep Xil
+#ls /dev
+#cd /root
+#./ipaddr.sh
+#cd /root/stack_bin
+#./5g_app start
+#cd /root/stack_bin/DU/cfg
+#ln -snf TR196_gNodeB_DU_Data_Model.xml_bak TR196_gNodeB_DU_Data_Model.xml
+#cd /root
+#rec
+#./build_script install
+#lspci |grep fec
+#lspci |grep Xil
+#ls /dev
+#cd /root
+#./ipaddr.sh
+#cd /root/stack_bin
+#./5g_app start
+#PID TTY TIME CMD 2572 pts/1 00:00:00
+#  bash 2598 pts/1 00:00:00
+#  python 2603 pts/1 00:00:00
+#  bash 2649 pts/1 00:00:00
+#  5g_app 2675 pts/1 00:00:36
+#  l1app 2714 pts/1 00:00:00
+#  gnb_cu_oam 2719 pts/1 00:00:00
+#  gnb_cu_son 2720 pts/1 00:00:00
+#  gnb_cu_rrm 2721 pts/1 00:00:00
+#  gnb_cu_l3 2753 pts/1 00:00:03
+#  gnb_cu_pdcp 2755 pts/1 00:00:00
+#  bin_reader 2782 pts/1 00:00:00
+#  bin_reader 2787 pts/1 00:00:00
+#  duoam 2788 pts/1 00:00:00
+#  bash 2789 pts/1 00:00:00 ps

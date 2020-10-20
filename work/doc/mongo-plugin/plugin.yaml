@@ -1,0 +1,61 @@
+plugins:
+  mongo:
+    executor: central_deployment_agent
+    package_name: mongo-plugin
+    package_version: '1.0'
+
+
+
+node_types:
+  add:
+    derived_from: cloudify.nodes.Root
+    properties:
+      IMSI*:
+        default: 460000000000200
+      UE_NUMS:
+        default: 1
+      APN:
+        default: 'internet'
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mongo.mongo_task.tasks.add
+          inputs: {}
+
+  delete:
+    derived_from: cloudify.nodes.Root
+    properties:
+      IMSI_1:
+        description:
+        default: 460000000000200
+      IMSI_2:
+        default: 460000000000200
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mongo.mongo_task.tasks.delete
+          inputs: {}
+
+  update:
+    derived_from: cloudify.nodes.Root
+    properties:
+      IMSI*:
+        default: 460000000000200
+      APN:
+        default: 'internet'
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mongo.mongo_task.tasks.update
+          inputs: {}
+
+  huaweiSwitch:
+    derived_from: cloudify.nodes.Root
+    properties:
+      ip:
+        default: 192.168.4.203
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: mongo.mongo_task.tasks.huaweiSwitch
+          inputs: {}

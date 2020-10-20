@@ -1,0 +1,116 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+
+inputs:
+
+  # CLIENT CONFIGURATION
+  venter_host:
+    type: string
+    default: 192.168.4.83
+  venter_username:
+    type: string
+    default: administrator@zjslab.local
+  datacenter_name:
+    type: string
+    default: Datacenter232
+  resource_pool_name:
+    type: string
+    default: pool232
+  # SERVER CONFIGURATION
+  server_name:
+    type: string
+    default: magma
+  template_name:
+    type: string
+    default: magma-ok-1
+  esxi_ip:
+    default: 192.168.4.232
+  magma_lan_vmnic:
+    default: vmnic3
+
+dsl_definitions:
+  connection_config: &connection_config
+    esxi_ip: { get_input: esxi_ip }
+    esxi_username: root
+    esxi_password: Zijinshan001&
+    username: { get_input: venter_username }
+    password: Zijinshan001&
+    host: { get_input: venter_host }
+    port: 443
+    datacenter_name: { get_input: datacenter_name }
+    resource_pool_name: { get_input: resource_pool_name }
+    auto_placement: true
+    allow_insecure: true
+
+node_templates:
+
+  nic3:
+    type: cloudify.vsphere.nodes.NIC
+    properties:
+      connection_config: *connection_config
+      name: { get_property: [ P-wan, network, name ] }
+      switch_distributed: false
+      #adapter_type: E1000
+      adapter_type: Vmxnet3
+      start_connected: true
+      network_configuration:
+        use_dhcp: true
+    relationships:
+      - type: cloudify.relationships.vsphere.nic_connected_to_network
+        target: P-wan
+
+  P-wan:
+    type: cloudify.vsphere.nodes.Network
+    properties:
+      connection_config: *connection_config
+      network:
+        name: port_srv6_lan
+        vlan_id: 0
+        vswitch_name: vswitch_srv6_lan
+        nicdevice: vmnic0
+        switch_distributed: false
+
+  P-lan:
+    type: cloudify.vsphere.nodes.Network
+    properties:
+      connection_config: *connection_config
+      network:
+        name: jizhan
+        vlan_id: 0
+        vswitch_name: vswitch_magma_lan
+        switch_distributed: false
+        nicdevice: { get_input: magma_lan_vmnic }
+
+  magma:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      use_external_resource: false
+      connection_config: *connection_config
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 2048
+      networking:
+        connect_networks:
+          - name: { get_property: [ P-lan, network, name ] }
+            management: false
+          - name: { get_property: [ P-wan, network, name ] }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: false
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.201
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: P-wan
+      - type: cloudify.relationships.connected_to
+        target: P-lan
+

@@ -1,0 +1,83 @@
+{
+  "name": "部署展示",
+  "widgets": [
+    {
+      "name": "Deployment Action Buttons",
+      "definition": "deploymentActionButtons",
+      "width": 7,
+      "height": 3,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "拓扑",
+      "definition": "topology",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 5
+    },
+    {
+      "name": "节点管理",
+      "definition": "nodes",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 35,
+      "configuration": {
+        "fieldsToShow": ["Name","Type","Deployment","Contained in","Connected to","Host","Creator","# Instances","Groups"]
+      }
+    },
+    {
+      "name": "部署输入",
+      "width": 6,
+      "height": 12,
+      "definition": "inputs",
+      "x": 0,
+      "y": 59
+    },
+    {
+      "name": "部署输出/能力",
+      "width": 6,
+      "height": 12,
+      "definition": "outputs",
+      "x": 6,
+      "y": 59
+    },
+    {
+      "name": "部署运行状态列表",
+      "width": 12,
+      "height": 24,
+      "definition": "executions",
+      "x": 0,
+      "y": 71
+    },
+    {
+      "name": "事件/日志 过滤",
+      "width": 12,
+      "height": 5,
+      "definition": "eventsFilter",
+      "x": 0,
+      "y": 95
+    },
+    {
+      "name": "部署 事件/日志",
+      "width": 12,
+      "height": 24,
+      "definition": "events",
+      "configuration": {
+        "fieldsToShow": ["Icon","Timestamp","Type","Workflow","Operation","Node Id","Node Instance Id","Message"]
+      },
+      "x": 0,
+      "y": 100
+    },
+    {
+      "name": "部署来源",
+      "width": 12,
+      "height": 40,
+      "definition": "blueprintSources",
+      "x": 0,
+      "y": 124
+    }
+  ]
+}

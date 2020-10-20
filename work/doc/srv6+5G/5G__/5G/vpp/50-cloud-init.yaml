@@ -1,0 +1,15 @@
+# This file is generated from information provided by
+# the datasource.  Changes to it will not persist across an instance.
+# To disable cloud-init's network configuration capabilities, write a file
+# /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg with the following:
+# network: {config: disabled}
+network:
+    ethernets:
+        eno1:
+            addresses: [192.168.9.220/24]
+            gateway4: 192.168.9.1
+            dhcp4: no
+        eno2:
+            addresses: [192.168.12.183/24,192.168.120.116/24,192.168.120.117/24,192.168.120.197/24,192.168.120.198/24]
+            dhcp4: no
+    version: 2

@@ -1,0 +1,67 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+
+inputs:
+
+  # CLIENT CONFIGURATION
+  venter_host:
+    type: string
+    default: 192.168.4.83
+  venter_username:
+    type: string
+    default: administrator@zjslab.local
+  datacenter_name:
+    type: string
+    default: Datacenter232
+  resource_pool_name:
+    type: string
+    default: pool232
+  # SERVER CONFIGURATION
+  server_name:
+    type: string
+    default: win10
+  template_name:
+    type: string
+    default: win10-muban
+  network_name:
+    type: string
+    default: port_srv6_lan
+
+dsl_definitions:
+  connection_config: &connection_config
+    username: { get_input: venter_username }
+    password: Zijinshan001&
+    host: { get_input: venter_host }
+    port: 443
+    datacenter_name: { get_input: datacenter_name }
+    resource_pool_name: { get_input: resource_pool_name }
+    auto_placement: true
+    allow_insecure: true
+
+node_templates:
+  vm1:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      use_external_resource: false
+      connection_config: *connection_config
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 2
+        memory: 4096
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.201
+

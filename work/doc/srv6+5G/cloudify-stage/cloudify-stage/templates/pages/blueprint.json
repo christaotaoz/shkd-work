@@ -1,0 +1,40 @@
+{
+  "name": "本地模板",
+  "widgets": [
+    {
+      "name": "Blueprint Actions",
+      "definition": "blueprintActionButtons",
+      "width": 7,
+      "height": 3,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "部署管理",
+      "width": 12,
+      "height": 24,
+      "definition": "deployments",
+      "x": 7,
+      "y": 35,
+      "configuration":{
+        "displayStyle":"list"
+      }
+    },
+    {
+      "name": "模版输入",
+      "width": 6,
+      "height": 12,
+      "definition": "inputs",
+      "x": 0,
+      "y": 59
+    },
+    {
+      "name": "模版输出/能力",
+      "width": 6,
+      "height": 12,
+      "definition": "outputs",
+      "x": 6,
+      "y": 59
+    }
+  ]
+}

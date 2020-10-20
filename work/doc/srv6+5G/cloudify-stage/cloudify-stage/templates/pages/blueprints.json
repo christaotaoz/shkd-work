@@ -1,0 +1,19 @@
+{
+  "name": "所有本地模板",
+  "widgets": [
+    {
+      "name": "模版管理",
+      "definition": "blueprints",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "图形化创建模版",
+      "definition": "composerLink",
+      "x": 0,
+      "y": 25
+    }
+  ]
+}

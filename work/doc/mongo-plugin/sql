@@ -1,0 +1,25 @@
+#创建表
+create table user_account_status(
+imsi text unique,
+dl text,
+ul text,
+apn text,
+id serial,
+_storage_id serial primary key,
+_tenant_id  text default '0',
+_creator_id  text default '0',
+visibility visibility_state  default 'global'
+);
+
+#更改表格权限
+ALTER TABLE user_account_status OWNER TO cloudify;
+
+#插入数据
+insert into user_account_status values('460000000000002','1024000 Kbps','1024000 Kbps','internet');
+
+#更改字段类型
+alter table user_account_status alter  COLUMN  imsi  type VARBIT(15) ;
+alter table user_account_status alter imsi type text using imsi::bit varying(15);
+
+#增加用户
+CREATE USER chris WITH PASSWORD 'chris';

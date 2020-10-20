@@ -1,0 +1,27 @@
+{
+  "app": {
+      "influx": {
+        "ip" : "127.0.0.1"
+      },
+      "ssl": {
+        "ca": null
+      }
+  },
+  "customer": {
+
+  },
+  "log4jsConfig": {
+
+  },
+  "manager": {
+    "ip":"127.0.0.1",
+    "protocol" : "http",
+    "port": "80"
+  },
+  "widgets": {
+
+  },
+  "e2e": {
+
+  }
+}

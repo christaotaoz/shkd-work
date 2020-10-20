@@ -1,0 +1,5 @@
+ansible==2.9.5
+hvac
+netaddr
+ipaddr
+netaddr

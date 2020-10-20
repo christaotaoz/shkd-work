@@ -1,0 +1,16 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+inputs:
+  ip:
+    default: 192.168.4.203
+
+
+node_templates:
+  huaweiSwitch:
+    type: huaweiSwitch
+    properties:
+      ip:
+        get_input: ip

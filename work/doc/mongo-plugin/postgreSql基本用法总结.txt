@@ -1,0 +1,229 @@
+1. 在docker里输入命令进入postgre：
+	sudo -s -u postgres
+	psql
+2. postgre基本命令
+	\l：列出所有的数据库；
+
+	\c DatabaseName：连接数据库；
+
+	\dt：连接进入到某个数据库后，使用此命令查看数据库中的所有表；
+
+	\d TableName：查看某个表的描述，此命令可以用来查看某个表中的列元素和相应的数据类型；
+
+	\e：打开psql内置的文本编辑器，可以方便的编写脚本。这个编辑器使用了Vim环境，用这个Vim文本编辑器编写SQL脚本会很方便，保存之后退出，就能自动运行刚才在编辑器中保存的SQL命令，并返回结果；如果需要对刚执行的SQL命令进行修改，可以再次使用\e打开编辑器，里面的内容仍然是上一次保存的文本；
+
+	\q：退出psql。
+3.sql语句
+	创建，删除，修改数据库
+		create database StudentManagement；
+	创建，删除，修改表
+#policyroutes
+create table policyroutes(id serial,
+number text unique,
+current  text,
+user_group text,
+source_interface text,
+vlan text,
+ttl text,
+source_addr_port text,
+to_addr_port text,
+protocol text,
+application text,
+dscp text,
+user_type text,
+action text,
+to_route text,
+next_jump text,
+match_times text,
+remark text,
+state text,
+_storage_id serial primary key,
+ _tenant_id  text default '0',
+ _creator_id  text default '0',
+visibility visibility_states  default 'global'
+);
+
+序号
+线路名称
+网卡
+状态
+IP地址
+网关地址
+MTU
+VLAN
+DNS牵引/失败率
+流入速率
+流出速率
+连接数
+备注
+number,line_name,network_card,state,ip,gateway,mtu,vlan,dns_traction_failure_rate,inflow_rate,outflow_rate,connects,annotate
+#wan_interface_search
+create table wan_interface(id serial,
+number text unique,
+line_name  text,
+network_card text,
+state text,
+ip text,
+gateway text,
+mtu text,
+vlan text,
+dns_traction_failure_rate text,
+inflow_rate text,
+outflow_rate text,
+connects text,
+annotate text,
+_storage_id serial primary key,
+ _tenant_id  text default '0',
+ _creator_id  text default '0',
+visibility visibility_states default 'global'
+);
+
+visibility_state
+
+
+
+#lan_interface_search
+序号
+接口名称
+物理网卡
+接口状态
+IP地址
+网络掩码
+MTU
+VLAN
+流入速率
+流出速率
+number,interface_name,network_card,state,ip,network_mask,mtu,vlan,inflow_rate,outflow_rate
+#lan_interface_search
+create table lan_interface(id serial,
+number text unique,
+interface_name  text,
+network_card text,
+state text,
+ip text,
+network_mask text,
+mtu text,
+vlan text,
+inflow_rate text,
+outflow_rate text,
+_storage_id serial primary key,
+ _tenant_id  text default '0',
+ _creator_id  text default '0',
+visibility visibility_states default 'global'
+);
+
+
+#equipment_status
+编号 名称  状态 最后在线 有效期 用户 连接数 上行/下行(bps) 运行 温度 当前版本
+license_id,sys_name,state,time_str,valid_time,users,flowcont,bps,sys_run,temp_cpu,version
+
+create table equipment_status(id serial,
+license_id text unique,
+sys_name  text,
+state text,
+time_str text,
+valid_time text,
+users text,
+flowcont text,
+bps text,
+sys_run text,
+temp_cpu text,
+version text,
+_storage_id serial primary key,
+ _tenant_id  text default '0',
+ _creator_id  text default '0',
+visibility visibility_states default 'global'
+);
+
+		drop table student;
+
+		alter table student add column Sdept char(20);
+		--自增
+		--SERIAL代表自增，默认从1开始增加，每次自增1。
+		
+		create table CREATETASK_CHKID_N( 
+		id SERIAL PRIMARY KEY, 
+		chk_id TEXT, 
+		n INTEGER
+		);
+	清空表
+		delete from [表名]    or    TRUNCATE TABLE  [表名]
+
+	查询
+		select count(*) from pg_stat_user_tables ;
+
+1 insert
+	语法: insert into 表名称 values(值1,值2);
+		insert into person values('github','c++','java','mysql');
+		insert into? persion(name,password) values('张三',123);
+	
+2 delete
+	语法: delete from 表名称 where 列名称=值
+	删除某行
+		delete from persion where lastname ='zhangsan';
+	删除所有行:
+		delete from table_name    or    delete * from table_name;
+
+3 update
+	语法:updata 表名称 set 列名称=新值 where 列名称=某值
+	更新某一行中一个列
+		update persion set firstname ='lisi' where lastname='zhangsan';
+	更新某一行的诺干列
+	修改地址,并添加新的城市名称
+		update persion set address ='zhenghzou',city='nanjing' where lastname='zhangsan';
+4 select
+	语法:select 列名称 from 表名称
+		select * from 表名称（我试了一下没什么效果！！！不知道什么情况）
+	获取列名称为"lastname" 和"firstname"的列内容
+		select lastname ,firstname from? persion;
+	获取表中所有的列名称
+		select * from persion
+	指定条件查询
+		select * form persion where id=2;
+	select连接字符串并起别名
+		select firstname+''+lastname as 名字 from persion
+	查询表中所有ID不为1的记录
+		select * from persion where not id=1;
+	带and多条件查询,没有符合条件的记录,返回为空
+	带or的多条件查询
+		select * from persion where id or firstname='a1';
+		select * from persion where id=1 and firstname='a1';
+5 order by 排序
+	select * from persion order by id desc;
+	select * from persion order by id asc;
+6 模糊查询
+	% 零或多个字符
+		select * from persion where firstnam like 'a%';
+	_ 一个字符
+		select * from persion where firstname like 'a_';
+	[] 指定范围内的任意单个字符
+		select * from persion where firstname like'a[a-e]';
+		select * from persion? where firstname like 'a[bcd]';
+	[^]不属于指定范围内的任单个字符
+		select * from persion where firstname like'a[^bcd]';
+		select * from persioin? where firstname likt '[bcd]%';
+7 between and 
+	select * from? between 1 and 2;
+8.增加字段：
+ 	ALTER TABLE products ADD COLUMN description text; 
+9.更改字段：
+	ALTER TABLE gatewayinterfaces RENAME nid TO id;
+	ALTER TABLE 表名 ALTER COLUMN 列名 SET DEFAULT 默认值; #更改字段并设置默认值
+10.枚举类型:
+	step 1：create type visibility_state as enum( 'private' , 'tenant' , 'global' );
+	step 2:  cloumn visibility_state
+11.更改 表的 owner：
+	alter table XXXX  owner to new_owner
+12.查看创建表 的语句：
+	pg_dump -U username -W -s -t tablename
+13.fetchall() 
+	返回由元组组成的 列表
+14.fecthone()
+
+
+
+
+
+
+
+

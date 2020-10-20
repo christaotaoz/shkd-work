@@ -1,0 +1,23 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+inputs:
+  IMSI*:
+    default: 460000000000200
+  APN:
+    default: 'internet'
+  ip:
+    default: 192.168.4.76
+
+node_templates:
+  update_user:
+    type: update
+    properties:
+      IMSI*:
+        get_input: IMSI*
+      APN:
+        get_input: APN
+      ip:
+        get_input: ip

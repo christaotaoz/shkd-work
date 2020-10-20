@@ -1,0 +1,13 @@
+{
+  "name": "插件管理",
+  "widgets": [
+    {
+      "name": "插件管理",
+      "definition": "plugins",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

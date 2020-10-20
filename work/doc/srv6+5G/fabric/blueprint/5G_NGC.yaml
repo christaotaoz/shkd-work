@@ -1,0 +1,43 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+
+inputs:
+
+  NGC_host_string:
+    type: string
+    description: >
+       host string
+
+  NGC_user:
+    type: string
+    description: >
+       user
+
+  NGC_password:
+    type: string
+    description: >
+       password
+  NGC_script_path:
+    type: string
+    description: >
+      script_path
+
+node_templates:
+
+  NGC_host:
+    type: cloudify.nodes.ApplicationServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: { get_input: script_path }
+            fabric_env:
+              host_string: { get_input: host_string }
+              user: { get_input: user }
+              password: { get_input: password }
+              no_agent: true
+              always_use_pty: false

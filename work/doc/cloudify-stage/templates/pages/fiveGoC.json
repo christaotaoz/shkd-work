@@ -1,0 +1,93 @@
+﻿{
+  "name": "5GoC",
+  "widgets": [
+    {
+      "name": "5G边缘云测试",
+      "definition": "managementAccount",
+      "width": 2,
+      "height": 3,
+      "x": 1,
+      "y": 0
+    },
+    {
+      "name": "配置传输资源",
+      "definition": "backupSettings",
+      "width": 2,
+      "height": 3,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "name": "启动5GC",
+      "definition": "start5GC",
+      "width": 2,
+      "height": 3,
+      "x": 5,
+      "y": 0
+    },
+    {
+      "name": "启动BBU",
+      "definition": "startBBU",
+      "width": 2,
+      "height": 3,
+      "x": 7,
+      "y": 0
+    },
+    {
+      "name": "systemDetails",
+      "definition": "systemDetails",
+      "width": 2,
+      "height": 3,
+      "x": 9,
+      "y": 0
+    },
+    {
+      "name": "userAccountButton",
+      "definition": "userAccountButton",
+      "width": 2,
+      "height": 3,
+      "x": 1,
+      "y": 3
+    },
+    {
+      "name": "switchConfButton",
+      "definition": "switchConfButton",
+      "width": 2,
+      "height": 3,
+      "x": 3,
+      "y": 3
+    },
+    {
+      "name": "userAccountDeleteButton",
+      "definition": "userAccountDeleteButton",
+      "width": 2,
+      "height": 3,
+      "x": 5,
+      "y": 3
+    },
+    {
+      "name": "userAccountUpdateButton",
+      "definition": "userAccountUpdateButton",
+      "width": 2,
+      "height": 3,
+      "x": 9,
+      "y": 3
+    },
+    {
+      "name": "userAccountStatus",
+      "definition": "userAccountStatus",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "name": "userAccountReadButton",
+      "definition": "userAccountReadButton",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 6
+    }
+  ]
+}

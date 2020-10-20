@@ -1,0 +1,53 @@
+{
+  "name": "设备功能部署",
+  "widgets": [
+    {
+      "name": "接口查询(LAN)",
+      "definition": "standardInterfaceSearchLan",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "name": "接口查询(WAN)",
+      "definition": "standardInterfaceSearch",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 34
+    },
+    {
+      "name": "链路策略",
+      "definition": "policyroutes",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 64
+    },
+    {
+      "name": "防火墙",
+      "width": 20,
+      "height": 20,
+      "definition": "firewall",
+      "x": 0,
+      "y": 94
+    },
+    {
+      "name": "弹窗限制",
+      "width": 20,
+      "height": 20,
+      "definition": "webAppFirewall",
+      "x": 0,
+      "y": 114
+    },
+    {
+      "name": "模版管理",
+      "definition": "blueprints",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 124
+    }
+  ]
+}

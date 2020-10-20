@@ -1,0 +1,32 @@
+{
+  "name": "城市小脑 目录",
+  "widgets": [
+    {
+      "name": "模板 目录",
+      "definition": "blueprintCatalog",
+      "width": 12,
+      "height": 26,
+      "x": 0,
+      "y": 0,
+      "configuration":{
+        "displayStyle":"catalog",
+        "username":"cloudify-examples",
+        "filter":"blueprint in:name NOT local"
+      }
+    },
+    {
+      "name": "Plugins Catalog",
+      "definition": "pluginsCatalog",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "name": "Composer link",
+      "definition": "composerLink",
+      "x": 0,
+      "y": 25
+    }
+  ]
+}

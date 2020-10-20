@@ -1,0 +1,13 @@
+﻿{
+  "name": "5GoC状态",
+  "widgets": [
+    {
+      "name": "设备状态",
+      "definition": "equipmentStatus",
+      "width": 12,
+      "height": 30,
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

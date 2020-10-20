@@ -1,0 +1,272 @@
+plugins:
+  srv6:
+    executor: central_deployment_agent
+    package_name: srv6-plugin
+    package_version: '1.0'
+
+
+
+node_types:
+  wan:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      wan_proto:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.srv6_fabric_wan.create
+          inputs: {}
+  wan6:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      wan6_proto:
+        description:
+        type: string
+      wan6_ip6addr:
+        description:
+        type: string
+      wan6_ip6gw:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.srv6_fabric_wan6.create
+          inputs: {}
+
+  lan:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      lan_proto:
+        description:
+        type: string
+      lan_ip4addr:
+        description:
+        type: string
+      lan_mask:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.srv6_fabric_lan.create
+          inputs: {}
+
+
+  srv6_service:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      srv6_services_name:
+        description:
+        type: string
+      remote_ipv6_address:
+        description:
+        type: string
+      dest_ipv4_address:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.srv6_fabric_services.create
+          inputs: {}
+        delete:
+          implementation: srv6.srv6_fabric_task.srv6_fabric_services.delete
+          inputs: {}
+
+  aliddns:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      Access_Key_ID:
+        description:
+        type: string
+      Access_Key_Secret:
+        description:
+        type: string
+      main_domain:
+        description:
+        type: string
+      sub_domain:
+        description:
+        type: string
+      interface :
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.aliddns_fabric.create
+          inputs: {}
+
+
+  frps:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      Dashboard_addr:
+        description:
+        type: string
+      Dashboard_port:
+        description:
+        type: string
+      Dashboard_user:
+        description:
+        type: string
+      Dashboard_password :
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_task.frps.create
+          inputs: {}
+
+
+  firewall:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      add_number:
+        description:
+        type: string
+      firewall_name:
+        description:
+        type: string
+      firewall_proto:
+        description:
+        type: string
+      firewall_extzone:
+        description:
+        type: string
+      firewall_extport:
+        description:
+        type: string
+      firewall_intzone:
+        description:
+        type: string
+      firewall_intaddr:
+        description:
+        type: string
+      firewall_intport:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.firewall_redirect.create
+          inputs: {}
+
+  change_password:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      old_password:
+        description:
+        type: string
+      new_password:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.change_password_fabric.create
+          inputs: {}
+
+  dnspod:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      token:
+        description:
+        type: string
+      sub_domain:
+        description:
+        type: string
+      main_domain:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.dnspod_fabric.create
+          inputs: {}
+
+  routes:
+    derived_from: cloudify.nodes.Root
+    properties:
+      manage_ip:
+        description:
+        type: string
+      password:
+        description:
+        type: string
+      interface:
+        description:
+        type: string
+      target:
+        description:
+        type: string
+      netmask:
+        description:
+        type: string
+      gateway:
+        description:
+        type: string
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: srv6.srv6_fabric_task.route_fabric.create
+          inputs: {}
+
+
+
+

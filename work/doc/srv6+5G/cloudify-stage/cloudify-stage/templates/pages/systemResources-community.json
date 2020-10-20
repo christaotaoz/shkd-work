@@ -1,0 +1,29 @@
+﻿{
+  "name": "设备维护",
+  "widgets": [
+    {
+      "name": "系统升级",
+      "definition": "systemUpgrade",
+      "width": 2,
+      "height": 3,
+      "x": 8,
+      "y": 0
+    },
+    {
+      "name": "一键同步",
+      "definition": "synchronization",
+      "width": 2,
+      "height": 3,
+      "x": 10,
+      "y": 0
+    },
+    {
+      "name": "插件",
+      "definition": "plugins",
+      "width": 12,
+      "height": 24,
+      "x": 0,
+      "y": 55
+    }
+  ]
+}

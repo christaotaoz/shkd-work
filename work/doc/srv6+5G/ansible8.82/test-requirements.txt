@@ -1,0 +1,3 @@
+https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip#egg=cloudify[dispatcher]
+nose
+mock

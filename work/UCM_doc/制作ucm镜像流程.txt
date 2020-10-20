@@ -1,0 +1,545 @@
+1. 下载github库cloudify-manager-install-master，这个里面是manger安装程序的源码，需要基于这个源码编译生成cfy_manager的aarch64架构程序
+2. 下载github库cloudify-image-bakery，进入cloudify-image-bakery/cloudify_docker_image，修改后运行make_base_image.sh，生成aarch64的centos基础镜像
+3. 修改make_cfy_manager_image.sh，运行生成aarch64的cfy-manager镜像备用，用于手工安装rpm包
+4. 准备create_rpm打包操作， cfy官方已经去掉了这个文件，我是在github的历史记录中找到这个文件
+create_rpm 编译cfy_manager程序，并把所有的rpm包打包，最终形成cloudify-manager-install-XX-community.aarch.rpm程序
+5. create_rpm需要下面的rpm包aarch64系统的
+cloudify-cli-19.10.13~community.el6.x86_64.rpm      		<<-- 自己编译
+cloudify-management-worker-5.0.5-.dev1.el7.x86_64.rpm	<<-- 自己编译
+cloudify-rest-service-5.0.5-.dev1.el7.x86_64.rpm		<<-- 自己编译
+daemonize-1.7.3-7.el7.x86_64				<<-- armbian yum源
+erlang-21.0.2-1.el7.centos.x86_64.rpm			<<-- 自己编译
+libxslt-1.1.28-5.el7.x86_64.rpm				<<-- armbian yum源
+nginx-1.13.7-1.el7_4.ngx.x86_64.rpm			<<-- armbian yum源
+node-v10.15.1-linux-x64.tar.xz				<<-- 第三方网站下载
+patch-2.7.1-10.el7_5.x86_64.rpm				<<-- armbian yum源
+postgresql95-9.5.3-2PGDG.rhel7.x86_64.rpm		<<-- 自己编译
+postgresql95-contrib-9.5.3-2PGDG.rhel7.x86_64.rpm		<<-- 自己编译
+postgresql95-devel-9.5.3-2PGDG.rhel7.x86_64.rpm		<<-- 自己编译
+postgresql95-libs-9.5.3-2PGDG.rhel7.x86_64.rpm		<<-- 自己编译
+postgresql95-server-9.5.3-2PGDG.rhel7.x86_64.rpm		<<-- 自己编译
+python-psycopg2-2.5.1-3.el7.x86_64.rpm   			<<-- armbian yum源
+socat-1.7.3.2-2.el7.x86_64.rpm				<<-- armbian yum源
+postgresql95比较特殊，armbian最大9.2版本，需要自己编译
+
+create_rpm重复运行每次都要准备基础环境，非常的慢，经常卡死就是半个小时到1个小时，后来修改脚本，只编译，不下基础环境，几分钟可以结束，create_rpm包需要在准备编译容器，
+基于前面第2步生成的镜像即可，需要安装一堆依赖
+
+6. 去github下载cloudify-cli，checkout 19.10.13版本，然后运行dockerfile编译，比较慢，耐心等待，生成cloudify-cli-19.10.13~community.el7.aarch64.rpm
+7. 去github下载cloudify-management-worker，用步骤6的容器进行打包编译，比较慢，耐心等待，生成cloudify-management-worker-5.0.5-.dev1.el7.aarch64.rpm
+8. 去github下载cloudify-rest-service，用步骤6的容器进行打包编译，比较慢，耐心等待，可能出现缺少依赖包，手工安装，生成cloudify-rest-service-5.0.5-.dev1.el7.aarch64.rpm
+9. 编译erlang，github官网下载erlang master，用第2步生成的镜像编译打包rpm，生成erlang-22.1.3-1.el7.aarch64.rpm，没有用21.02版本，用的最新的
+10. nginx找到下载地方nginx-1.12.2-3.el7.aarch64.rpm，会有一堆依赖要一起安装
+11. 去官网下载node-v10.15.1-linux-arm64.tar.xz
+12. 编译postgresql，准备编译镜像，链接到centos sci库中的src代码，先安装源码，然后进行编译，无法匹配到x86_64的9.5.3版本，编译的9.5.14版本
+编译流程见最后，这个步骤耗时最长，花在找方法时间上
+13. 所有rpm包准备就绪，转到create_rpm镜像，指定本地的cloudify-manager-install-master库，需要修改这个库里用到的打包文件名
+具体目录是：cloudify-manager-install-master\cfy_manager\components\sources.py，修改所有带x86_64字样的字符串，改成上面准备的rpm包
+14. 执行打包命令 ./create_rpm --edition community --local-installer-path=/hom/cloudify-manager-install-master/，成功后会生成cloudify_manager..aarch64.rpm
+15. 进入步骤3的cfy-manager镜像，copy cloudify_manager..aarch64.rpm进行安装，会失败，原因未定位，实际rpm是成功的
+16. 准备cfy的配置文件，从x86_64的系统/etc/cloudify/config.yaml copy到步骤15镜像中，任意目录执行cfy_manager install，第一次执行sanity check会失败，需要修改config.yaml，关闭sanity check，然后
+再次执行cfy_manager install直到执行成功
+17.删除镜像全盘的rpm包，查找超过10M的大文件，选择性删除，最后commit镜像，完成原始镜像制作
+
+
+编译postgresql：
+cd /etc/yum.repos.d/
+    4  ls
+    5  yum install centos-release-scl-rh
+    6  yum search rh-postgresql95
+    7  yum --enablerepo=centos-sclo-rh-testing install rh-postgresql95
+    8  yum search  rh-postgresql95
+    9  yum install yum-utils rpm-build
+   10  yumdownloader --source rh-postgresql95
+   11  yum search rh-postgresql95
+   12  yum install rh-postgresql95-2.2-2.el7.src.rpm
+   13  vi /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo 
+   14  yum install rh-postgresql95-2.2-2.el7.src.rpm
+   15  vi /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo 
+   16  yum install rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm
+   17  yum install rh-postgresql95-2.2-2.el7.src.rpm
+   18  yumdownloader --source rh-postgresql95-2.2-2
+   19  vi /etc/yum.repos.d/CentOS-Sources.repo 
+   20  rpmbuild --rebuild rh-postgresql95-2.2-2
+   21  rpmbuild --rebuild rh-postgresql95-2.2-2-src.rpm
+   22  rpmbuild --rebuild rh-postgresql95-2.2-2.el7.src.rpm
+   23  yum repolist
+   24  yum repolist --all
+   25  yum repolist all
+   26  vi /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo 
+   27  rpmbuild --rebuild rh-postgresql95-2.2-2.el7.src.rpm
+   28  yumdownloader --source rh-postgresql95-2.2-2.el7.src.rpm
+   29  cd /etc/yum.repos.d/
+   30  grep -r 'vault.centos.org/altarch' *
+   31  vi CentOS-Sources.repo 
+   32  vi CentOS-Vault.repo 
+   33  yum reposlist all
+   34  yum repolist all
+   35  ls
+   36  grep -r updates-source *
+   37  vi CentOS-Sources.repo
+   38  vi CentOS-Sources.repo
+   39  rpmbuild --rebuild rh-postgresql95-2.2-2.el7.src.rpm
+   40  yumdownloader --source rh-postgresql95-2.2-2.el7.src.rpm
+   41  ls
+   42  vi CentOS-Sources.repo 
+   43  yumdownloader --source rh-postgresql95-2.2-2.el7.src.rpm
+   44  yumdownloader --source rh-postgresql95-2.2-2.el7
+   45  ls
+   46  mv rh-postgresql95-2.2-2.el7.src.rpm ~
+   47  cd
+   48  ls
+   49  rpmbuild --rebuild rh-postgresql95-2.2-2.el7.src.rpm 
+   50  ls
+   51  ls
+   52  cd rh-postgresql95-2.2-2.el7.src.rpm 
+   53  tar xf rh-postgresql95-2.2-2.el7.src.rpm 
+   54  ls
+   55  rm rpmbuild/
+   56  cd rpmbuild/
+   57  ls
+   58  cd BUILD
+   59  ls
+   60  cd ../BUILDROOT/
+   61  ls
+   62  cd ../RPMS/
+   63  ls
+   64  cd ../SOURCES/
+   65  ls
+   66  cd ../SRPMS/
+   67  ls
+   68  vi ../SPECS/rh-postgresql95.spec 
+   69  pwd
+   70  cd ../
+   71  ls
+   72  cd ..
+   73  ls
+   74  ls
+   75  rm -fr rpmbuild/
+   76  rpm -ivh ./rh-postgresql95-2.2-2.el7.src.rpm 
+   77  yum-builddep rh-postgresql95-2.2-2.el7.src.rpm
+   78  cd rpmbuild/SPECS
+   79  rpmbuild -bp  rh-postgresql95.spec 
+   80  rpmbuild -ba rh-postgresql95.spec 
+   81  rpm -qa | grep rh-p
+   82  ls
+   83  cd ..
+   84  ls
+   85  cd RPMS/
+   86  ls
+   87  cd aarch64/
+   88  ls
+   89  yum search nss_wrapper
+   90  yumdownloader --source nss_wrapper
+   91  rpm -ivh nss_wrapper-1.0.3-1.el7.src.rpm 
+   92  yum-builddep nss_wrapper
+   93  wget https://altlinux.pkgs.org/sisyphus/classic-x86_64/libcmocka-devel-1.1.3-alt2.x86_64.rpm
+   94  yum install wget
+   95  wget https://altlinux.pkgs.org/sisyphus/classic-x86_64/libcmocka-devel-1.1.3-alt2.x86_64.rpm
+   96  wget http://ftp.altlinux.org/pub/distributions/ALTLinux/Sisyphus/x86_64/RPMS.classic//libcmocka-devel-1.1.3-alt2.x86_64.rpm
+   97  yum install libcmocka-devel-1.1.3-alt2.x86_64.rpm 
+   98  rm libcmocka-devel-1.1.3-alt2.x86_64.rpm 
+   99  yumdownloader --source libcmocka-devel
+  100  yumdownloader --source rh-postgresql95-postgresql-contrib
+  101  yumdownloader --source rh-postgresql95-postgresql-contrib
+  102  vi /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo 
+  103  yumdownloader --source rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm
+  104  yumdownloader --source rh-postgresql95-postgresql-9.5.14-1.el7
+  105  rpm -ivh ./rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  106  yum-builddep rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  107  cd rpmbuild/SPECS
+  108  ls
+  109  pwd
+  110  mv *.src.rpm ~
+  111  ls
+  112  cd
+  113  ls
+  114  cd rpmbuild/SPECS/
+  115  ls
+  116  rpmbuild -bp rh-postgresql95.spec 
+  117  ls
+  118  cd ../
+  119  cd ..
+  120  ls
+  121  rpm -ivh rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  122  yum-builddep rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  123  cd rpmbuild/SPECS
+  124  ls
+  125  rpmbuild -ba rh-postgresql95.spec 
+  126  exit
+  127  ls
+  128  pwd
+  129  cd
+  130  ls
+  131  pwd
+  132  rpm -ivh ./nss_wrapper-1.0.3-1.el7.src.rpm 
+  133  yum-builddep nss_wrapper-1.0.3-1.el7.src.rpm 
+  134  yumdownloader --source libcmocka-devel
+  135  yum info libcmocka-devel
+  136  mv /home/ec2-user/cmocka-1.1.1-8.fc28.src.rpm .
+  137  cd /home/
+  138  ls
+  139  exit
+  140  pwd
+  141  exit
+  142  ls
+  143  rpm -ivh cmocka-1.1.1-8.fc28.src.rpm 
+  144  yum-builddep cmocka-1.1.1-8.fc28.src.rpm 
+  145  cd rpmbuild/SPECS
+  146  rpmbuild -bp cmocka.spec 
+  147  rpmbuild -ba cmocka.spec 
+  148  $ 
+  149  ls ~/rpmbuild/BUILD
+  150  pwd
+  151  ls
+  152  cd ../../
+  153  ls
+  154  yum install libcmocka-devel-1.1.1-8.fc28.aarch64.rpm 
+  155  ls
+  156  ls
+  157  ls
+  158  cd rpmbuild/SPECS/
+  159  l
+  160  ls
+  161  vi postgresql.spec 
+  162  rpmbuild -bp postgresql.spec 
+  163  rpmbuild -ba postgresql.spec 
+  164  rpmbuild -ba postgresql.spec  --define='runselftest 0'
+  165  cd ../../
+  166  yum-builddep rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  167  yum-builddep rh-postgresql95-2.2-2.el7.src.rpm 
+  168  cd rpmbuild/SPECS/
+  169  ls
+  170  pwd
+  171  rpmbuild -bp postgresql.spec 
+  172  rpmbuild -ba postgresql.spec 
+  173  rpmbuild -ba postgresql.spec --define='runselftest 0'
+  174  whoami
+  175  yum install make
+  176  rpmbuild -ba postgresql.spec --define='runselftest 0'
+  177  rpmbuild -ba postgresql.spec --define='runselftest 0' --no-discard-stderr
+  178  ls
+  179  cd ../
+  180  ls
+  181  cd ..
+  182  ls
+  183  mkdir rpms
+  184  mv rpmbuild/RPMS/aarch64/rh-postgresql95-2.2-2.el7.aarch64.rpm rpms
+  185  rm -fr rpmbuild/
+  186  ls
+  187  mkdir nss
+  188  mv cmocka-1.1.1-8.fc28.src.rpm nss
+  189  mv libcmocka-devel-1.1.1-8.fc28.aarch64.rpm nss
+  190  mv nss_wrapper-1.0.3-1.el7.src.rpm nss
+  191  ls
+  192  mkdir src.rpm
+  193  mv rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm src.rpm/
+  194  ls
+  195  rpm -ivh rh-postgresql95-2.2-2.el7.src.rpm 
+  196  yum-builddep rh-postgresql95-2.2-2.el7.src.rpm 
+  197  cd rpmbuild/SPECS
+  198  rpmbuild -bp rh-postgresql95.spec 
+  199  rpmbuild -bp rh-postgresql95.spec 
+  200  rpmbuild -ba rh-postgresql95.spec 
+  201  mv ../RPMS/aarch64/rh-postgresql95-* ../../rpms/
+  202  cd ../
+  203  ls
+  204  cd ../
+  205  rm -fr rpmbuild/
+  206  ls
+  207  mv rh-postgresql95-2.2-2.el7.src.rpm src.rpm
+  208  cp src.rpm/rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm .
+  209  ls
+  210  rpm -ivh  rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  211  yum-builddep rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm 
+  212  cd rpmbuild/SPECS
+  213  rpmbuild -bp  postgresql.spec 
+  214  rpmbuild -ba  postgresql.spec 
+  215  rpmbuild -ba  postgresql.spec --define='runselftest 0'
+  216  yum install help2man
+  217  ls
+  218  vi postgresql.spec 
+  219  ls
+  220  ls
+  221  cd ../
+  222  ls
+  223  cd ..
+  224  ls
+  225  ls
+  226  yumdownloader --source rh-postgresql95-postgresql-9.5.7-2.el7
+  227  ls
+  228  mv rh-postgresql95-postgresql-9.5.14-1.el7.src.rpm rpms
+  229  ls
+  230  rm -fr rpmbuild/
+  231  ls
+  232  rpm -ivh rh-postgresql95-postgresql-9.5.7-2.el7.src.rpm 
+  233  yum-builddep rh-postgresql95-postgresql-9.5.7-2.el7.src.rpm 
+  234  cd rpmbuild/SPECS
+  235  rpmbuild -bp  postgresql.spec 
+  236  rpmbuild -ba postgresql.spec 
+  237  rpmbuild -ba postgresql.spec  --define='runselftest 0'
+  238  clear
+  239  rpmbuild -ba postgresql.spec  --define='runselftest 0'
+  240  cd ../../
+  241  ls
+  242  ls
+  243  cd ../
+  244  ls
+  245  cd
+  246  ls
+  247  rm rh-postgresql95-postgresql-9.5.7-2.el7.src.rpm 
+  248  yumdownloader --source rh-postgresql94-2.0-9.el7
+  249  yum-builddep rh-postgresql94-2.0-9.el7.src.rpm 
+  250  cd rpmbuild/SPECS
+  251  rpmbuild -bp postgresql.spec 
+  252  rpmbuild -ba postgresql.spec 
+  253  rpmbuild -ba postgresql.spec 
+  254  rpmbuild -ba postgresql.spec --define='runselftest 0'
+  255  cd ../../
+  256  ls
+  257  rm -fr rpmbuild/
+  258  yum-builddep rh-postgresql94-2.0-9.el7.src.rpm 
+  259  cd rpmbuild/SPECS
+  260  pwd
+  261  ls
+  262  rpm -ivh rh-postgresql94-2.0-9.el7.src.rpm 
+  263  cd yum-builddep rh-postgresql94-2.0-9.el7.src.rpm 
+  264  yum-builddep rh-postgresql94-2.0-9.el7.src.rpm 
+  265  cd rpmbuild/SPECS
+  266  ls
+  267  rpmbuild -bp rh-postgresql94.spec 
+  268  rpmbuild -ba rh-postgresql94.spec 
+  269  mv ../RPMS/aarch64/rh-postgresql94-* ../../rpms/
+  270  cd ../../
+  271  ls
+  272  rm -fr rpmbuild/
+  273  mv rh-postgresql94-2.0-9.el7.src.rpm src.rpm
+  274  ls
+  275  yumdownloader --source rh-postgresql94-postgresql-9.4.14-2.el7.src.rpm
+  276  yumdownloader --source rh-postgresql94-postgresql-9.4.14-2.el7
+  277  rpm -ivh rh-postgresql94-postgresql-9.4.14-2.el7.src.rpm 
+  278  yum-builddep  rh-postgresql94-postgresql-9.4.14-2.el7.src.rpm 
+  279  cd rpmbuild/SPECS
+  280  ls
+  281  rpmbuild -bp postgresql.spec 
+  282  rpmbuild -ba postgresql.spec 
+  283  rpmbuild -ba postgresql.spec  --define='runselftest 0'
+  284  vi /etc/passwd
+  285  cd /opt/app-root/src/rpmbuild/BUILD/postgresql-9.4.14/postgresql-setup-6.0/
+  286  ls
+  287  man rpmbuild
+  288  yum install man
+  289  man rpmbuild
+  290  ls
+  291  ls
+  292  cd ../../
+  293  ls
+  294  mv rh-postgresql94-postgresql-9.4.14-2.el7.src.rpm src.rpm/
+  295  ls
+  296  rm -fr rpmbuild/
+  297  ls
+  298  yumdownloader --source rh-postgresql94-postgresql-9.4.12-1.el7.src.rpm
+  299  l
+  300  yumdownloader --source rh-postgresql94-postgresql-9.4.12-1.el7
+  301  rpm -ivh rh-postgresql94-postgresql-9.4.12-1.el7.src.rpm 
+  302  rpm -ivh ./rh-postgresql94-postgresql-9.4.12-1.el7.src.rpm 
+  303  yum-builddep rh-postgresql94-postgresql-9.4.12-1.el7.src.rpm 
+  304  cd rpmbuild/SPECS
+  305  rpmbuild -bp postgresql.spec 
+  306  rpmbuild -ba postgresql.spec 
+  307  useradd kstam
+  308  sudo su - kstam
+  309  su - kstam
+  310  useradd mockbuild
+  311  su - ksta
+  312  su - kstam
+  313  yum install sudo
+  314  vi /etc/sudoers
+  315  vi /etc/group
+  316  su - kstam
+  317  yum install gcc
+  318  su - kstam
+  319  vi /etc/group
+  320  vi /etc/sudoers
+  321  vi /etc/sudoers
+  322  vi /etc/group
+  323  su - kstam
+  324  yum-config-manager --enable epel epel-source
+  325  yumdownloader --source libcmocka
+  326  ls
+  327  pwd
+  328  cd ../../
+  329  ls
+  330  rm -fr rpmbuild/
+  331  ls
+  332  rm rh-postgresql94-postgresql-9.4.12-1.el7.src.rpm 
+  333  ls
+  334  yumdownloader --source libcmocka
+  335  rpm -ivh cmocka-1.1.5-1.el7.src.rpm 
+  336  yum-builddep cmocka-1.1.5-1.el7.src.rpm 
+  337  cd rpmbuild/SPECS
+  338  rpmbuild -bp cmocka.spec 
+  339  rpmbuild -ba cmocka.spec 
+  340  cd ../RPMS/
+  341  ls
+  342  cd aarch64/
+  343  ls
+  344  yum install libcmocka-1.1.5-1.el7.aarch64.rpm 
+  345  ls
+  346  mv *.rpm ../../../rpms/
+  347  ls
+  348  cd ../
+  349  ls
+  350  cd ../../
+  351  ls
+  352  mv cmocka-1.1.5-1.el7.src.rpm src.rpm/
+  353  rm -fr rpmbuild/
+  354  ls
+  355  mv nss/nss_wrapper-1.0.3-1.el7.src.rpm .
+  356  cp nss_wrapper-1.0.3-1.el7.src.rpm src.rpm/
+  357  ls
+  358  rm -fr nss
+  359  ls
+  360  rpm -ivh nss_wrapper-1.0.3-1.el7.src.rpm 
+  361  yum-builddep nss_wrapper-1.0.3-1.el7.src.rpm 
+  362  cd rpmbuild/SPECS
+  363  rpmbuild -bp nss_wrapper.spec 
+  364  rpmbuild -ba nss_wrapper.spec 
+  365  ls
+  366  cd ../RPMS/
+  367  ls
+  368  cd aarch64/
+  369  ls
+  370  cp *.rpm ../../../rpms/
+  371  yum install nss_wrapper-1.0.3-1.el7.aarch64.rpm 
+  372  ls
+  373  cd ../../
+  374  ls
+  375  cd ../
+  376  ls
+  377  rm nss_wrapper-1.0.3-1.el7.src.rpm 
+  378  ls
+  379  rm -fr rpmbuild/
+  380  ls
+  381  mkdir kurt
+  382  mv * kurt/
+  383  ls
+  384  yum install scl-utils scl-utils-build
+  385  scl --list 
+  386  su - kstam
+  387  ls
+  388  cd ..
+  389  ls
+  390  cd
+  391  cd kurt/rpms/
+  392  ls
+  393  mkdir rh-postgresql94-postgresql-9.4.14-2.el7
+  394  mv /home/kstam/rpmbuild/RPMS/aarch64/rh-postgresql-* rh-postgresql94-postgresql-9.4.14-2.el7/
+  395  ls
+  396  mkdir libcmocka-1.1.5-1.el7
+  397  mv libcmocka-* libcmocka-1.1.5-1.el7
+  398  ls
+  399  mkdir rh-postgresql94-2.0-9
+  400  mv rh-postgresql94-*.rpm rh-postgresql94-2.0-9
+  401  ls
+  402  mkdir rh-postgresql95-2.2-2.el7
+  403  mv rh-postgresql95*.rpm rh-postgresql95-2.2-2.el7
+  404  ls
+  405  mkdir nss_wrapper-1.0.3-1.el7
+  406  ls
+  407  mv nss_wrapper*.rpm nss_wrapper-1.0.3-1.el7
+  408  ls
+  409  mv cmocka-debuginfo-1.1.5-1.el7.aarch64.rpm libcmocka-1.1.5-1.el7/
+  410  ls
+  411  su - kstam
+  412  ls
+  413  cd ..
+  414  ls
+  415  cd rpms/
+  416  ls
+  417  su - kstam
+  418  ls
+  419  mkdir rh-postgresql95-postgresql-9.5.14-1.el7
+  420  cd rh-postgresql95-postgresql-9.5.14-1.el7/
+  421  ls
+  422  cp /home/kstam/rpmbuild/RPMS/aarch64/rh-postgresql-* .
+  423  ls
+  424  cd ../../
+  425  ls
+  426  w
+  427  ls
+  428  exit
+  429  ls
+  430  exit
+  431  pwd
+  432  exit
+  433  cd /etc/yum.repos.d/
+  434  ls
+  435  grep -r centos-sclo-sclo *
+  436  vi CentOS-SCLo-scl-rh.repo 
+  437  exit
+  438  cd src.rpm/
+  439  ls
+  440  cd ../nss/
+  441  ls
+  442  ls
+  443  pwd
+  444  whoami
+  445  ls
+  446  cd
+  447  ls
+  448  su - kstam
+  449  ls
+  450  cd kurt/rpms/rh-postgresql95-2.2-2.el7/
+  451  ls
+  452  cp -r /home/kstam/rpmbuild/RPMS/aarch64/* .
+  453  ls
+  454  cd ../../
+  455  ls
+  456  cd ../
+  457  ls
+  458  pwd
+  459  docker ps
+  460  exit
+  461  su - kstam
+  462  ls
+  463  cd kurt/rpms/rh-postgresql94-2.0-9/
+  464  ls
+  465  cp /home/kstam/rpmbuild/RPMS/aarch64/rh-* .
+  466  ls
+  467  exit
+  468  cd kurt/rpms/rh-postgresql94/
+  469  ls
+  470  ls -l
+  471  cd ../rh-postgresql95/
+  472  ls
+  473  ls -l
+  474  cd ../rh-postgresql94/
+  475  ls
+  476  rm rh-2.0-9.el7.aarch64.rpm rh-build-2.0-9.el7.aarch64.rpm rh-runtime-2.0-9.el7.aarch64.rpm rh-scldevel-2.0-9.el7.aarch64.rpm 
+  477  ls
+  478  ls -l
+  479  cd ../rh-postgresql95/
+  480  ls
+  481  cp /home/kstam/rpmbuild/RPMS/aarch64/* .
+  482  ls -l
+  483  exit
+  484  find / | grep runtime
+  485  find / | grep *.rpm
+  486  ls
+  487  cd kurt/
+  488  ls
+  489  cd rpms/
+  490  ls
+  491  cd rh-postgresql9
+  492  cd rh-postgresql95
+  493  ls
+  494  rpm -qa | grep runtime
+  495  find / | grep runtime
+  496  ls
+  497  cd ..
+  498  ls
+  499  cd rh-postgresql9
+  500  cd rh-postgresql94/
+  501  ls
+  502  history

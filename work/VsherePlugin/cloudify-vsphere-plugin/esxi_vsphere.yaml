@@ -1,0 +1,63 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+  #zhutao
+  - 'plugin:pa-plugin?version=1.0&distribution=centos'
+
+inputs:
+  esxi_ip:
+    type: string
+    default: 192.168.4.88
+
+  esxi_username:
+    type: string
+    default: root
+
+  esxi_password:
+    type: string
+    default: Zijinshan001&
+
+  vcenter_ip:
+    type: string
+    default: 192.168.4.220
+
+  vcenter_username:
+    type: string
+    default: administrator@testlocal.test
+
+  vcenter_password:
+    type: string
+    default: Zijinshan001&
+
+  datacenter_name:
+    type: string
+    default: Datacenter
+
+  cluster_name:
+    type: string
+    default: cluster
+
+dsl_definitions:
+  connection_config: &connection_config
+    esxi_ip: { get_input: esxi_ip }
+    esxi_username: { get_input: esxi_username }
+    esxi_password: { get_input: esxi_password }
+    host: { get_input: vcenter_ip }
+    username: { get_input: vcenter_username }
+    password: { get_input: vcenter_password }
+    datacenter_name: { get_input: datacenter_name }
+    cluster_name: { get_input: cluster_name }
+    auto_placement: true
+    allow_insecure: true
+
+node_templates:
+  esxi:
+    type: cloudify.vsphere.nodes.Host
+    properties:
+      name: { get_input: esxi_ip }
+      use_existing_resource: false
+      use_external_resource: false
+      connection_config: *connection_config
+

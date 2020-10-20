@@ -1,0 +1,294 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.5.5/types.yaml
+  - plugin.yaml
+
+inputs:
+
+  # CLIENT CONFIGURATION
+  venter_host:
+    type: string
+    default: 192.168.4.220
+  venter_username:
+    type: string
+    default: administrator@testlocal.test
+  datacenter_name:
+    type: string
+    default: srv6+windows
+  resource_pool_name:
+    type: string
+    default: srv6+win
+  # SERVER CONFIGURATION
+  server_name:
+    type: string
+    default: win10
+  template_name:
+    type: string
+    default: win10muban
+  network_name:
+    type: string
+    default: port_srv6_lan
+
+dsl_definitions:
+  connection_config: &connection_config
+    username: { get_input: venter_username }
+    password: Zijinshan001&
+    host: { get_input: venter_host }
+    port: 443
+    datacenter_name: { get_input: datacenter_name }
+    resource_pool_name: { get_input: resource_pool_name }
+    auto_placement: true
+    allow_insecure: true
+
+node_templates:
+  vm1:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      use_external_resource: false
+      connection_config: *connection_config
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.201
+
+  vm2:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm1
+        type: cloudify.relationships.connected_to
+
+  vm3:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm2
+        type: cloudify.relationships.connected_to
+  vm4:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm3
+        type: cloudify.relationships.connected_to
+  vm5:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm4
+        type: cloudify.relationships.connected_to
+
+  vm6:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm5
+        type: cloudify.relationships.connected_to
+  vm7:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm6
+        type: cloudify.relationships.connected_to
+  vm8:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm7
+        type: cloudify.relationships.connected_to
+  vm9:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm8
+        type: cloudify.relationships.connected_to
+  vm10:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      connection_config: *connection_config
+      use_external_resource: false
+      agent_config:
+        install_method: none
+      server:
+        name: { get_input: server_name }
+        template: { get_input: template_name }
+        cpus: 1
+        memory: 1024
+      networking:
+        connect_networks:
+          - name: { get_input: network_name }
+            management: true
+            external: true
+            switch_distributed: false
+            use_dhcp: true
+            network: 172.16.168.0/24
+            gateway: 172.16.168.1
+            ip: 172.16.168.202
+    relationships:
+      - target: vm9
+        type: cloudify.relationships.connected_to

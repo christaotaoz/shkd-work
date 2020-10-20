@@ -1,0 +1,347 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+  #zhutao
+  - 'plugin:srv6-plugin?version=1.0&distribution=centos'
+
+
+inputs:
+
+#  CLIENT CONFIGURATIONll
+  srv6_manage_ip:
+    description: srv6 manage ip address
+    default: 192.168.4.153
+
+  ali_DDNS_main_domain:
+    description:
+    default: srv6.tech
+  ali_DDNS_sub_domain:
+    description:
+    default: e
+  ali_DDNS_Access_Key_ID:
+    description:
+    default: LTAI4FfX1qGCWQ6UB6AZvtUD
+  ali_DDNS_Access_Key_Secret:
+    description:
+    default: RumbrRcr20hXMyCqLxdYqZxuULuXMF
+  ali_DDNS_WAN-IP_interface:
+    description:
+    default: wan_6
+
+  DNSPOD_sub_domain:
+    description:
+    default: v4a
+  DNSPOD_main_domain:
+    description:
+    default: minidc.cn
+  DNSPOD_token:
+    description:
+    default: 140565,6ce146a283e92704ecaca8793e2f6ba8
+
+  srv6_password:
+    description:
+    default: root
+  srv6_wan_proto:
+    description: static/dhcp
+    default: dhcp
+  srv6_lan_address:
+    description:
+    default: 192.168.16.1
+  srv6_local_lan_address:
+    description:
+    default: 192.168.8.1
+  srv6_remote_address:
+    default: f.srv6.tech
+  srv6_wan_vmnic:
+    default:  vmnic1
+  srv6_lan_vmnic:
+    default:  vmnic2
+
+
+  # firewall
+  windows_remote_address_firewall_add_number:
+    description:
+    default: 1
+  windows_remote_address_firewall_name_1:
+    description:
+    default: frp
+  windows_remote_address_firewall_extport_1:
+    description:
+    default: 11001
+  windows_remote_address_firewall_intaddr_1:
+    description:
+    default: 192.168.16.1
+  windows_remote_address_firewall_intport_1:
+    description:
+    default: 11001
+  windows_remote_address_firewall_extport_2:
+    description:
+    default: 1234
+  windows_remote_address_firewall_intaddr_2:
+    description:
+    default: 192.168.16.1
+
+  # NIC CONFIGURATION
+  vcenter_ip:
+    type: string
+    default: 192.168.4.220
+  vcenter_username:
+    type: string
+    default: administrator@testlocal.test
+  vcenter_esxi_ip:
+    default: 192.168.4.197
+  vcenter_datacenter_name:
+    type: string
+    default: Datacenter3
+  vcenter_resource_pool_name:
+    type: string
+    default: pool
+  vcenter_template_name:
+    type: string
+    default: 153muban
+
+
+
+dsl_definitions:
+#  connection_config: &connection_config
+#    auto_placement: true
+#    allow_insecure: true
+#    datacenter_name: { get_input: datacenter_name }
+#    host: { get_input: vcenter_ip }
+#    username: { get_input: vcenter_username }
+#    password: { get_input: vcenter_password }
+
+  connection_config: &connection_config
+    esxi_ip: { get_input: vcenter_esxi_ip }
+    esxi_username: root
+    esxi_password: Zijinshan001&
+    host: { get_input: vcenter_ip }
+    username: { get_input: vcenter_username }
+    password: Zijinshan001&
+    datacenter_name: { get_input: vcenter_datacenter_name }
+    #cluster_name: { get_input: cluster_name }
+    resource_pool_name: { get_input: vcenter_resource_pool_name }
+    auto_placement: true
+    allow_insecure: true
+
+node_templates:
+
+#add esxi to vcenter
+  esxi:
+    type: cloudify.vsphere.nodes.Host
+    properties:
+      name: { get_input: esxi_ip }
+      use_existing_resource: false
+      use_external_resource: false
+      connection_config: *connection_config
+
+  nic3:
+    type: cloudify.vsphere.nodes.NIC
+    properties:
+      connection_config: *connection_config
+      name: { get_property: [ P-wan, network, name ] }
+      switch_distributed: false
+      #adapter_type: E1000
+      adapter_type: Vmxnet3
+      start_connected: true
+      network_configuration:
+        use_dhcp: true
+    relationships:
+      - type: cloudify.relationships.vsphere.nic_connected_to_network
+        target: P-wan
+
+  nic4:
+    type: cloudify.vsphere.nodes.NIC
+    properties:
+      connection_config: *connection_config
+      name: { get_property: [ P-lan, network, name ] }
+      switch_distributed: false
+      #adapter_type: E1000
+      adapter_type: Vmxnet3
+      start_connected: true
+    relationships:
+      - type: cloudify.relationships.vsphere.nic_connected_to_network
+        target: P-lan
+
+
+
+  P-lan:
+    type: cloudify.vsphere.nodes.Network
+    properties:
+      connection_config: *connection_config
+      network:
+        name: port_srv6_lan
+        vlan_id: 0
+        vswitch_name: vswitch_srv6_lan
+        nicdevice: { get_input: srv6_lan_vmnic }
+        switch_distributed: false
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: esxi
+
+  P-wan:
+    type: cloudify.vsphere.nodes.Network
+    properties:
+      connection_config: *connection_config
+      network:
+        name: port_srv6_wan
+        vlan_id: 0
+        vswitch_name: vswitch_srv6_wan
+        nicdevice: { get_input: srv6_wan_vmnic }
+        switch_distributed: false
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: esxi
+
+  SRV6:
+    type: cloudify.vsphere.nodes.Server
+    properties:
+      use_external_resource: false
+      connection_config: *connection_config
+      agent_config:
+        install_method: none
+      server:
+        name: srv6
+        template: { get_input: vcenter_template_name }
+        cpus: 1
+        memory: 256
+      networking:
+        connect_networks:
+          - name: { get_property: [ P-lan, network, name ] }
+            management: true
+          - name: { get_property: [ P-wan, network, name ] }
+            management: false
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: P-lan
+      - type: cloudify.relationships.connected_to
+        target: P-wan
+
+  srv6_service:
+    type: srv6_service
+    properties:
+      manage_ip:
+        get_input: srv6_manage_ip
+      srv6_services_name: srv6
+      remote_ipv6_address:
+        get_input: srv6_remote_address
+      dest_ipv4_address:
+        get_input: srv6_local_lan_address
+      password:
+        get_input: srv6_password
+    relationships:
+      - target: SRV6
+        type: cloudify.relationships.connected_to
+
+  wan:
+    type: wan
+    properties:
+      manage_ip:
+        get_input: srv6_manage_ip
+      wan_proto:
+        get_input: srv6_wan_proto
+      password:
+        get_input: srv6_password
+    relationships:
+      - target: lan
+        type: cloudify.relationships.connected_to
+
+  aliddns:
+    type: aliddns
+    properties:
+      manage_ip:
+        get_input: srv6_manage_ip
+      Access_Key_ID:
+        get_input: ali_DDNS_Access_Key_ID
+      Access_Key_Secret:
+        get_input: ali_DDNS_Access_Key_Secret
+      main_domain:
+        get_input: ali_DDNS_main_domain
+      sub_domain:
+        get_input: ali_DDNS_sub_domain
+      interface:
+        get_input: ali_DDNS_WAN-IP_interface
+      password:
+        get_input: srv6_password
+    relationships:
+      - target: srv6_service
+        type: cloudify.relationships.connected_to
+
+  dnspod:
+    type: dnspod
+    properties:
+      manage_ip:
+        get_input: srv6_manage_ip
+      password:
+        get_input: srv6_password
+      token:
+        get_input: DNSPOD_token
+      sub_domain:
+        get_input: DNSPOD_sub_domain
+      main_domain:
+        get_input: DNSPOD_main_domain
+    relationships:
+      - target: aliddns
+        type: cloudify.relationships.connected_to
+
+  firewall_1:
+    type: firewall
+    properties:
+      firewall_proto: tcp udp
+      manage_ip:
+        get_input: srv6_manage_ip
+      password:
+        get_input: srv6_password
+      add_number:
+        get_input: windows_remote_address_firewall_add_number
+      firewall_name:
+        get_input: windows_remote_address_firewall_name_1
+      firewall_extzone: wan
+      firewall_extport:
+        get_input: windows_remote_address_firewall_extport_1
+      firewall_intzone: lan
+      firewall_intaddr:
+        get_input: windows_remote_address_firewall_intaddr_1
+      firewall_intport:
+        get_input: windows_remote_address_firewall_intport_1
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: dnspod
+
+  firewall_2:
+    type: firewall
+    properties:
+      add_number: 1
+      firewall_proto: tcp udp
+      manage_ip:
+        get_input: srv6_manage_ip
+      password:
+        get_input: srv6_password
+      firewall_name: duankou
+      firewall_extzone: wan
+      firewall_extport:
+        get_input: windows_remote_address_firewall_extport_2
+      firewall_intzone: lan
+      firewall_intaddr:
+        get_input: windows_remote_address_firewall_intaddr_2
+      firewall_intport: 80
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: firewall_1
+
+  lan:
+    type: lan
+    properties:
+      manage_ip:
+        get_input: srv6_manage_ip
+      lan_proto: static
+      lan_ip4addr:
+        get_input: srv6_lan_address
+      lan_mask: 255.255.255.0
+      password:
+        get_input: srv6_password
+    relationships:
+      - target: firewall_2
+        type: cloudify.relationships.connected_to

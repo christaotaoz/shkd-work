@@ -1,0 +1,65 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+    - http://www.getcloudify.org/spec/cloudify/4.5.5/types.yaml
+    - http://www.getcloudify.org/spec/vsphere-plugin/2.1.0/plugin.yaml
+
+node_templates:
+    example_server:
+        type: cloudify.vsphere.nodes.Server
+        properties:
+            networking:
+                domain: example.com
+                dns_servers: ['8.8.8.8']
+                connect_networks:
+                    -
+                        name: example_management_network
+                        management: true
+                        switch_distributed: false
+                        use_dhcp: true
+                    -
+                        name: example_external_network
+                        external: true
+                        switch_distributed: true
+                        use_dhcp: false
+                        network: 10.0.0.0/24
+                        gateway: 10.0.0.1
+                        ip: 10.0.0.2
+                    -
+                        name: example_other_network
+                        switch_distributed: true
+                        use_dhcp: true
+            server:
+                name: example_server
+                template: example_server_template
+                cpus: 1
+                memory: 512
+
+    example_network:
+        type: cloudify.vsphere.nodes.Network
+        properties:
+            network:
+                name: example_network
+                vlan_id: 1
+                vswitch_name: example_vswitch
+                switch_distributed: true
+
+    example_port:
+        type: cloudify.vsphere.nodes.Port
+        properties:
+            port:
+                mac: 00:00:00:11:11:11
+        relationships:
+            - target: example_network
+              type: cloudify.vsphere.port_connected_to_network
+            - target: example_server
+              type: cloudify.vsphere.port_connected_to_server
+
+    example_storage:
+        type: cloudify.vsphere.nodes.Storage
+        properties:
+            storage:
+                storage_size: 1
+        relationships:
+            - target: example_server
+              type: cloudify.vsphere.storage_connected_to_server

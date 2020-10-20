@@ -1,0 +1,93 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - types.yaml
+  - plugin.yaml
+
+inputs:
+  # CLIENT CONFIGURATION
+  username:
+    type: string
+    default: administrator@testlocal.test
+  password:
+    type: string
+    default: Zijinshan001&
+  host:
+    type: string
+    default: 192.168.4.220
+  esxi_ip: 192.168.4.197
+  port:
+    type: string
+    default: 443
+  datacenter_name:
+    type: string
+    default: Datacenter3
+  resource_pool_name:
+    type: string
+    default: pool
+  auto_placement:
+    type: string
+    default: True
+  allow_insecure:
+    type: string
+    default: True
+
+  # NIC CONFIGURATION
+  switch_distributed:
+    type: boolean
+    default: false
+
+  # NETWORK CONFIGURATION
+  #port name
+  network_name:
+    type: string
+    default: port-test
+
+  vlan_id:
+    type: string
+    default: 1
+
+  vswitch_name:
+    type: string
+    default: vSwitch-test
+
+  nicdevice:
+    type: string
+    default: vmnic1
+
+dsl_definitions:
+  connection_config: &connection_config
+    esxi_ip: { get_input: esxi_ip }
+    username: { get_input: username }
+    password: { get_input: password }
+    host: { get_input: host }
+    port: { get_input: port }
+    datacenter_name: { get_input: datacenter_name }
+    resource_pool_name: { get_input: resource_pool_name }
+    auto_placement: { get_input: auto_placement }
+    allow_insecure: { get_input: allow_insecure }
+
+node_templates:
+
+  nic:
+    type: cloudify.vsphere.nodes.NIC
+    properties:
+      connection_config: *connection_config
+      name: { get_property: [ net, network, name ] }
+      switch_distributed: false
+      adapter_type: E1000
+    relationships:
+      - type: cloudify.vsphere.port_connected_to_network
+        target: net
+
+  net:
+    type: cloudify.vsphere.nodes.Network
+    properties:
+      connection_config: *connection_config
+      network:
+        name: { get_input: network_name }
+        vlan_id: { get_input: vlan_id }
+        vswitch_name: { get_input: vswitch_name }
+        nicdevice: { get_input: nicdevice }
+        switch_distributed: { get_input: switch_distributed }
+

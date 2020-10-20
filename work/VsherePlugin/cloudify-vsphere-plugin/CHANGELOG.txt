@@ -1,0 +1,119 @@
+2.17.0:
+  - Support postpone_delete_networks flag for removal of network interfaces after VM creation.
+  - Upgrade vm version on start, supported only on stopped vm.
+2.16.2:
+  - Fix debug log output for vm object
+2.16.1:
+  - Export datastore filename for cdrom to `datastore_file_name` field.
+  - Cleanup storage runtime properties after delete.
+  - Cleanup content library deployment node after delete.
+2.16.0:
+  - Preserve ordering of networks when not external
+  - Cleanup create vm error messages
+  - Allow users not to specify num CPUs and RAM
+  - Fix typo: `contoller` -> `controller`
+  - Resubable workflows support
+  - Add `add_scale_suffix` for add suffix for instance name by default.
+  - Filter network by datacenters before attach.
+  - Start vm on create only with `enable_start_vm` equal to True.
+  - Cleanup runtime properties after delete ippool, cdrom and server instances.
+2.15.1:
+  - Fix mistake with network adapters type. #138
+2.15.0:
+  - Support Solaris guests (OmniOS CE)
+  - Wait IP flag for wait any ip's on connected NIC
+  - Set extra properties set to VM
+  - Deprecate support for cloudify-plugins-common < 4.1.
+    https://cloudify.co/product/cloudify-lifecycle/
+2.14.0:
+  - Export host and datastore for external VM
+2.13.1:
+  - Fix json keys order in deployments additional parameters for content
+    library.
+2.13.0:
+  - Rename `raw_files` to `files_raw`
+  - Fix start external VM without VMware tools
+  - Put VM to prexisted folder
+2.12.0:
+  - Add `enable_start_vm flag` for external VM's
+  - Add Content Library support
+  - Support OVA deployments from Content Library
+  - Export external id for Hypervisor Host, Resource Pool and VM Folder.
+2.11.0:
+  - IP Pool support
+  - CIDR/MTU export for external network based on assigned IP Pool and
+    parent switch
+2.10.0:
+  - Initial CloudInit support
+  - MTU export for new created networks
+2.9.3:
+  - Add `enable_start_vm flag`. Backport from 2.12.0.
+2.9.2:
+  - CFY-981: DHCP regression fix
+2.9.1:
+  - Support Servers without memory and cpu values assigned
+2.9.0:
+  - Support Server - Nic relationship.
+  - Start moving from use_existing_resource to use_external_resource.
+2.8.0:
+  - Support use_external_resource in cloudify.vsphere.nodes.Storage.
+  - CY-807: Stabilize tests.
+2.7.0:
+  - Add backup/restore workflow with snapshot support.
+  - Add suspend/resume workflow support.
+2.6.1:
+  - Fix debug info about selected hosts.
+2.6.0:
+  - Add "use_existing_resource" support for cloudify.vsphere.nodes.Server.
+2.5.0:
+  - Add support for SCSI/Ethernet attach to preexisted vm.
+2.4.0:
+  - Support for os_family=other
+  - Allow node properties to be overridden in operation inputs (VSPHERE-92)
+2.3.0:
+  - Move default connection config to /etc/cloudify/vsphere_plugin/connection_config.yaml (VSPHERE-1, VSPHERE-17)
+  - Add Server power operations (on, off, reboot, reset) (VSPHERE-73)
+  - Allow host memory overcommit (best-effort placement of VMs) (VSPHERE-74)
+  - Allow adding metadata (custom attributes) to VMs (VSPHERE-49)
+  - Support slashes in network names (VSPHERE-29)
+  - Don't try to deploy on hypervisors in maintenance mode (VSPHERE-76)
+  - Provide NSX compatibility helpers (VSPHERE-75)
+  - Add Server resize operations (CPU, RAM) (VSPHERE-38)
+  - Fix case sensitivity issue in candidate host finder (VSPHERE-89)
+  - Remove all NICs from template when cloning, not just VMXNet3 (VSPHERE-3)
+  - Support for SSL verification (or disabling of verification) (VSPHERE-39, VSPHERE-47)
+  - Fix naming collision when deploying a node with two attached volumes (VSPHERE-27)
+  - Deprecate auto_placement
+  - Handle unhealthy hypervisors (VSPHERE-101)
+2.2.2:
+  - Fix debug info about selected hosts.
+2.2.1:
+  - Fix handling of VMs currently being cloned (VSPHERE-86)
+2.2.0:
+  - Support setting organization on Windows VMs.
+  - Support Windows custom sysprep.
+  - Make amount of vSphere calls independent of amount of entities on vSphere.
+2.1.0:
+  - Support restrictions on deployment location by setting one or more allowed hosts, clusters, or datastores.
+  - Better logic for selecting deployment locations to ensure selected hosts have all required resources.
+  - Improve health checks on hypervisors and datastores when determining availability for VM deployment.
+  - Remove defaults from plugin.yaml connection config to avoid them always overriding manager connection config.
+2.0.1:
+  - Make naming of servers automatically replace underscores with hyphens, allowing nodecellar to work.
+  - Don't fail when no public or management networks are set.
+  - More consistent setting of runtime properties when public or management networks are not set.
+  - Do not fail when no interfaces are attached.
+  - Fail fast when invalid properties are provided for servers.
+  - Provide more useful feedback if network names or switch_distributed settings are incorrect.
+  - Don't return from network creation before network is created.
+2.0:
+  - Add extra runtime attribute data for attached networks to include MAC address for servers.
+  - Add extra runtime attribute for SCSI ID on storage nodes.
+  - Remove undocumented and redundant port resource.
+  - Make module naming more explicit.
+  - Improve error output when trying to create network.
+  - Completely remove transform_resource.
+  - Make logging meet draft guidelines.
+  - More tests.
+  - Improvements to network naming.
+  - Factor out constants.
